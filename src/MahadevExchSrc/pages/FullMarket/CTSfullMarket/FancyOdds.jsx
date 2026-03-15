@@ -20,6 +20,7 @@ import { IoInformationCircleOutline } from "react-icons/io5";
 import { handleOpenPlaceBet } from "../../../../redux/slices/placeBetSlice";
 import { Premiumcricket } from "../../../../utils/helper/commonSelectors";
 import { getSportsBook } from "../../../../api";
+import PlaceBet from "../../../components/PlaceBet";
 
 const tabs11 = ["ALL", "Fancy", "Over", "Ball by Ball", "Meter", "Khado"];
 // let tabs22 = [];
@@ -474,7 +475,7 @@ const FancyTabPane = ({ selectedFancyFilterTab }) => {
                   </div>
                 </div>
               </div>
-              {/* <PlaceBet
+              <PlaceBet
                 sportName={sportsMapping[sportId]}
                 sportId={sportId}
                 competitionId={competitionId}
@@ -501,7 +502,7 @@ const FancyTabPane = ({ selectedFancyFilterTab }) => {
                     ? "aura-suspended"
                     : ""
                 }
-              /> */}
+              />
             </Fragment>
           );
         })}
@@ -760,7 +761,7 @@ export const MarketRunnerContainer = ({
         </div>
       </div>
 
-      {/* <PlaceBet
+      <PlaceBet
         sportName={sportsMapping[sportId]}
         sportId={sportId}
         competitionId={competitionId}
@@ -780,7 +781,7 @@ export const MarketRunnerContainer = ({
         }`}
         runners={runners}
         question={marketName}
-      /> */}
+      />
     </div>
   );
 };

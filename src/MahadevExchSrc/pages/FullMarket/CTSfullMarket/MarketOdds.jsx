@@ -12,8 +12,8 @@ import useGetMarketNameByMarketId from "../../../../CommonComponents/useGetMarke
 import { handleOpenPlaceBet } from "../../../../redux/slices/placeBetSlice";
 import { IoInformationCircleOutline } from "react-icons/io5";
 
-
 import { sportsMapping } from "./MatchDetailsBanner"; // adjust path if needed
+import PlaceBet from "../../../components/PlaceBet";
 
 export function formatToKOrM(value) {
   if (isNaN(value)) return value;
@@ -168,16 +168,13 @@ const MarketContainer = ({
                 <span className="flex items-center -mt-6 gap-2.5 text-[12px] uppercase">
                   {marketName || "Market"}
                 </span>
-                <IoInformationCircleOutline className="-mt-6 text-[20px]"/>
-
+                <IoInformationCircleOutline className="-mt-6 text-[20px]" />
               </div>
             </div>
 
             {/* Market Header */}
             <div className="w-full bg-[white] border-b border-[00000033]  relative z-10 text-white">
-      
               <div className="flex items-center justify-between px-2 py-1.5 text-[11px] font-semibold">
-
                 <div className="text-[#7c7c7c] text-[11px] w-[65%] ">
                   Min: 100 | Max: 100000
                 </div>
@@ -186,9 +183,13 @@ const MarketContainer = ({
                 <div
                   className={`flex text-[13px] ${isMobile ? "w-[42%]" : "w-[70%]"} justify-end`}
                 >
-                  <div className="w-[50%] text-center font-extrabold text-[black]">BACK</div>
+                  <div className="w-[50%] text-center font-extrabold text-[black]">
+                    BACK
+                  </div>
 
-                  <div className="w-[50%] text-center font-extrabold text-[black]">LAY</div>
+                  <div className="w-[50%] text-center font-extrabold text-[black]">
+                    LAY
+                  </div>
                 </div>
               </div>
             </div>
@@ -260,14 +261,30 @@ export const MarketRunnerContainer = ({
 
   const [selfSelectedOdds, setSelfSelectedOdds] = useState(0);
 
-  const handleMarketCellClick = (betBoxBgColor, price, betType) => {
-    if (!price) return;
-    setSelfSelectedOdds(price);
+  // const handleMarketCellClick = (betBoxBgColor, price, betType) => {
+  //   setSelfSelectedOdds(price);
+  //   dispatch(
+  //     handleOpenPlaceBet({
+  //       sportName: sportsMapping[sportId],
+  //       sportId: sportId,
+  //       competitionId,
+  //       marketId,
+  //       market: "Premium Cricket",
+  //       markettype: "Match Odds",
+  //       selectionId: runnerId,
+  //       betBoxBgColor,
+  //       betType,
+  //     }),
+  //   );
+  // };
 
+  const handleMarketCellClick = (betBoxBgColor, price, betType) => {
+    setSelfSelectedOdds(price);
+    if (price === 0) return;
     dispatch(
       handleOpenPlaceBet({
-        sportName: sportsMapping[sportId] || "Soccer",
-        sportId,
+        sportName: sportsMapping[sportId],
+        sportId: sportId,
         competitionId,
         marketId,
         market: marketName,
@@ -275,52 +292,83 @@ export const MarketRunnerContainer = ({
         selectionId: runner.selectionId,
         betBoxBgColor,
         betType,
-      }),
+      })
     );
   };
 
   const calculateBetValues = useCallback(
-    (runner) => {
+    (runner, marketId) => {
       const filteredBets = placedBetsInThisMarket || [];
 
-      const fbThis = filteredBets.filter(
-        (fb) =>
-          String(fb.selectionId) === String(runner.selectionId) &&
-          String(fb.eventId) === String(eventId) &&
-          fb.marketId === marketId,
-      );
+      const fbOfThisRunner =
+        filteredBets?.filter(
+          (fb) =>
+            fb.selectionId.toString() === runner.selectionId.toString() &&
+            eventId.toString() === fb.eventId.toString() &&
+            fb.marketId === marketId,
+        ) || [];
 
-      const fbOther = filteredBets.filter(
-        (fb) =>
-          String(fb.selectionId) !== String(runner.selectionId) &&
-          String(fb.eventId) === String(eventId) &&
-          fb.marketId === marketId,
-      );
+      const fbOfOtherRunners =
+        filteredBets?.filter(
+          (fb) =>
+            fb.selectionId.toString() !== runner.selectionId.toString() &&
+            eventId.toString() === fb.eventId.toString() &&
+            fb.marketId === marketId,
+        ) || [];
 
-      let calc =
-        fbThis.reduce(
-          (acc, b) =>
+      let placedBetCalculation =
+        fbOfThisRunner.reduce(
+          (acc, fbr) =>
             acc +
-            (b.type === "Back"
-              ? Number(b.favourMargin || 0)
-              : -Number(b.againstMargin || 0)),
+            (fbr.type === "Back"
+              ? Number(fbr.favourMargin)
+              : -Number(fbr.againstMargin)),
           0,
         ) +
-        fbOther.reduce(
-          (acc, b) =>
+        fbOfOtherRunners.reduce(
+          (acc, fbor) =>
             acc +
-            (b.type === "Back"
-              ? -Number(b.againstMargin || 0)
-              : Number(b.favourMargin || 0)),
+            (fbor.type === "Back"
+              ? -Number(fbor.againstMargin)
+              : Number(fbor.favourMargin)),
           0,
         );
 
-      return Number(calc).toFixed(0);
+      return Number(placedBetCalculation).toFixed(0);
     },
-    [placedBetsInThisMarket, eventId, marketId],
+    [placedBetsInThisMarket, eventId],
   );
 
-  const placedBetValue = calculateBetValues(runner);
+  const placedBetCalculation = calculateBetValues(runner, marketId);
+
+  let newCalc;
+
+  if (activeBet) {
+    if (
+      runner?.selectionId === activeBet?.selectionId &&
+      activeBet.type === "Back"
+    ) {
+      newCalc = Number(activeBet.favourMargin).toFixed(0);
+    } else if (
+      runner?.selectionId === activeBet?.selectionId &&
+      activeBet.type === "Lay"
+    ) {
+      newCalc = Number(activeBet.againstMargin).toFixed(0);
+    } else if (
+      runner?.selectionId !== activeBet?.selectionId &&
+      activeBet.type === "Back"
+    ) {
+      newCalc = Number(activeBet.againstMargin).toFixed(0);
+    } else if (
+      runner?.selectionId !== activeBet?.selectionId &&
+      activeBet.type === "Lay"
+    ) {
+      newCalc = Number(activeBet.favourMargin).toFixed(0);
+    }
+  }
+  if (newCalc == 0) newCalc = null;
+
+  console.log({ newCalc });
 
   return (
     <div className="relative z-10 w-full bg-[white]">
@@ -336,16 +384,44 @@ export const MarketRunnerContainer = ({
             {runnerData?.runnerName || runner?.runnerName || "Unknown"}
           </p>
 
-          {placedBetsInThisMarket?.length > 0 && (
-            <p
-              className={`text-[10px] font-semibold ${
-                Number(placedBetValue) > 0 ? "text-green-600" : "text-red-500"
-              }`}
-            >
-              <ImArrowRight className="inline mr-1" />
-              {Math.abs(Number(placedBetValue))}
-            </p>
-          )}
+          <div className="flex flex-row items-center">
+            {placedBetsInThisMarket && placedBetsInThisMarket?.length > 0 && (
+              <p
+                className={`flex flex-row items-center text-[10px] font-semibold ${
+                  placedBetCalculation > 0 ? "text-green-600" : "text-red-500"
+                }`}
+              >
+                {" "}
+                <span>
+                  {" "}
+                  <ImArrowRight className="mr-1" />{" "}
+                </span>{" "}
+                {Math.abs(Number(placedBetCalculation))}{" "}
+              </p>
+            )}
+            {newCalc ? (
+              <p
+                className={`flex flex-row items-center text-[10px] font-semibold ${
+                  placedBetCalculation === 0 ? "" : "ml-2"
+                } ${
+                  Number(newCalc || 0) + (Number(placedBetCalculation) || 0) > 0
+                    ? "text-green-600"
+                    : "text-red-500"
+                }`}
+              >
+                {" "}
+                <span>
+                  {" "}
+                  <ImArrowRight className="mr-1" />{" "}
+                </span>{" "}
+                {Math.abs(
+                  (
+                    Number(newCalc) + (Number(placedBetCalculation) || 0)
+                  ).toFixed(0),
+                )}{" "}
+              </p>
+            ) : null}
+          </div>
         </div>
 
         {/* Back / Lay cells */}
@@ -386,6 +462,25 @@ export const MarketRunnerContainer = ({
           />
         </div>
       </div>
+
+      <PlaceBet
+        sportName={sportsMapping[sportId]}
+        sportId={sportId}
+        competitionId={competitionId}
+        marketId={marketId}
+        market={marketName}
+        markettype="Match Odds"
+        selectionId={runner.selectionId}
+        selection={runnerData?.runnerName}
+        selectedOdds={selfSelectedOdds}
+        setActiveBet={setActiveBet}
+        suspendNow={`${
+          runner?.status?.toLowerCase() != "active" || selfSelectedOdds == 0
+            ? "aura-suspended"
+            : ""
+        }`}
+        runners={marketRunners}
+      />
     </div>
   );
 };

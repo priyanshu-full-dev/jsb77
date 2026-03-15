@@ -16,6 +16,7 @@ import { ImArrowRight } from "react-icons/im";
 import { IoInformationCircleOutline } from "react-icons/io5";
 import RulesModal from "./RulesModal";
 import { handleOpenPlaceBet } from "../../../../redux/slices/placeBetSlice";
+import PlaceBet from "../../../components/PlaceBet";
 export function formatToKOrM(value) {
   if (!value) return value;
   if (value >= 1_000_000) {
@@ -99,14 +100,13 @@ const MarketContainer = ({ market, markets }) => {
             transition={{ duration: 0.1, ease: "easeInOut" }}
             className="overflow-hidden rounded-[10px] w-[98%] mx-auto mt-[45px]"
           >
-             {/* Market Header */}
+            {/* Market Header */}
             <div className="w-full flex justify-between items-center  text-white  text-[12px] font-semibold ">
               <div className="bg-[#2d2d2d]  absolute z-0 text-white px-2 h-[55px] rounded-t-[10px] flex gap-2 items-center font-semibold">
                 <span className="flex items-center -mt-6 gap-2.5 text-[12px] uppercase">
                   {marketName || "Market"}
                 </span>
-                <IoInformationCircleOutline className="-mt-6 text-[20px]"/>
-
+                <IoInformationCircleOutline className="-mt-6 text-[20px]" />
               </div>
             </div>
 
@@ -398,16 +398,16 @@ export const MarketRunnerContainer = ({
         </div>
       </div>
 
-      {/* <PlaceBet
-                sportName={sportsMapping[sportId]}
-                sportId={sportId}
-                competitionId={competitionId}
-                marketId={marketId}
-                selectionId={runner.selectionId}
-                selectedOdds={selfSelectedOdds}
-            /> */}
+      <PlaceBet
+        sportName={sportsMapping[sportId]}
+        sportId={sportId}
+        competitionId={competitionId}
+        marketId={marketId}
+        selectionId={runner.selectionId}
+        selectedOdds={selfSelectedOdds}
+      />
 
-      {/* <PlaceBet
+      <PlaceBet
         sportName={sportsMapping[sportId]}
         sportId={sportId}
         competitionId={competitionId}
@@ -419,12 +419,14 @@ export const MarketRunnerContainer = ({
         selectedOdds={selfSelectedOdds}
         setActiveBet={setActiveBet}
         suspendNow={`${
-          runner.status.toLowerCase() != "active" || selfSelectedOdds == 0 ? "aura-suspended" : ""
+          runner.status.toLowerCase() != "active" || selfSelectedOdds == 0
+            ? "aura-suspended"
+            : ""
         }`}
         runners={marketRunners.map(({ runner: r, selectionId: sid }) => {
           return { runner: r, selectionId: sid };
         })}
-      /> */}
+      />
     </div>
   );
 };
