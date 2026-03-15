@@ -321,7 +321,7 @@ const FancyTabPane = ({ selectedFancyFilterTab }) => {
             isMobile ? "w-[65%]" : "w-[30%]"
           } px-2 py-1`}
         >
-          <p className="text-[12px] text-[#00000080]">Min: 0 /Max: 0</p>
+          <p className="text-[12px] font-bold text-[#00000080]">Min: 0 /Max: 0</p>
         </div>
         <div
           className={`flex justify-end ${
