@@ -203,33 +203,27 @@ function FancyOdds({ f, s }) {
   const premiumCricket = useSelector(Premiumcricket());
 
   return (
+    <div className="flex flex-col w-[98%] mx-auto">
+      <div className="flex flex-row items-center mt-6 gap-2">
+        {f === "true" && (
+          <ClippedMarketTab
+            title="Fancy Bet"
+            isTopLeftRounded={false}
+            handleClickLeft={() => setSelectedMarketTab("f")}
+            handleClickRight={() => console.log("clickedRight")}
+          />
+        )}
 
-   <div className="flex flex-col w-[98%] mx-auto">
-
-  <div className="flex flex-row items-center mt-6 gap-2">
-
-    {f === "true" && (
-      <ClippedMarketTab
-        title="Fancy Bet"
-        isTopLeftRounded={false}
-        handleClickLeft={() => setSelectedMarketTab("f")}
-        handleClickRight={() => console.log("clickedRight")}
-      />
-    )}
-
-    {s === "true" && premiumCricket && (
-      <ClippedMarketTab
-        title="Sportsbook"
-        isTopLeftRounded={true}
-        showNew={true}
-        handleClickLeft={() => setSelectedMarketTab("s")}
-        handleClickRight={() => console.log("clickedRight")}
-      />
-    )}
-
-
-
-</div>
+        {s === "true" && premiumCricket && (
+          <ClippedMarketTab
+            title="Sportsbook"
+            isTopLeftRounded={true}
+            showNew={true}
+            handleClickLeft={() => setSelectedMarketTab("s")}
+            handleClickRight={() => console.log("clickedRight")}
+          />
+        )}
+      </div>
       {f === "true" && selectedMarketTab === "f" && (
         <MarketFilterTabBar
           tabs={tabs11}
@@ -421,7 +415,7 @@ const FancyTabPane = ({ selectedFancyFilterTab }) => {
 
                 {/* Odds Cells */}
                 <div
-                  className={`flex p-1 gap-1 justify-end ${
+                  className={`flex suspended p-1 gap-1 justify-end ${
                     isMobile ? "w-[65%]" : "w-[70%]"
                   } ${
                     fod.GameStatus.toLowerCase() != "" &&
@@ -564,22 +558,8 @@ const SportsbookMarketContainer = ({
 
   return (
     <div className="flex flex-col mt-1">
-      <div className="w-full min-h-7 flex flex-row items-center justify-between   bg-[#0000001a] text-black pl-2 text-xs font-semibold">
+      <div className="w-full min-h-7 flex flex-row items-center justify-between   bg-[#0000001a] text-black pl-2 text-[14px] font-bold">
         {marketName}
-        <span className="flex flex-row items-center">
-          {/* <IoInformationCircleOutline size={14} color='white' /> */}
-          <div
-            role="button"
-            onClick={() => setShowMarket((prev) => !prev)}
-            className="rounded-full bg-aura-blue-gradient text-white ml-[6px]"
-          >
-            {showMarket ? (
-              <CiCircleMinus size={18} />
-            ) : (
-              <CiCirclePlus size={18} />
-            )}
-          </div>
-        </span>
       </div>
       {showMarket && (
         <div>
@@ -698,15 +678,15 @@ export const MarketRunnerContainer = ({
       : activeBet?.againstMargin.toFixed(1);
 
   return (
-    <div key={runnerId} className="relative w-full">
-      <div className="w-full flex items-stretch justify-between min-h-11 border-b-[1px] border-[#00000033] bg-light-bg dark:bg-dark-bg border-t-[0.3px]">
+    <div key={runnerId} className="relative w-full p-1 bg-[white]">
+      <div className="w-full flex items-stretch justify-between ">
         {/* Runner Column */}
         <div
           className={`flex flex-col bg-[white] justify-center w-[${
             isMobile ? "70%" : "30%"
           }] pl-2 pr-1 py-1`}
         >
-          <p className="text-[13px] font-semibold text-[black]">
+          <p className="text-[14px] font-bold text-[black]">
             {runnerName || "unknown"}
           </p>
           {/* {activeBet && newCalc && <p className={`flex flex-row items-center text-[10px] font-semibold ${newCalc > 0 ? "text-green-600" : "text-red-500"}`}> <span> <ImArrowRight className='mr-1' /> </span> {Math.abs(newCalc)} </p>} */}
@@ -753,15 +733,15 @@ export const MarketRunnerContainer = ({
         {/* MarketCell Column */}
 
         <div
-          className={`
+          className={` bg-[white]
                 ${
                   runnerStatus?.toLowerCase() != "active" ||
                   marketStatus?.toLowerCase() != "active" ||
                   !backPrice
-                    ? "aura-suspended"
+                    ? "sport-aura-suspended"
                     : ""
                 } 
-                flex flex-wrap flex-grow w-[${isMobile ? "35%" : "70%"}]`}
+                flex flex-wrap flex-grow w-[${isMobile ? "45%" : "70%"}]`}
           data-label={
             runnerStatus?.toLowerCase() != "active" ||
             marketStatus?.toLowerCase() != "active" ||
@@ -854,7 +834,6 @@ const ClippedMarketTab = ({
     <div
       className={`relative  flex flex-row items-center h-[32px] w-fit text-white font-semibold `}
     >
-
       {/* NEW Badge */}
       {showNew && (
         <span className="absolute -top-2 left-[35%] bg-yellow-400 text-black text-[10px] font-bold px-1.5 rounded">
