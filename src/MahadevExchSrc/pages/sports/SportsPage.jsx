@@ -57,62 +57,58 @@ const SportsPage = () => {
     return true;
   });
 
-
-
   return (
-   <div className="bg-[#D9D9D9] min-h-screen pb-[100px]">
-  <AnnouncementBar />
+    <div className="bg-[#D9D9D9] min-h-screen pb-[100px]">
+      <AnnouncementBar />
 
-  <SportsTabs />
+      <SportsTabs />
 
-  <SportsNav type={type} />
+      <SportsNav type={type} />
 
-  {!sportLockStatus?.[sport] && (
-    <div className="mt-5 relative">
+      {!sportLockStatus?.[sport] && (
+        <div className="mt-5 relative">
+          {!filteredMatches?.length ? (
+            <div className="w-full h-[60vh] flex flex-col items-center justify-center text-center">
+              <img
+                src="/no_event.svg"
+                alt="No Event"
+                className="w-[90px] mb-3"
+              />
 
-      {!filteredMatches?.length ? (
-        <div className="w-full h-[60vh] flex flex-col items-center justify-center text-center">
-          <img
-            src="/no_event.svg"
-            alt="No Event"
-            className="w-[90px] mb-3"
-          />
+              <p className="text-[16px] font-semibold text-gray-600">
+                No Event(s) Currently
+              </p>
 
-          <p className="text-[16px] font-semibold text-gray-600">
-            No Event(s) Currently
-          </p>
-
-          <p className="text-[13px] text-gray-400 mt-1">
-            Please check again later
-          </p>
-        </div>
-      ) : (
-        <>
-          {/* Sport Header */}
-          <div className="flex items-end w-[97%] mx-auto absolute top-0 left-0 right-0 z-0">
-            <div className="bg-[#2d2d2d] text-white px-3 h-[55px] rounded-t-[10px] flex items-center font-semibold">
-              <div className="flex items-center -mt-6 gap-2.5 text-[12px]">
-                {sport?.toUpperCase()}
-
-                <img
-                  src={`/SportsIcon/${sport}.svg`}
-                  alt={sport}
-                  className="w-[16px] h-[16px]"
-                />
-              </div>
+              <p className="text-[13px] text-gray-400 mt-1">
+                Please check again later
+              </p>
             </div>
-          </div>
+          ) : (
+            <>
+              {/* Sport Header */}
+              <div className="flex items-end w-[97%] mx-auto absolute top-0 left-0 right-0 z-0">
+                <div className="bg-[#2d2d2d] text-white px-3 h-[55px] rounded-t-[10px] flex items-center font-semibold">
+                  <div className="flex items-center -mt-6 gap-2.5 text-[12px]">
+                    {sport?.toUpperCase()}
 
-          {/* Match List */}
-          <div className="pt-[32px] relative z-10">
-            <MatchList matches={currentMatches} />
-          </div>
-        </>
+                    <img
+                      src={`/SportsIcon/${sport}.svg`}
+                      alt={sport}
+                      className="w-[16px] h-[16px]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Match List */}
+              <div className="pt-[32px] relative z-10">
+                <MatchList matches={currentMatches} />
+              </div>
+            </>
+          )}
+        </div>
       )}
-
     </div>
-  )}
-</div>
   );
 };
 
