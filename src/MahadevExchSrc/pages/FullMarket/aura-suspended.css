@@ -1,0 +1,26 @@
+.aura-suspended {
+    position: relative;
+}
+
+.aura-suspended::before {
+    content: attr(data-label);
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.485);
+    /* background-image: url("/bg-disabled.png"); */
+    background-position: center;
+    background-size: contain;
+    height: 85%;
+    width: 94%;
+    /* z-index: 1; */
+    cursor: not-allowed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: rgb(255, 255, 255);
+    font-weight: bold;
+    font-size: 12px;
+    border-radius: 8px;
+    left: 5px;
+    top: 4px;
+}

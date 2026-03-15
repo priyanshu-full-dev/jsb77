@@ -1,0 +1,325 @@
+import { useState } from "react";
+import { createPortal } from "react-dom";
+import { FaEye, FaEyeSlash, FaFacebookF, FaInstagram } from "react-icons/fa";
+import {
+  IoPaperPlane,
+  IoCloseSharp,
+  IoChevronBackSharp,
+} from "react-icons/io5";
+import { subscribeToLogin } from "../../socketClient";
+import { toast } from "react-toastify";
+import { setAccountType } from "../../redux/slices/accountSlice";
+import { useDispatch } from "react-redux";
+import { createLoginRecord, Demo } from "../../api";
+import { loginSuccess } from "../../redux/slices/userSlice";
+
+const LoginModal = ({ onClose }) => {
+  const [mode, setMode] = useState("login");
+  const [showPass, setShowPass] = useState(false);
+
+  const [errors, setErrors] = useState({});
+  const dispatch = useDispatch();
+  const [formData, setFormData] = useState({
+    userName: "",
+    password: "",
+    x_panel_type: "user",
+  });
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+
+    setErrors({
+      ...errors,
+      [e.target.name]: "",
+    });
+  };
+
+  const validateLogin = () => {
+    const newErrors = {};
+
+    if (!formData.userName.trim()) {
+      newErrors.userName = "User Name is mandatory";
+    }
+
+    if (!formData.password.trim()) {
+      newErrors.password = "Password is mandatory";
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateForgot = () => {
+    const newErrors = {};
+
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Phone No is mandatory";
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSendOTP = () => {
+    if (!validateForgot()) return;
+
+    console.log("Send OTP:", formData.phone);
+  };
+
+  const [loading, setLoading] = useState({ demo: false, real: false });
+
+  const handleSubmit = async (e) => {
+    e?.preventDefault();
+    if (!validateLogin()) return;
+
+    setLoading((prev) => ({ ...prev, real: true }));
+
+    try {
+      const response = await subscribeToLogin(formData);
+
+      if (response.success) {
+        const { token, userdata } = response;
+
+        localStorage.setItem("userId", userdata?._id);
+
+        dispatch(
+          loginSuccess({
+            userData: userdata,
+            loggedInType: "real",
+            token: token,
+          }),
+        );
+        dispatch(
+          setAccountType({
+            userData: userdata,
+            type: "real",
+          }),
+        );
+
+        toast.success(response.message || "Login successful");
+
+        onClose();
+
+        await createLoginRecord();
+      } else {
+        toast.error(response.message || "invalid credentials");
+      }
+    } catch (error) {
+      console.error("Login API error:", error);
+      toast.error("Failed to login. Please try again.");
+    } finally {
+      setLoading((prev) => ({ ...prev, real: false }));
+    }
+  };
+
+  const handleDemoAccount = async () => {
+    setLoading((prev) => ({ ...prev, demo: true }));
+
+    try {
+      const res = await Demo();
+
+      if (!res || !res.data || !res.data.token) {
+        throw new Error("Invalid response from Demo API");
+      }
+
+      const { token, userdata } = res.data;
+      console.log(res.data);
+
+      dispatch(setAccountType({ type: "demo" }));
+      dispatch(
+        loginSuccess({
+          userData: userdata,
+          loggedInType: "demo",
+          token: token,
+        }),
+      );
+
+      toast.success("Demo account created successfully");
+    } catch (error) {
+      console.error("Error creating demo account:", error);
+      toast.error("Failed to create demo account. Please try again.");
+    } finally {
+      setLoading((prev) => ({ ...prev, demo: false }));
+      onClose();
+    }
+  };
+
+  const modal = (
+    <div className="fixed w-full inset-0 z-[999999] flex items-center justify-center px-2">
+      {/* Overlay */}
+      <div onClick={onClose} className="absolute inset-0 bg-black/80 z-[1]" />
+
+      <div className="relative   w-[100%] md:w-[420px]  z-[2]">
+        {/* Back */}
+        {mode === "forgot" && (
+          <button
+            onClick={() => setMode("login")}
+            className="absolute font-bold h-[50px] left-0 top-[-29px] bg-[#2c2c2c] text-white text-[12px] px-2 rounded-[10px]"
+          >
+            <div className="flex items-center gap-2 -mt-5">
+              <IoChevronBackSharp size={18} />
+            </div>
+          </button>
+        )}
+
+        {/* Close */}
+        <button
+          onClick={onClose}
+          className="absolute font-bold h-[50px] right-0 top-[-29px] bg-[#2c2c2c] text-white text-[12px] px-4 rounded-[10px]"
+        >
+          <div className="flex items-center gap-2 -mt-5">
+            <span>CLOSE</span>
+            <IoCloseSharp size={18} />
+          </div>
+        </button>
+
+        <div className="relative bg-[#1a1a1a] w-[100%] md:w-[420px] rounded-[10px] p-4 px-4  shadow-xl">
+          <img
+            src="/Welcome516.png"
+            alt=""
+            className="w-full h-[182px] rounded"
+          />
+
+          {/* Logo */}
+          <div className="flex justify-center ">
+            <img
+              src="https://bajiplay365.com/assets/images/logos/bajiplay365_com-logo.png"
+              className="h-[26px] mb-2"
+              alt="logo"
+            />
+          </div>
+
+          {mode === "login" && (
+            <>
+              <h3 className="text-white text-center font-extrabold text-[24px] mb-8">
+                Welcome Back!
+              </h3>
+
+              {/* Username */}
+              <input
+                name="userName"
+                value={formData.userName}
+                onChange={handleChange}
+                placeholder="Username"
+                className="w-full mb-1 bg-transparent border border-white rounded-[8px] px-3 py-1.5 text-[12px] text-white"
+              />
+
+              <div className="text-[red] text-[11px] min-h-[13px]">
+                <p className="!mb-1">{errors.userName}</p>
+              </div>
+
+              {/* Password */}
+              <div className="relative mb-1">
+                <input
+                  type={showPass ? "text" : "password"}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Password"
+                  className="w-full bg-transparent border border-white rounded-[8px] px-3 py-1.5 text-[12px] text-white"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPass(!showPass)}
+                  className="absolute right-3 top-[8px] text-white"
+                >
+                  {showPass ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
+
+              <div className="text-[red] flex justify-between items-center text-[11px] min-h-[13px]">
+                <p className="!mb-1">{errors.password}</p>
+                <p
+                  onClick={() => setMode("forgot")}
+                  className="text-[12px]  underline text-[white]"
+                >
+                  Forgot Username/Password?
+                </p>
+              </div>
+
+              {/* Signup */}
+              <button
+                onClick={handleSubmit}
+                disabled={loading.real}
+                className="w-full bg-white text-black font-extrabold py-2 mt-12 text-[14px] rounded-[8px] mb-4"
+              >
+                {loading.real ? "Logging in..." : "LOG IN"}
+              </button>
+
+              <button
+                onClick={handleDemoAccount}
+                disabled={loading.demo}
+                className="w-full border border-white text-white text-[14px] py-2 rounded-[8px] mb-4 font-bold"
+              >
+                {loading.demo ? "Creating Demo..." : "LOG IN WITH DEMO"}
+              </button>
+            </>
+          )}
+
+          {/* FORGOT MODE */}
+          {mode === "forgot" && (
+            <>
+              <h3 className="text-white text-center font-extrabold text-[24px] mb-8">
+                Forgot Username
+              </h3>
+
+              <div className="flex gap-3 mb-1">
+                <input
+                  name="country"
+                  placeholder="+91"
+                  value={formData.country}
+                  onChange={handleChange}
+                  className="w-[120px] bg-transparent border border-white rounded-[8px] px-3 py-2 text-[12px] text-white"
+                />
+
+                <input
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="Phone no."
+                  className="flex-1 bg-transparent border border-white rounded-[8px] px-3 py-2 text-[12px] text-white"
+                />
+              </div>
+
+              <p className="text-red-500 text-[11px] min-h-[14px]">
+                {formData.phone}
+              </p>
+
+              <button
+                onClick={handleSendOTP}
+                className="w-full bg-white text-black font-extrabold py-2 mt-10 text-[14px] rounded-[8px] mb-6"
+              >
+                SEND OTP
+              </button>
+            </>
+          )}
+
+          {/* Social Icons */}
+          <div className="flex justify-center gap-4">
+            <div className="w-[38px] h-[38px] rounded-full bg-[#0088cc] flex items-center justify-center">
+              <IoPaperPlane className="text-white text-xl" />
+            </div>
+
+            <div className="w-[38px] h-[38px] rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 flex items-center justify-center">
+              <FaInstagram className="text-white text-xl" />
+            </div>
+
+            <div className="w-[38px] h-[38px] rounded-full bg-[#3b5998] flex items-center justify-center">
+              <FaFacebookF className="text-white text-xl" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return createPortal(modal, document.body);
+};
+
+export default LoginModal;
