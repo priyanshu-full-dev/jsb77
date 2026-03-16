@@ -1,6 +1,7 @@
-const CategoryCard = ({ title, icon: Icon }) => {
+const CategoryCard = ({ title, icon: Icon, onClick }) => {
   return (
     <div
+      onClick={onClick}
       className="
       h-[99px]
       bg-[#272727]

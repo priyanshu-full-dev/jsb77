@@ -4,7 +4,7 @@ import { lazy, Suspense } from "react";
 import AppLayout from "./components/AppLayout.jsx/AppLayout";
 import Loader from "./components/Loader/Loader";
 
-const loadable = (importFn, { fallback = Loader} = {}) => {
+const loadable = (importFn, { fallback = Loader } = {}) => {
   const Lazy = lazy(importFn);
   Lazy.preload = importFn;
 

@@ -32,6 +32,8 @@ function PlaceBet(props) {
   const [wantToPlaceBet, setWantToPlaceBet] = useState(false);
   const openPlaceBetId = useSelector((state) => state?.placeBet?.placeBetId);
 
+  const [acceptAnyOdds, setAcceptAnyOdds] = useState(true);
+
   useEffect(() => {
     if (openPlaceBetId === placeBetId) {
       setWantToPlaceBet(true);
@@ -79,6 +81,7 @@ const BetBox = (props) => {
     max,
     disableOdds,
     joinedMarketId,
+    liveOdds,
   } = props;
   const { betType } = useSelector((state) => state?.placeBet);
   const [searchParams] = useSearchParams();
@@ -113,6 +116,10 @@ const BetBox = (props) => {
   const [betStake, setBetStake] = useState(null);
   const [betData, setBetData] = useState(null);
   const [loading, setLoading] = useState(false);
+    const [acceptAnyOdds, setAcceptAnyOdds] = useState(false);
+
+
+    
 
   const handleCancel = () => {
     setActiveIndex?.(null);
@@ -132,7 +139,6 @@ const BetBox = (props) => {
   useEffect(() => {
     const createBetData = {
       type: betType,
-
       event: eventName,
       eventId: eventId,
       eventType: sportId,
@@ -147,7 +153,7 @@ const BetBox = (props) => {
           : eventId,
       roundId: mid,
 
-      oddsReq: selectedOdds,
+      oddsReq: acceptAnyOdds? liveOdds: selectedOdds,
       price: selectedOdds,
       placeTime: new Date().toISOString(),
       runners:
@@ -292,6 +298,8 @@ const BetBox = (props) => {
     }
   };
 
+  console.log({ selectedOdds });
+
   const [stakes, setStakes] = useState(() => {
     const savedStakes = localStorage.getItem("stakes");
     if (savedStakes) {
@@ -369,25 +377,25 @@ const BetBox = (props) => {
 
               <button
                 className="bg-red-500 hover:bg-red-600 text-white w-[28px] h-[28px] flex justify-center items-center rounded text-[16px] font-bold"
-                onClick={() =>
-                  setBetPrice((prev) => decrementValue(Number(prev)))
-                }
+                // onClick={() =>
+                //   setBetPrice((prev) => decrementValue(Number(prev)))
+                // }
               >
                 -
               </button>
 
               <input
                 type="number"
-                value={betPrice}
+                value={acceptAnyOdds? liveOdds: selectedOdds}
                 onChange={(e) => setBetPrice(Number(e.target.value))}
                 className="w-[80px] h-[28px] text-center border border-gray-300 rounded bg-white text-[13px] font-semibold focus:outline-none focus:border-blue-400"
               />
 
               <button
                 className="bg-green-500 hover:bg-green-600 text-white w-[28px] h-[28px] flex justify-center items-center rounded text-[16px] font-bold"
-                onClick={() =>
-                  setBetPrice((prev) => incrementValue(Number(prev)))
-                }
+                // onClick={() =>
+                //   setBetPrice((prev) => incrementValue(Number(prev)))
+                // }
               >
                 +
               </button>
@@ -429,27 +437,23 @@ const BetBox = (props) => {
           </div>
 
           {/* ACCEPT ODDS */}
-          {/* <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-[12px] font-semibold">Accept Any Odds</span>
 
-          <span className="text-sm font-semibold">
-            Accept Any Odds
-          </span>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={acceptAnyOdds}
+                onChange={(e) => setAcceptAnyOdds(e.target.checked)}
+                className="sr-only peer"
+                defaultChecked
+              />
 
-          <label className="relative inline-flex items-center cursor-pointer">
+              <div className="w-[38px] h-[17px] bg-gray-300 rounded-full peer peer-checked:bg-green-500"></div>
 
-            <input
-              type="checkbox"
-              className="sr-only peer"
-              defaultChecked
-            />
-
-            <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-green-500"></div>
-
-            <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5"></div>
-
-          </label>
-
-        </div> */}
+              <div className="absolute left-[3px]  w-[14px] h-[14px] bg-white rounded-full transition peer-checked:translate-x-5"></div>
+            </label>
+          </div>
 
           {/* BUTTONS */}
           <div className="flex gap-3">

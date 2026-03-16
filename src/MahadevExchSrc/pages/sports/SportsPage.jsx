@@ -1,15 +1,18 @@
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import SportsTabs from "../../components/Sports/SportsTabs";
 import SportsNav from "../../components/Sports/SportsNav";
 import AnnouncementBar from "../../components/Sports/AnnouncementBar";
 import { useSelector } from "react-redux";
 import { SelectUserLockApplications } from "../../../utils/helper/commonSelectors";
 import MatchList from "../../components/Sports/MatchList";
+import SportsHeader from "../../components/SportsHeader";
 
 const SportsPage = () => {
   const { sport, type } = useParams();
   const lockData = useSelector(SelectUserLockApplications());
+  const [searchParams] = useSearchParams();
 
+      const isSportsbook = searchParams.has("sportsbook");
   const { matches: cricketMatches } = useSelector(
     (state) => state.matches.cricket,
   );
@@ -50,6 +53,8 @@ const SportsPage = () => {
 
     const isTomorrow = matchDate.toDateString() === tomorrow.toDateString();
 
+
+
     if (type === "inplay") return isInPlay;
     if (type === "today") return isToday;
     if (type === "tomorrow") return isTomorrow;
@@ -61,9 +66,14 @@ const SportsPage = () => {
     <div className="bg-[#D9D9D9] min-h-screen pb-[100px]">
       <AnnouncementBar />
 
-      <SportsTabs />
-
-      <SportsNav type={type} />
+      {isSportsbook ? (
+        <SportsHeader />
+      ) : (
+        <>
+          <SportsTabs />
+          <SportsNav type={type} />
+        </>
+      )}
 
       {!sportLockStatus?.[sport] && (
         <div className="mt-5 relative">

@@ -6,10 +6,10 @@ import TournamentIcon from "../components/icons/TournamentIcon";
 import VirtualIcon from "../components/icons/VirtualIcon";
 
 export const categories = [
- { title:"IN-PLAY", icon:InPlayIcon },
- { title:"SPORTSBOOK", icon:SportsbookIcon },
- { title:"VIRTUAL", icon:VirtualIcon },
- { title:"PLAYER BATTLE", icon:PlayerBattleIcon },
- { title:"CONTEST", icon:ContestIcon },
- { title:"TOURNAMENT", icon:TournamentIcon },
-]
+ { title:"IN-PLAY", icon:InPlayIcon, path:"/sports/cricket/inplay" },
+ { title:"SPORTSBOOK", icon:SportsbookIcon, path:"/sports/cricket/tomorrow?sportsbook" },
+ { title:"VIRTUAL", icon:VirtualIcon, path:"/virtual" },
+ { title:"PLAYER BATTLE", icon:PlayerBattleIcon, path:"/player-battle" },
+ { title:"CONTEST", icon:ContestIcon, path:"/contest" },
+ { title:"TOURNAMENT", icon:TournamentIcon, path:"/tournament" },
+];
