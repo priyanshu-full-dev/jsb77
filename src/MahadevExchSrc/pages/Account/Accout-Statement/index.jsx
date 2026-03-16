@@ -178,7 +178,7 @@ export default function AccountStatement() {
       <div className="container mx-auto">
         <div className="w-full">
           <h2
-            className="text-[13px] text-white font-sans font-bold mt-2 md:mt-8  bg-[#343435] p-1.5"
+            className="text-[13px] text-white font-sans font-bold   bg-[#343435] p-1.5"
             style={{
               backgroundImage: `linear-gradient(180deg, ${topHeaderColor?.start}, ${topHeaderColor?.end})`,
             }}
