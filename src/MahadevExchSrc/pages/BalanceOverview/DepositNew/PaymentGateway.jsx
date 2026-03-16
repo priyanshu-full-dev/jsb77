@@ -18,6 +18,7 @@ import {
   selectSite,
 }  from "../../../../utils/helper/commonSelectors";
 import { generatePresignedUrl } from "../../../../utils/helper/generatePresignedUrl";
+import Loader from "../../../components/Loader/Loader";
 
 
 
@@ -374,9 +375,7 @@ function PaymentGateway({ amount, open, toggle, fetchTransactions }) {
   return (
     <div className="container mx-auto max-w-7xl">
       {loading && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <>Loading...</>
-        </div>
+           <Loader/>
       )}
       <div
         style={{ backgroundColor: topHeaderColor?.start || "#000" }}

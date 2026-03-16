@@ -7,6 +7,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { getUnsettledBets } from "../../../../api";
 import { selectSite } from "../../../../utils/helper/commonSelectors";
+import Loader from "../../../components/Loader/Loader";
 
 export default function UnsettledBet() {
   const [search, setSearch] = useState("");
@@ -187,7 +188,7 @@ export default function UnsettledBet() {
         </div>
 
         {loading ? (
-          <>Loading...</>
+             <Loader/>
         ) : betHistory?.length === 0 ? (
           <p className="text-center text-white-500">No bet history found.</p>
         ) : (

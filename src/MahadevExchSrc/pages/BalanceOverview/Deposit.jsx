@@ -15,6 +15,7 @@ import {
   uploadMedia,
 } from "../../../api";
 import { generatePresignedUrl } from "../../../utils/helper/generatePresignedUrl";
+import Loader from "../../components/Loader/Loader";
 
 const INITIAL_FORM_DATA = {
   UTR: "",
@@ -431,7 +432,7 @@ const Deposit = () => {
 
   return (
     <div className="p-6">
-      {loading && <>Loading...</>}
+      {loading &&    <Loader/>}
       {step === 1 && (
         <>
           {/* HEADER */}

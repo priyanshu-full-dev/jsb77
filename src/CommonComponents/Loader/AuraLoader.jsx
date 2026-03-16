@@ -27,7 +27,7 @@ const AuraLoader = () => {
                 </div>
               </div>
             </li>
-            <li>Loading...</li>
+            <li>#00723c</li>
           </ul>
         </div>
       </div>

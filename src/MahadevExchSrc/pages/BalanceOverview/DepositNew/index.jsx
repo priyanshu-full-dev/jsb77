@@ -9,6 +9,7 @@ import { format } from "date-fns";
 // import Loader from "../../../../../AsianExchangeSrc/utils/Loader";
 import { getPaymentsByUserId } from "../../../../api";
 import { getUserId, selectSite } from "../../../../utils/helper/commonSelectors";
+import Loader from "../../../components/Loader/Loader";
 
 export default function Deposit() {
   const [amount, setAmount] = useState("");
@@ -57,7 +58,7 @@ export default function Deposit() {
 
   return (
     <div className="container mx-auto">
-      {loading && <>Loading...</>}
+      {loading &&    <Loader/>}
       <div className="flex flex-wrap">
         {/* Left Section */}
         <div className="w-full md:w-2/3 p-2">

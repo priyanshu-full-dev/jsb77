@@ -9,6 +9,7 @@ import { RefreshCw, ArrowDown, ArrowUp, AlertCircle, Info, Filter } from "lucide
 
 import { getUserId, selectSite } from "../../utils/helper/commonSelectors"
 import { getPaymentsByUserId, getwithdrawals } from "../../api"
+import Loader from "../components/Loader/Loader"
 
 const BankTransfer = () => {
   const topHeaderColor = useSelector(selectSite())?.headerColor
@@ -294,9 +295,7 @@ const BankTransfer = () => {
         {/* Content */}
         <div className="p-0">
           {loading ? (
-            <div className="flex justify-center items-center py-16">
-              <>Loading...</>
-            </div>
+               <Loader/>
           ) : (
             <>
               {activeTab === "deposits" && <TabContent transactions={deposits} type="deposits" />}

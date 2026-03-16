@@ -7,6 +7,7 @@ import { useSelector } from "react-redux";
 import { getAccountStatements } from "../../../../api";
 import { selectSite } from "../../../../utils/helper/commonSelectors";
 import Pagination from "../../../components/Pagination/Pagination";
+import Loader from "../../../components/Loader/Loader";
 
 export default function ProfitLossReport() {
   const [filter, setFilter] = useState("ALL");
@@ -73,7 +74,7 @@ export default function ProfitLossReport() {
 
   return (
     <section className="pb-8">
-      {loading && <>Loading...</>}
+      {loading &&    <Loader/>}
       <div className="container mx-auto">
         <div className="w-full">
           <h2

@@ -8,6 +8,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { getAccountStatements, getBet } from "../../../../api";
 import { getUserId, selectSite } from "../../../../utils/helper/commonSelectors";
+import Loader from "../../../components/Loader/Loader";
 
 export default function AccountStatement() {
   const [startDate, setStartDate] = useState(() => {
@@ -174,7 +175,7 @@ export default function AccountStatement() {
 
   return (
     <section className="pb-8">
-      {loading && <>Loading...</>}
+      {loading &&    <Loader/>}
       <div className="container mx-auto">
         <div className="w-full">
           <h2

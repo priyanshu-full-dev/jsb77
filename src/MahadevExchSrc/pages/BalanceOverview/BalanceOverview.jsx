@@ -16,7 +16,7 @@ const BalanceOverview = () => {
   };
 
   return (
-    <div className="w-full min-h-screen flex flex-col md:flex-row bg-[#f0ece1]">
+    <div className="w-full min-h-screen pb-[80px] flex flex-col md:flex-row bg-[#f0ece1]">
       {/* Mobile Menu Button */}
 
       {/* Main Content */}
@@ -24,13 +24,13 @@ const BalanceOverview = () => {
       <div className="w-full mx-auto md:w-[80%] lg:w-[82%] flex flex-col">
         <div className="bg-[#2f2f2f] relative min-h-[250px] w-full">
           <div className="pb-3">
-            <div className="w-[95%] md:w-[80%] lg:w-[60%] mx-auto mt-[3em] md:mt-[5em] bg-white rounded-lg shadow-lg">
+            <div className="w-[95%] md:w-[80%] lg:w-[60%] mx-auto mt-4 bg-white rounded-lg shadow-lg">
               {/* Tabs */}
               <div className="flex border-b">
                 <button
                   className={`w-1/2 py-3 text-center font-semibold ${
                     activeTab === "deposit"
-                      ? "border-b-[6px] border-[#ffb80c] text-blue-500"
+                      ? "border-b-[6px] border-[#00723c] text-blue-500"
                       : "text-gray-500 border-b-[6px] border-white"
                   }`}
                   onClick={() => setActiveTab("deposit")}
@@ -40,7 +40,7 @@ const BalanceOverview = () => {
                 <button
                   className={`w-1/2 py-3 text-center font-semibold ${
                     activeTab === "withdraw"
-                      ? "border-b-[6px] border-[#ffb80c] text-blue-500"
+                      ? "border-b-[6px] border-[#00723c] text-blue-500"
                       : "text-gray-500 border-b-[6px] border-white"
                   }`}
                   onClick={() => setActiveTab("withdraw")}
@@ -72,8 +72,8 @@ const BalanceOverview = () => {
             background-color: #f6ce6f;
           }
           .deposit-ul li:hover button {
-            border: 1px solid #ffb80c;
-            background: #ffb80c;
+            border: 1px solid #00723c;
+            background: #00723c;
             color: white;
           }
         `}

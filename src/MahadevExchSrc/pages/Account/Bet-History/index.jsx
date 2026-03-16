@@ -153,7 +153,7 @@ export default function BetHistory() {
 
   return (
     <div>
-      {loading && <>Loading...</>}
+      {loading &&    <Loader/>}
 
       <h2
         className="text-[13px] text-white font-sans font-bold  bg-[#343435] p-1.5"

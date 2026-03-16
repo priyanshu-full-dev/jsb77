@@ -15,6 +15,7 @@ import {
   checkWithdrawalAllowed,
 }  from "../../../api/index";
 import { Trash2 } from "lucide-react";
+import Loader from "../../components/Loader/Loader";
 
 
 const Withdraw = () => {
@@ -285,7 +286,7 @@ const handleRemoveAccount = async (id) => {
 
   return (
     <>
-      {loading && <>Loading...</>}
+      {loading &&    <Loader/>}
       <p className="text-gray-700 bg-[#08182f] text-[12px] text-white mt-[-1px] text-center">
         Kindly check the bank details before withdrawal
       </p>
@@ -304,8 +305,8 @@ const handleRemoveAccount = async (id) => {
                     className="w-full text-center overflow-hidden rounded-lg cursor-pointer"
                     onClick={() => handleAccountClick(account._id)}
                   >
-                    <div className="flex items-center justify-between text-center bg-[#ffb80c] px-4 py-2">
-                      <h2 className="text-xl font-bold text-black">
+                    <div className="flex items-center justify-between text-center bg-[#00723c] px-4 py-2">
+                      <h2 className="text-[13px] font-bold text-[white]">
                         BANK {slot}
                       </h2>
                       <button
@@ -317,7 +318,7 @@ const handleRemoveAccount = async (id) => {
                         }}
                         disabled={loading}
                       >
-                        <Trash2 className="h-5 w-5" />
+                        <Trash2 className="h-5 w-5 text-[white]" />
                       </button>
                     </div>
 
@@ -377,7 +378,7 @@ const handleRemoveAccount = async (id) => {
                       </div>
                       <button
                         onClick={() => handleCreateWithdrawal(account._id)}
-                        className="w-full mt-4 bg-[#ffb80c] font-bold text-white py-3 rounded hover:bg-blue-600 disabled:opacity-50"
+                        className="w-full mt-4 bg-[#00723c] font-bold text-white py-3 rounded hover:bg-blue-600 disabled:opacity-50"
                         disabled={ window.location.hostname === "d2.blacklion.club" ?( loading || !amounts[account._id] || !withdrawalCheck.withdrawalAllowed): ( loading || !amounts[account._id] )}
                       >
                         {loading ? "Processing..." : "Request Withdrawal"}
@@ -459,7 +460,7 @@ const handleRemoveAccount = async (id) => {
 
               <button
                 onClick={handleSaveAccount}
-                className="w-full mt-4 mb-6 bg-[#ffb80c] font-bold text-white py-3 rounded hover:bg-blue-600 disabled:opacity-50"
+                className="w-full mt-4 mb-6 bg-[#00723c] font-bold text-white py-3 rounded hover:bg-blue-600 disabled:opacity-50"
                 disabled={
                   loading ||
                   !formData.accountNumber ||

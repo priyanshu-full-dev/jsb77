@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { getLoginRecord } from "../../api";
 import { getUserId } from "../../utils/helper/commonSelectors";
 import { IoChevronBack, IoChevronForward } from "react-icons/io5";
+import Loader from "../components/Loader/Loader";
 
 const ActivityLog = () => {
   const [activeLogs, setActiveLogs] = useState([]);
@@ -62,9 +63,7 @@ const ActivityLog = () => {
 
             {/* BODY */}
             {loading ? (
-              <div className="text-center py-6 text-[13px]">
-                Loading...
-              </div>
+             <Loader/>
             ) : activeLogs.length > 0 ? (
               activeLogs.map((e, i) => (
                 <div
