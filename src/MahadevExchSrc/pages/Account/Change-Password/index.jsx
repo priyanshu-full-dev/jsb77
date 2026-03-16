@@ -8,12 +8,14 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { updateUserPassword } from "../../../api";
+
 import { useSelector } from "react-redux";
-import { selectSite } from "../../../utils/helper/commonSelectors";
-import Loading from "../../../../SkyExchangeSrc/src/components/Loading";
+
+
 import { FaSpinner, FaCheck } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import { updateUserPassword } from "../../../../api";
+import { selectSite } from "../../../../utils/helper/commonSelectors";
 
 const InputField = ({
   label,
@@ -181,7 +183,7 @@ export default function ChangePassword() {
 
   return (
     <div className="w-full p-3">
-      {loading && <Loading />}
+      {loading && <>Loading...</>}
       <div className="bg-gray-100 rounded-t-lg">
         <h2
           className="text-sm font-bold text-white p-3 rounded-t-lg"

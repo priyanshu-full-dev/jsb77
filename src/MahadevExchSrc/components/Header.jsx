@@ -7,10 +7,15 @@ import { useDispatch, useSelector } from "react-redux";
 import { IoWallet } from "react-icons/io5";
 import { getCasinoBalance } from "../../api";
 import { updateSiteCasinoSlice } from "../../redux/slices/siteCasinoSlice";
-import { selectSite, selectSiteFevicon, selectSiteLogo, selectSiteName } from "../../utils/helper/commonSelectors";
+import {
+  selectSite,
+  selectSiteFevicon,
+  selectSiteLogo,
+  selectSiteName,
+} from "../../utils/helper/commonSelectors";
 import { generatePresignedUrl } from "../../utils/helper/generatePresignedUrl";
-
-
+import { useNavigate, useLocation } from "react-router-dom";
+import { IoChevronBack } from "react-icons/io5";
 
 const languages = [
   "ENGLISH",
@@ -31,7 +36,22 @@ const Header = () => {
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
   const siteDetails = useSelector(selectSite());
   const userData = useSelector((state) => state?.user?.userData) || {};
+  const navigate = useNavigate();
+  const location = useLocation();
 
+    const accountPaths = [
+    "/balance-overview",
+    "/bet-history",
+    "/myAccount/bank-transfer",
+    "/profit-loss-report",
+    "/account-statement",
+    "/change-password",
+    "/full-market",
+    "/activityLog"
+  ];
+
+
+  const showBack = accountPaths.includes(location.pathname);
 
   const siteName = useSelector(selectSiteName());
   const siteLogo = useSelector(selectSiteLogo());
@@ -59,13 +79,11 @@ const Header = () => {
     fetchData();
   }, []);
 
-
-    const [logoUrl, setLogoUrl] = useState(null);
+  const [logoUrl, setLogoUrl] = useState(null);
 
   useEffect(() => {
     const fetchAssets = async () => {
       try {
-
         const cachedLogo = localStorage.getItem("siteLogoUrl");
         const cachedLogoKey = localStorage.getItem("siteLogoKey");
 
@@ -96,15 +114,23 @@ const Header = () => {
     }
   }, [siteLogo, siteFavIcon, siteName]);
 
+
   return (
     <header className="fixed top-0 left-0 w-full z-50 bg-[#00723B]">
       <div className="max-w-[1200px] mx-auto flex items-center justify-between px-3 h-[42px]">
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <img
-            src={logoUrl}
-            className="h-[20px]"
-          />
+          {showBack ? (
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center text-white text-[14px] font-semibold"
+            >
+              <IoChevronBack size={20} />
+              BACK
+            </button>
+          ) : (
+            <img src={logoUrl} className="h-[20px]" />
+          )}
         </div>
 
         {/* Right Buttons */}
@@ -128,11 +154,19 @@ const Header = () => {
             </>
           ) : (
             <>
+
+              {showBack &&(
+                <div className="flex items-center gap-1 text-[12px] text-[white]">
+                  <p>EXP</p>
+                   <span className="font-bold"> {exposure?.toFixed(2)}</span>
+                </div>
+              )}
               <button className="bg-[#08391e] flex gap-1 items-center text-white text-[12px] font-semibold px-[6px] h-[26px] rounded-[5px]">
                 <IoWallet />
                 <p className="pr-1">CI</p>{" "}
                 <span> {availableBalance?.toFixed(2)}</span>
               </button>
+
             </>
           )}
 

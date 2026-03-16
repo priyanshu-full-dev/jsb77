@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { getSettledBets } from "../../../api";
-import Loading from "../../../../SkyExchangeSrc/src/components/Loading";
-import { selectSite } from "../../../utils/helper/commonSelectors";
+
+
 import { useSelector } from "react-redux";
-import Pagination from "../../../components/Pagination/Pagination";
+
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { getSettledBets } from "../../../../api";
+import { selectSite } from "../../../../utils/helper/commonSelectors";
+import Pagination from "../../../components/Pagination/Pagination";
 
 export default function BetHistory() {
   const today = new Date();
@@ -151,7 +153,7 @@ export default function BetHistory() {
 
   return (
     <div>
-      {loading && <Loading />}
+      {loading && <>Loading...</>}
 
       <h2
         className="text-[13px] text-white font-sans font-bold mt-2 md:mt-8 bg-[#343435] p-1.5"

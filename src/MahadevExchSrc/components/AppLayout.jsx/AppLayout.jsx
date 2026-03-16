@@ -16,7 +16,19 @@ const AppLayout = () => {
   const hideLayoutRoutes = ["/sport/profile"];
   const hideLayout = hideLayoutRoutes.includes(location.pathname);
 
-const hideFooterRoutes = ["/casino-games", "/sports","/full-market"];
+const hideFooterRoutes = [
+  "/casino-games",
+  "/sports",
+  "/full-market",
+  "/balance-overview",
+  "/bet-history",
+  "/myAccount/bank-transfer",
+  "/profit-loss-report",
+  "/account-statement",
+  "/change-password",
+  "/activityLog",
+];
+
 const hideFooter = hideFooterRoutes.some((route) =>
   location.pathname.startsWith(route)
 );

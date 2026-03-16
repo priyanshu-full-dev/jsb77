@@ -51,6 +51,25 @@ const CTSfullMarket = loadable(
   () => import(/* webpackPrefetch: true */ "./pages/FullMarket/CTSfullMarket"),
 );
 
+const BankTransfer = loadable(
+  () => import(/* webpackPrefetch: true */ "./pages/BankTransfer"),
+);
+
+const BalanceOverview = loadable(
+  () =>
+    import(
+      /* webpackPrefetch: true */ "./pages/BalanceOverview/BalanceOverview"
+    ),
+);
+
+const Withdrawal = loadable(
+  () =>
+    import(/* webpackPrefetch: true */ "./pages/BalanceOverview/WithdrawNew"),
+);
+const ActivityLog = loadable(
+  () => import(/* webpackPrefetch: true */ "./pages/ActivityLog"),
+);
+
 export const MahadevExchRouter = createBrowserRouter([
   {
     path: "/",
@@ -75,8 +94,41 @@ export const MahadevExchRouter = createBrowserRouter([
 
       { path: "full-market", element: <CTSfullMarket.Element /> },
 
+      {
+        path: "/account-statement",
+        element: <AccountStatement.Element />,
+      },
+      {
+        path: "/transactions-report",
+        element: <TransactionReport.Element />,
+      },
+      {
+        path: "/profit-loss-report",
+        element: <ProfitLossReport.Element />,
+      },
+      {
+        path: "/bet-history",
+        element: <BetHistory.Element />,
+      },
+      {
+        path: "/unsettled-bet",
+        element: <UnsettledBet.Element />,
+      },
+      {
+        path: "/change-password",
+        element: <ChangePassword.Element />,
+      },
 
-      
+      {
+        path: "myAccount/bank-transfer",
+        element: <BankTransfer.Element />,
+      },
+      {
+        path: "/balance-overview",
+        element: <BalanceOverview.Element />,
+      },
+      { path: "/withdraw", element: <Withdrawal.Element /> },
+      { path: "/activityLog", element: <ActivityLog.Element /> },
     ],
   },
 

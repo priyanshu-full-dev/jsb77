@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
-import { getAccountStatements } from "../../../api";
-import Loading from "../../../../SkyExchangeSrc/src/components/Loading";
+
+
 import { useSelector } from "react-redux";
-import { selectSite } from "../../../utils/helper/commonSelectors";
+
+
+import { getAccountStatements } from "../../../../api";
+import { selectSite } from "../../../../utils/helper/commonSelectors";
 import Pagination from "../../../components/Pagination/Pagination";
 
 export default function ProfitLossReport() {
@@ -70,7 +73,7 @@ export default function ProfitLossReport() {
 
   return (
     <section className="pb-8">
-      {loading && <Loading />}
+      {loading && <>Loading...</>}
       <div className="container mx-auto">
         <div className="w-full">
           <h2

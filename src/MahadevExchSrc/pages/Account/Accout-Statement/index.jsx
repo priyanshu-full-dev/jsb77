@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
-import { getAccountStatements, getBet } from "../../../api";
-import Loading from "../../../../SkyExchangeSrc/src/components/Loading";
+
 import { useSelector } from "react-redux";
-import { getUserId, selectSite } from "../../../utils/helper/commonSelectors";
-import { formatIndianNumber } from "../../../utils/helper/formatNumberIndianStyle";
+
+import { formatIndianNumber } from "../../../../utils/helper/formatNumberIndianStyle";
 import Pagination from "../../../components/Pagination/Pagination";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { getAccountStatements, getBet } from "../../../../api";
+import { getUserId, selectSite } from "../../../../utils/helper/commonSelectors";
 
 export default function AccountStatement() {
   const [startDate, setStartDate] = useState(() => {
@@ -173,7 +174,7 @@ export default function AccountStatement() {
 
   return (
     <section className="pb-8">
-      {loading && <Loading />}
+      {loading && <>Loading...</>}
       <div className="container mx-auto">
         <div className="w-full">
           <h2
