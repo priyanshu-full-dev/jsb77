@@ -23,6 +23,30 @@ const CasinoGames = loadable(() => import("./pages/CasinoGames/CasinoGames"));
 const GameLobby = loadable(() => import("./pages/GameLobby"));
 const SportsPage = loadable(() => import("./pages/sports/SportsPage"));
 
+const AccountStatement = loadable(
+  () => import(/* webpackPrefetch: true */ "./pages/Account/Accout-Statement"),
+);
+const ProfitLossReport = loadable(
+  () =>
+    import(/* webpackPrefetch: true */ "./pages/Account/Profit-Loss-Report"),
+);
+const BetHistory = loadable(
+  () => import(/* webpackPrefetch: true */ "./pages/Account/Bet-History"),
+);
+const UnsettledBet = loadable(
+  () => import(/* webpackPrefetch: true */ "./pages/Account/Unsettled-Bet"),
+);
+const ChangePassword = loadable(
+  () => import(/* webpackPrefetch: true */ "./pages/Account/Change-Password"),
+);
+const Rules = loadable(
+  () => import(/* webpackPrefetch: true */ "./pages/Account/Rules"),
+);
+const TransactionReport = loadable(
+  () =>
+    import(/* webpackPrefetch: true */ "./pages/Account/Transaction-Report"),
+);
+
 const CTSfullMarket = loadable(
   () => import(/* webpackPrefetch: true */ "./pages/FullMarket/CTSfullMarket"),
 );
@@ -49,7 +73,10 @@ export const MahadevExchRouter = createBrowserRouter([
         element: <SportsPage.Element />,
       },
 
-            { path: "full-market", element: <CTSfullMarket.Element /> },
+      { path: "full-market", element: <CTSfullMarket.Element /> },
+
+
+      
     ],
   },
 

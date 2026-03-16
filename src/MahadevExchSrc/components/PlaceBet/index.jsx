@@ -317,123 +317,119 @@ const BetBox = (props) => {
     ];
   });
 
+  return (
+    <>
+      {/* {loading && <>Loading...</>} */}
 
-  console.log({betData});
-  
-
-return (
-  <>
-    {loading && <>Loading...</>}
-
-    <div className={` w-full border-b ${ betType === "Back" ? "border-[#9ec9ff]" : "border-[#f9b6c2]"}  `}>
-
-      {/* HEADER */}
       <div
-        className={`flex justify-between items-center text-sm font-semibold ${
-          betType === "Back" ? "bg-[#9ecaffe0]" : "bg-[#f9b6c2d6]"
-        }`}
+        className={` w-full border-b ${betType === "Back" ? "border-[#9ec9ff]" : "border-[#f9b6c2]"}  `}
       >
-        <div className="flex items-center gap-3">
+        {/* HEADER */}
+        <div
+          className={`flex justify-between items-center text-sm font-semibold ${
+            betType === "Back" ? "bg-[#9ecaffe0]" : "bg-[#f9b6c2d6]"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleCancel}
+              className={`font-bold text-[13px] h-[45px] w-[70px] text-black ${
+                betType === "Back" ? "bg-[#8ebff9]" : "bg-[#fbafbd]"
+              }`}
+            >
+              BACK
+            </button>
 
-          <button
-            onClick={handleCancel}
-            className={`font-bold h-[45px] w-[70px] text-black ${
-          betType === "Back" ? "bg-[#8ebff9]" : "bg-[#fbafbd]"
-        }`}
-          >
-            BACK
-          </button>
+            <div className="flex flex-col">
+              <span className="font-bold text-[12.5px] text-black">
+                {selection || eventName}
+              </span>
 
-          <div className="flex flex-col">
-            <span className="font-bold text-black">
-              {selection || eventName}
-            </span>
+              <span className="text-[10px] -mt-1 text-gray-800">
+                {market} ({markettype})
+              </span>
+            </div>
+          </div>
+        </div>
 
-            <span className="text-[11px] -mt-1 text-gray-800">
-              {market} ({markettype})
-            </span>
+        {/* MIN BET */}
+        <div className="bg-[#2f2f2f] text-white px-3 py-2 text-[12px] font-semibold">
+          Minimum Bet : {min}
+        </div>
+
+        {/* BODY */}
+        <div className="bg-[white] p-3">
+          {/* ODDS + STAKE */}
+          <div className="flex items-center justify-between gap-4 mb-3">
+            {/* ODDS */}
+            <div className="flex items-center gap-2 bg-gray-100 px-2 py-1 rounded">
+              <span className="text-[12px] font-semibold text-gray-700">
+                Odds
+              </span>
+
+              <button
+                className="bg-red-500 hover:bg-red-600 text-white w-[28px] h-[28px] flex justify-center items-center rounded text-[16px] font-bold"
+                onClick={() =>
+                  setBetPrice((prev) => decrementValue(Number(prev)))
+                }
+              >
+                -
+              </button>
+
+              <input
+                type="number"
+                value={betPrice}
+                onChange={(e) => setBetPrice(Number(e.target.value))}
+                className="w-[80px] h-[28px] text-center border border-gray-300 rounded bg-white text-[13px] font-semibold focus:outline-none focus:border-blue-400"
+              />
+
+              <button
+                className="bg-green-500 hover:bg-green-600 text-white w-[28px] h-[28px] flex justify-center items-center rounded text-[16px] font-bold"
+                onClick={() =>
+                  setBetPrice((prev) => incrementValue(Number(prev)))
+                }
+              >
+                +
+              </button>
+            </div>
+
+            {/* STAKE */}
+            <div className="flex items-center gap-2 bg-gray-100 px-2 py-1 rounded">
+              <span className="text-[12px] font-semibold text-gray-700">
+                Stake
+              </span>
+
+              <input
+                type="number"
+                value={betStake ?? ""}
+                onChange={(e) => setBetStake(Number(e.target.value))}
+                className="w-[110px] h-[28px] text-center border border-gray-300 rounded bg-white text-[13px] font-semibold focus:outline-none focus:border-green-400"
+              />
+            </div>
           </div>
 
-        </div>
+          {/* QUICK BUTTONS */}
+          <div className="grid grid-cols-4 gap-2 mb-3">
+            {[50, 100, 250, 400, 1000, 5000, 10000].map((num) => (
+              <button
+                key={num}
+                className="bg-white border border-[#0000001a] rounded py-1 text-[12px] font-semibold"
+                onClick={() => handleStakeClick(num)}
+              >
+                +{num}
+              </button>
+            ))}
 
-
-      </div>
-
-      {/* MIN BET */}
-      <div className="bg-[#2f2f2f] text-white px-3 py-2 text-sm font-semibold">
-        Minimum Bet : {min}
-      </div>
-
-      {/* BODY */}
-      <div className="bg-[white] p-3">
-
-        {/* ODDS + STAKE */}
-        <div className="flex items-center gap-3 mb-3">
-
-          <span className="text-[12px] font-semibold">Odds</span>
-
-          <button
-            className="bg-black text-white w-[20px] h-[28px] flex justify-center items-center rounded"
-            onClick={() =>
-              setBetPrice((prev) => decrementValue(Number(prev)))
-            }
-          >
-            -
-          </button>
-
-          <input
-            type="number"
-            value={betPrice}
-            onChange={(e) => setBetPrice(Number(e.target.value))}
-            className="w-[90px] h-[28px] text-center border rounded bg-white"
-          />
-
-          <button
-            className="bg-black text-white w-[20px] h-[28px] flex justify-center items-center rounded"
-            onClick={() =>
-              setBetPrice((prev) => incrementValue(Number(prev)))
-            }
-          >
-            +
-          </button>
-
-          <span className="text-[12px] font-semibold ml-4">
-            Stake
-          </span>
-
-          <input
-            type="number"
-            value={betStake ?? ""}
-            onChange={(e) => setBetStake(Number(e.target.value))}
-            className="w-[150px] h-[28px] text-center border rounded bg-white"
-          />
-
-        </div>
-
-        {/* QUICK BUTTONS */}
-        <div className="grid grid-cols-4 gap-2 mb-3">
-
-          {[50, 100, 250, 400, 1000, 5000, 10000].map((num) => (
             <button
-              key={num}
-              className="bg-white border border-[#0000001a] rounded py-1 text-[12px] font-semibold"
-              onClick={() => handleStakeClick(num)}
+              className="bg-black text-white rounded py-1 text-[12px] font-semibold"
+              onClick={() => setBetStake(1000000)}
             >
-              +{num}
+              MAX
             </button>
-          ))}
+          </div>
 
-          <button
-            className="bg-black text-white rounded py-1 text-[12px] font-semibold"
-            onClick={() => setBetStake(1000000)}
-          >
-            MAX
-          </button>
-
-        </div>
-
-        {/* ACCEPT ODDS */}
-        {/* <div className="flex items-center gap-3 mb-4">
+          {/* ACCEPT ODDS */}
+          {/* <div className="flex items-center gap-3 mb-4">
 
           <span className="text-sm font-semibold">
             Accept Any Odds
@@ -455,30 +451,34 @@ return (
 
         </div> */}
 
-        {/* BUTTONS */}
-        <div className="flex gap-3">
+          {/* BUTTONS */}
+          <div className="flex gap-3">
+            <button
+              onClick={handleCancel}
+              className="flex-1 bg-[#ff0000] text-white py-1.5 text-[14px] rounded font-bold"
+            >
+              CANCEL
+            </button>
 
-          <button
-            onClick={handleCancel}
-            className="flex-1 bg-[#ff0000] text-white py-1.5 text-[14px] rounded font-bold"
-          >
-            CANCEL
-          </button>
-
-          <button
-            disabled={!betStake || !betPrice}
-            onClick={handlePlaceBet}
-            className="flex-1 bg-[#38b44b] text-[14px] text-white py-1.5 rounded font-bold"
-          >
-            PLACE BET ✓
-          </button>
-
+            <button
+              disabled={!betStake || !betPrice || loading}
+              onClick={handlePlaceBet}
+              className="flex-1 bg-[#38b44b] text-[14px] text-white py-1.5 rounded font-bold flex justify-center items-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  Placing...
+                </>
+              ) : (
+                "PLACE BET ✓"
+              )}
+            </button>
+          </div>
         </div>
-
       </div>
-    </div>
-  </>
-);
+    </>
+  );
 };
 
 export default PlaceBet;
