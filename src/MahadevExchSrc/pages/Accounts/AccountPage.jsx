@@ -17,7 +17,7 @@ const AccountPage = () => {
   const navigate = useNavigate();
   const menuItems = [
     { label: "Deposit & Withdrawal", path: "/balance-overview" },
-        { label: "Live Bets", path: "/unsettled-bet" },
+    { label: "Unsettled Bet", path: "/unsettled-bet" },
     { label: "Bet History", path: "/bet-history" },
     { label: "Bank Transfer", path: "/myAccount/bank-transfer" },
     { label: "Profit & Loss", path: "/profit-loss-report" },

@@ -128,7 +128,7 @@ export default function UnsettledBet() {
   };
 
   return (
-    <div className="bg-white-100 mt-2">
+    <div className="bg-white-100">
       <h2
         className="text-[13px] p-1.5 font-sans font-bold text-white"
         style={{
