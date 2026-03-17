@@ -1,5 +1,5 @@
-import { NavLink } from "react-router-dom";
-import { useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
 import { FaSearch, FaTimes } from "react-icons/fa";
 
 const sports = [
@@ -8,7 +8,6 @@ const sports = [
   { name: "tennis", label: "Tennis", ext: "svg" },
   { name: "horse", label: "Horse Racing", ext: "png" },
   { name: "greyhound", label: "Greyhound Racing", ext: "png" },
-  { name: "kabaddi", label: "Kabaddi", ext: "svg" },
 ];
 
 const dummyResults = [
@@ -24,12 +23,32 @@ const SportsHeader = () => {
   const [openSearch, setOpenSearch] = useState(false);
   const [query, setQuery] = useState("");
 
+  const scrollRef = useRef(null);
+  const location = useLocation();
+
   const filteredResults = dummyResults.filter((item) =>
     item.toLowerCase().includes(query.toLowerCase())
   );
 
-  const clearSearch = () => {
-    setQuery("");
+  const clearSearch = () => setQuery("");
+
+  // ✅ Scroll active tab on route change
+  useEffect(() => {
+    const activeEl = scrollRef.current?.querySelector(".active-tab");
+    if (activeEl) {
+      activeEl.scrollIntoView({
+        behavior: "smooth",
+        inline: "center",
+        block: "nearest",
+      });
+    }
+  }, [location.pathname]);
+
+  // ✅ Route handler
+  const getRoute = (sport) => {
+    if (sport.name === "horse") return "/horseRacing";
+    if (sport.name === "greyhound") return "/greyhoundRacing";
+    return `/sports/${sport.name}/tomorrow?sportsbook`;
   };
 
   return (
@@ -37,17 +56,25 @@ const SportsHeader = () => {
       <div className="flex items-center justify-between max-w-screen-2xl mx-auto">
 
         {/* SPORTS TABS */}
-        <div className="flex-1 overflow-x-auto scrollbar-hide">
-          <div className="flex items-center min-w-max px-1">
+        <div className="flex-1 overflow-x-auto hide-scrollbar">
+          <div className="flex items-center min-w-max px-1" ref={scrollRef}>
             {sports.map((sport) => (
               <NavLink
                 key={sport.name}
-                to={`/sports/${sport.name}/tomorrow?sportsbook`}
+                to={getRoute(sport)}
+                  preventScrollReset={true}
+                onClick={(e) => {
+                  e.currentTarget.scrollIntoView({
+                    behavior: "smooth",
+                    inline: "center",
+                     block: "nearest",
+                  });
+                }}
                 className={({ isActive }) =>
-                  `group flex items-center gap-2.5 px-5 py-3.5 transition-all duration-200 border-b-2 whitespace-nowrap
+                  `group flex items-center gap-2.5 px-5 py-3 transition-all duration-200 border-b-2 whitespace-nowrap
                   ${
                     isActive
-                      ? "text-white border-[#00723b] bg-gradient-to-t from-[#00723b]/20 to-transparent"
+                      ? "active-tab text-white border-[#00723b] bg-gradient-to-t from-[#00723b]/20 to-transparent"
                       : "text-gray-400 hover:text-gray-200 hover:bg-white/5 border-transparent"
                   }`
                 }
@@ -71,7 +98,7 @@ const SportsHeader = () => {
         </div>
 
         {/* SEARCH BUTTON */}
-        <div className="relative flex-shrink-0">
+        <div className="relative border-l-2 border-[#4c4c4c] flex-shrink-0">
           <button
             onClick={() => setOpenSearch(true)}
             className="p-3.5 text-gray-400 hover:text-white transition-colors"
@@ -83,13 +110,10 @@ const SportsHeader = () => {
 
       {/* SEARCH DROPDOWN */}
       {openSearch && (
-        <div
-          className="fixed inset-x-0 top-[50px] w-full bg-[#1a1a1a]/95 backdrop-blur-lg 
-          border border-[#333]/70 shadow-2xl shadow-black/70 z-50 overflow-hidden"
-        >
+        <div className="fixed inset-x-0 top-[50px] w-full bg-[#1a1a1a]/95 backdrop-blur-lg border border-[#333]/70 shadow-2xl shadow-black/70 z-50 overflow-hidden">
+          
           {/* HEADER */}
           <div className="flex items-center justify-between p-4 border-b border-[#2a2a2a]">
-
             <div className="relative flex-1">
               <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm" />
 
@@ -98,8 +122,7 @@ const SportsHeader = () => {
                 placeholder="Search matches, teams, tournaments..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="w-full bg-[#111] text-gray-100 placeholder-gray-500 
-                pl-10 pr-10 py-2.5 rounded-lg text-[14px] outline-none border border-[#333]"
+                className="w-full bg-[#111] text-gray-100 placeholder-gray-500 pl-10 pr-10 py-2.5 rounded-lg text-[14px] outline-none border border-[#333]"
                 autoFocus
               />
 
@@ -133,8 +156,7 @@ const SportsHeader = () => {
                 filteredResults.map((item, i) => (
                   <div
                     key={i}
-                    className="px-6 py-4 text-gray-200 text-[15px] border-b border-[#222]
-                    hover:bg-[#222] hover:text-white cursor-pointer transition-all"
+                    className="px-6 py-4 text-gray-200 text-[15px] border-b border-[#222] hover:bg-[#222] hover:text-white cursor-pointer transition-all"
                     onClick={() => {
                       console.log("Selected:", item);
                       setOpenSearch(false);

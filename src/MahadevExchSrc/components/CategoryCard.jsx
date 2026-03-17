@@ -17,7 +17,7 @@ gap-1
       shadow-[2px_2px_3px_rgba(0,0,0,0.5)]
       "
     >
-      <Icon className="text-white mb-1" />
+      <Icon className="text-white mb-1 h-[45px] w-[45px]" />
 
       <p
         className="

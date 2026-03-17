@@ -64,12 +64,13 @@ const SportsPage = () => {
 
   return (
     <div className="bg-[#D9D9D9] min-h-screen pb-[100px]">
-      <AnnouncementBar />
+
 
       {isSportsbook ? (
         <SportsHeader />
       ) : (
         <>
+              <AnnouncementBar />
           <SportsTabs />
           <SportsNav type={type} />
         </>

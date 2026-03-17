@@ -71,6 +71,19 @@ const ActivityLog = loadable(
   () => import(/* webpackPrefetch: true */ "./pages/ActivityLog"),
 );
 
+const Horse = loadable(
+  () => import(/* webpackPrefetch: true */ "./pages/Horse"),
+);
+const HorseMarket = loadable(
+  () => import(/* webpackPrefetch: true */ "./pages/Horse/HorseMarket"),
+);
+const GreyhoundMarket = loadable(
+  () => import(/* webpackPrefetch: true */ "./pages/Greyhound/GreyhoundMarket"),
+);
+const Greyhound = loadable(
+  () => import(/* webpackPrefetch: true */ "./pages/Greyhound"),
+);
+
 export const MahadevExchRouter = createBrowserRouter([
   {
     path: "/",
@@ -92,7 +105,10 @@ export const MahadevExchRouter = createBrowserRouter([
         path: "/sports/:sport/:type",
         element: <SportsPage.Element />,
       },
-
+      { path: "horseRacing", element: <Horse.Element /> },
+      { path: "horse-market", element: <HorseMarket.Element /> },
+      { path: "greyhoundRacing", element: <Greyhound.Element /> },
+      { path: "greyhound-market", element: <GreyhoundMarket.Element /> },
       { path: "full-market", element: <CTSfullMarket.Element /> },
 
       {

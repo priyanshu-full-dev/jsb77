@@ -31,8 +31,6 @@ const languages = [
   { name: "नेपाली", code: "ne" },
 ];
 
-
-
 const Header = () => {
   const [open, setOpen] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
@@ -52,6 +50,8 @@ const Header = () => {
     "/change-password",
     "/full-market",
     "/activityLog",
+    "/greyhound-market",
+    "/horse-market",
   ];
 
   const changeLanguage = (lang) => {
@@ -136,7 +136,7 @@ const Header = () => {
               BACK
             </button>
           ) : (
-            <img src={logoUrl} className="h-[20px]" />
+            <img src={logoUrl} className="h-[22px]"   onClick={() => navigate("/")}/>
           )}
         </div>
 

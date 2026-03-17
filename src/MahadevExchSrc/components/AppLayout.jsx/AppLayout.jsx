@@ -27,6 +27,10 @@ const hideFooterRoutes = [
   "/account-statement",
   "/change-password",
   "/activityLog",
+  "/horseRacing",
+  "/horse-market",
+  "/greyhoundRacing",
+  "/greyhound-market"
 ];
 
 const hideFooter = hideFooterRoutes.some((route) =>
@@ -63,7 +67,7 @@ const hideFooter = hideFooterRoutes.some((route) =>
   return (
     <>
       {!hideLayout && <Header />}
-      {/* {!hideLayout && <div className="pt-[42px]" />} */}
+      {!hideLayout && <div className="pt-[42px]" />}
 
       <main style={{ minHeight: "80vh" }}>
         <Outlet />
