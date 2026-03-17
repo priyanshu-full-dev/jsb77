@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import {
   subscribeToGreyhoundMatchesData,
   subscribeToHorseMatchesData,
+  subscribeToJoinMyBets,
   subscribeToKabaddiMatchesData,
   subscribeToMatchData,
 } from "../../../socketClient";
@@ -62,6 +63,11 @@ const hideFooter = hideFooterRoutes.some((route) =>
     subscribeToKabaddiMatchesData();
     subscribeToGreyhoundMatchesData();
     subscribeToHorseMatchesData();
+  }, []);
+
+
+    useEffect(() => {
+    subscribeToJoinMyBets();
   }, []);
 
   return (

@@ -8,6 +8,7 @@ import autoTable from "jspdf-autotable";
 import { getSettledBets } from "../../../../api";
 import { selectSite } from "../../../../utils/helper/commonSelectors";
 import Pagination from "../../../components/Pagination/Pagination";
+import Loader from "../../../components/Loader/Loader";
 
 export default function BetHistory() {
   const today = new Date();

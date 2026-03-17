@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 import HomeInplayIcon from "./icons/HomeInplayIcon";
@@ -8,14 +8,25 @@ import OpenBetsIcon from "./icons/OpenBetsIcon";
 import ProfileIcon from "./icons/ProfileIcon";
 import OpenBets from "./OpenBets";
 
+import { getUserId } from "../../utils/helper/commonSelectors";
+import { useSelector } from "react-redux";
+import { toast } from "react-toastify";
+
 const BottomNav = () => {
   const [showPopup, setShowPopup] = useState(false);
+  const currentUserId = useSelector(getUserId());
+  const navigate = useNavigate();
 
   const navItems = [
     { path: "/", label: "HOME", icon: HomeIcon },
     { path: "/casino-games", label: "CASINO", icon: CasinoIcon },
     { path: "/sports/cricket/inplay", label: "IN-PLAY", icon: HomeInplayIcon },
-    { path: "/open-bets", label: "OPEN BETS", icon: OpenBetsIcon, isPopup: true },
+    {
+      path: "/open-bets",
+      label: "OPEN BETS",
+      icon: OpenBetsIcon,
+      isPopup: true,
+    },
     { path: "/sport/profile", label: "ACCOUNT", icon: ProfileIcon },
   ];
 
@@ -26,7 +37,7 @@ const BottomNav = () => {
         {navItems.map((item, index) => {
           const Icon = item.icon;
 
-          // ✅ OPEN BETS (Popup + Active)
+
           if (item.isPopup) {
             const isActive = showPopup;
 
@@ -45,7 +56,6 @@ const BottomNav = () => {
                   }`}
                 >
                   <Icon color={isActive ? "#ffffff" : "#9ca3af"} />
-
                   <span className="text-[9.5px] font-bold mt-1">
                     {item.label}
                   </span>
@@ -54,11 +64,51 @@ const BottomNav = () => {
             );
           }
 
-          // ✅ Normal NavLink (with FIX)
+
+          if (item.path === "/sport/profile") {
+            return (
+              <NavLink
+                key={index}
+                to={currentUserId ? item.path : "#"}
+                onClick={(e) => {
+                  if (!currentUserId) {
+                    e.preventDefault();
+                    toast.error("Please login first");
+                  }
+                }}
+                className="flex-1"
+              >
+                {({ isActive }) => {
+                  const finalActive =
+                    !showPopup &&
+                    isActive &&
+                    (item.path !== "/sport/profile" || currentUserId);
+
+                  return (
+                    <div
+                      className={`flex flex-col items-center justify-center pt-2 pb-1 transition-all border-b-[3px]
+        ${
+          finalActive
+            ? "text-white border-white"
+            : "text-gray-400 border-transparent"
+        }`}
+                    >
+                      <Icon color={finalActive ? "#ffffff" : "#9ca3af"} />
+                      <span className="text-[9.5px] font-bold mt-1">
+                        {item.label}
+                      </span>
+                    </div>
+                  );
+                }}
+              </NavLink>
+            );
+          }
+
+
           return (
             <NavLink key={index} to={item.path} className="flex-1">
               {({ isActive }) => {
-                const finalActive = !showPopup && isActive; // 🔥 main fix
+                const finalActive = !showPopup && isActive;
 
                 return (
                   <div
@@ -70,7 +120,6 @@ const BottomNav = () => {
                     }`}
                   >
                     <Icon color={finalActive ? "#ffffff" : "#9ca3af"} />
-
                     <span className="text-[9.5px] font-bold mt-1">
                       {item.label}
                     </span>
@@ -82,7 +131,8 @@ const BottomNav = () => {
         })}
       </div>
 
-     {showPopup && <OpenBets onClose={() => setShowPopup(false)} />}
+
+      {showPopup && <OpenBets onClose={() => setShowPopup(false)} />}
     </>
   );
 };

@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+  top: 0px !important;
+  position: static !important;
+}
+
 /* tunable variables for pixel-perfect control */
 :root{
   --news-height: 36px;        /* change if you need micro tuning */

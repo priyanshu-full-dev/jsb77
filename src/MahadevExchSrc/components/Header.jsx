@@ -54,11 +54,14 @@ const Header = () => {
     "/horse-market",
   ];
 
-  const changeLanguage = (lang) => {
-    document.cookie = `googtrans=/en/${lang}; path=/`;
-    window.location.reload();
-  };
+const changeLanguage = (lang) => {
+  document.cookie = `googtrans=/en/${lang}; path=/`;
 
+
+  setTimeout(() => {
+    window.location.reload();
+  }, 500); 
+};
   const showBack = accountPaths.includes(location.pathname);
 
   const siteName = useSelector(selectSiteName());
@@ -104,10 +107,7 @@ const Header = () => {
           localStorage.setItem("siteLogoKey", siteLogo);
         }
 
-        if (siteFavIcon) {
-          const favPresigned = await generatePresignedUrl(siteFavIcon);
-          setFavIconUrl(favPresigned);
-        }
+
 
         if (siteName) {
           document.title = siteName;

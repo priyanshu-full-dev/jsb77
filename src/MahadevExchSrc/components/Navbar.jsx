@@ -1,11 +1,12 @@
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { FaFutbol, FaGavel } from "react-icons/fa";
 import { MdSportsCricket } from "react-icons/md";
+import { setMarketName, setMarketOddsData, setRunningData } from "../../redux/slices/fullmarketSlice";
 
 const Navbar = () => {
   const navigate = useNavigate();
-
+  const dispatch = useDispatch();
   const { matches: cricketMatches } = useSelector(
     (state) => state.matches.cricket,
   );
@@ -50,13 +51,23 @@ const Navbar = () => {
   ].sort((a, b) => sportPriority[a.sportName] - sportPriority[b.sportName]);
 
   const handleClick = (e) => {
+
+    dispatch(setRunningData(e?.matchRunners));
+    dispatch(setMarketName(e?.markets));
+
+    dispatch(
+      setMarketOddsData({
+        data: { data: e?.matchOdds },
+        sport: e?.sportName,
+      }),
+    );
+
     navigate(
       `/full-market?eventType=${e?.sportId}&eventId=${e?.eventId}&marketId=${e?.marketId}&joinedMarketIds=${e?.joinedMarketIds}&competitionId=${e?.competitionId}&bm=${e?.bm}&fancy=${e?.fancy}&pc=${e?.pc}&eventName=${encodeURIComponent(
         e?.eventName,
       )}&openDate=${e?.openDate}&tv=${e?.tv}`,
     );
   };
-
   return (
     <div className="bg-[#1c1c1c] border-b border-[#2a2a2a]">
       <div className="flex items-center overflow-x-auto hide-scrollbar h-[47px] px-2">

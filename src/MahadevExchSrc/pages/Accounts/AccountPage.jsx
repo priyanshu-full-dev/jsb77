@@ -88,7 +88,7 @@ const AccountPage = () => {
       <div>
         {/* USER CARD */}
         <div className="bg-[#00723B] m-4 text-white flex items-center justify-between p-2 px-2.5 rounded-md mb-4">
-          <h2 className="font-bold text-[16px]">{userData?.userName}</h2>
+          <h2 className="font-bold text-[16px] notranslate" translate="yes">{userData?.userName}</h2>
 
           <FaCircleUser size={28} />
         </div>

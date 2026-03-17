@@ -3,6 +3,7 @@ import { lazy, Suspense } from "react";
 
 import AppLayout from "./components/AppLayout.jsx/AppLayout";
 import Loader from "./components/Loader/Loader";
+import ProtectedRoute from "../CommonComponents/ProtectedRoute";
 
 const loadable = (importFn, { fallback = Loader } = {}) => {
   const Lazy = lazy(importFn);
@@ -113,39 +114,84 @@ export const MahadevExchRouter = createBrowserRouter([
 
       {
         path: "/account-statement",
-        element: <AccountStatement.Element />,
+        element: (
+          <ProtectedRoute>
+            <AccountStatement.Element />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/transactions-report",
-        element: <TransactionReport.Element />,
+        element: (
+          <ProtectedRoute>
+            <TransactionReport.Element />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/profit-loss-report",
-        element: <ProfitLossReport.Element />,
+        element: (
+          <ProtectedRoute>
+            <ProfitLossReport.Element />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/bet-history",
-        element: <BetHistory.Element />,
+        element: (
+          <ProtectedRoute>
+            <BetHistory.Element />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/unsettled-bet",
-        element: <UnsettledBet.Element />,
+        element: (
+          <ProtectedRoute>
+            <UnsettledBet.Element />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/change-password",
-        element: <ChangePassword.Element />,
+        element: (
+          <ProtectedRoute>
+            <ChangePassword.Element />
+          </ProtectedRoute>
+        ),
       },
-
       {
-        path: "myAccount/bank-transfer",
-        element: <BankTransfer.Element />,
+        path: "/myAccount/bank-transfer",
+        element: (
+          <ProtectedRoute>
+            <BankTransfer.Element />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/balance-overview",
-        element: <BalanceOverview.Element />,
+        element: (
+          <ProtectedRoute>
+            <BalanceOverview.Element />
+          </ProtectedRoute>
+        ),
       },
-      { path: "/withdraw", element: <Withdrawal.Element /> },
-      { path: "/activityLog", element: <ActivityLog.Element /> },
+      {
+        path: "/withdraw",
+        element: (
+          <ProtectedRoute>
+            <Withdrawal.Element />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/activityLog",
+        element: (
+          <ProtectedRoute>
+            <ActivityLog.Element />
+          </ProtectedRoute>
+        ),
+      },
     ],
   },
 

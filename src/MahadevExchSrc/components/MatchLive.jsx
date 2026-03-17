@@ -1,22 +1,24 @@
 import { IoRadio } from "react-icons/io5";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaFutbol, FaGavel } from "react-icons/fa";
 import { MdSportsCricket } from "react-icons/md";
+import { setMarketName, setMarketOddsData, setRunningData } from "../../redux/slices/fullmarketSlice";
 
 const MatchLive = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const scrollRef = useRef(null);
 
   const { matches: cricketMatches } = useSelector(
-    (state) => state.matches.cricket
+    (state) => state.matches.cricket,
   );
   const { matches: soccerMatches } = useSelector(
-    (state) => state.matches.soccer
+    (state) => state.matches.soccer,
   );
   const { matches: tennisMatches } = useSelector(
-    (state) => state.matches.tennis
+    (state) => state.matches.tennis,
   );
 
   /* =========================
@@ -59,6 +61,17 @@ const MatchLive = () => {
        NAVIGATION
   ========================= */
   const handleClick = (e) => {
+
+    dispatch(setRunningData(e?.matchRunners));
+    dispatch(setMarketName(e?.markets));
+
+    dispatch(
+      setMarketOddsData({
+        data: { data: e?.matchOdds },
+        sport: e?.sportName,
+      }),
+    );
+
     navigate(
       `/full-market?eventType=${e?.sportId}&eventId=${e?.eventId}&marketId=${e?.marketId}&joinedMarketIds=${e?.joinedMarketIds}&competitionId=${e?.competitionId}&bm=${e?.bm}&fancy=${e?.fancy}&pc=${e?.pc}&eventName=${encodeURIComponent(
         e?.eventName,
@@ -69,20 +82,17 @@ const MatchLive = () => {
   return (
     <div className="px-3 py-3 bg-black overflow-x-auto hide-scrollbar">
       <div ref={scrollRef} className="flex gap-[10px] min-w-max">
-
         {mergedInplayMatches.map((match, i) => {
-          const team1 =
-            match?.matchOdds?.[0]?.runners?.[0]?.runnerName;
-          const team2 =
-            match?.matchOdds?.[0]?.runners?.[1]?.runnerName;
+          const team1 = match?.matchOdds?.[0]?.runners?.[0]?.runnerName;
+          const team2 = match?.matchOdds?.[0]?.runners?.[1]?.runnerName;
 
           const odds1 =
-            match?.matchOdds?.[0]?.runners?.[0]?.ex
-              ?.availableToBack?.[0]?.price || "-";
+            match?.matchOdds?.[0]?.runners?.[0]?.ex?.availableToBack?.[0]
+              ?.price || "-";
 
           const odds2 =
-            match?.matchOdds?.[0]?.runners?.[1]?.ex
-              ?.availableToBack?.[0]?.price || "-";
+            match?.matchOdds?.[0]?.runners?.[1]?.ex?.availableToBack?.[0]
+              ?.price || "-";
 
           return (
             <div
@@ -100,9 +110,8 @@ const MatchLive = () => {
                   </span>
                 </div>
 
-            
-                  <img
-               src={`/SportsIcon/${match.sportName.toLowerCase()}.svg`}
+                <img
+                  src={`/SportsIcon/${match.sportName.toLowerCase()}.svg`}
                   alt=""
                   className="w-[16px] h-[16px]"
                 />
@@ -143,7 +152,6 @@ const MatchLive = () => {
             </div>
           );
         })}
-
       </div>
     </div>
   );
