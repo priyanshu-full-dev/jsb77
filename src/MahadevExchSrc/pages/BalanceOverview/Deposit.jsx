@@ -6,8 +6,6 @@ import { IoMdDownload } from "react-icons/io";
 import { AiOutlinePaperClip } from "react-icons/ai";
 import { FaCopy, FaDollarSign } from "react-icons/fa";
 
-
-
 import { getUserId, selectSite } from "../../../utils/helper/commonSelectors";
 import {
   createPayment,
@@ -26,30 +24,6 @@ const INITIAL_FORM_DATA = {
   PaymentBy: "",
   domainId: "",
 };
-
-// const UpiRow = ({ upi }) => {
-//   const handleCopy = async () => {
-//     try {
-//       await navigator.clipboard.writeText(upi);
-//       toast.success("UPI ID copied");
-//     } catch {
-//       toast.error("Failed to copy");
-//     }
-//   };
-
-//   return (
-//     <div className="flex items-center justify-between bg-[#f8fafc] border border-gray-200 rounded px-3 py-2">
-//       <span className="text-sm text-gray-800 break-all">{upi}</span>
-//       <button
-//         onClick={handleCopy}
-//         className="text-gray-500 hover:text-[#0c385c] transition"
-//         title="Copy UPI ID"
-//       >
-//         <FaCopy size={18} />
-//       </button>
-//     </div>
-//   );
-// };
 
 const Deposit = () => {
   const siteDetails = useSelector(selectSite());
@@ -398,26 +372,38 @@ const Deposit = () => {
     }
   };
 
-  const details = paymentDetails.account?.[0]
-    ? [
-        {
-          label: "BANK NAME",
-          value: paymentDetails.account[0].bankName || "N/A",
-        },
-        {
-          label: "ACCOUNT HOLDER NAME",
-          value: paymentDetails.account[0].accountHolder || "N/A",
-        },
-        {
-          label: "IFSC/SWIFT",
-          value: paymentDetails.account[0].ifscCode || "N/A",
-        },
-        {
-          label: "ACCOUNT NO",
-          value: paymentDetails.account[0].accountNumber || "N/A",
-        },
-      ]
-    : [];
+
+  const isBangladesh = window.location.host === "localhost:5000";
+
+const details = paymentDetails.account?.[0]
+  ? [
+      {
+        label: isBangladesh ? "SERVICE NAME" : "BANK NAME",
+        value: paymentDetails.account[0].bankName || "N/A",
+      },
+      {
+        label: isBangladesh
+          ? "ACCOUNT HOLDER"
+          : "ACCOUNT HOLDER NAME",
+        value: paymentDetails.account[0].accountHolder || "N/A",
+      },
+
+      // 🔥 ONLY INDIA
+      ...(!isBangladesh
+        ? [
+            {
+              label: "IFSC CODE",
+              value: paymentDetails.account[0].ifscCode || "N/A",
+            },
+          ]
+        : []),
+
+      {
+        label: isBangladesh ? "ACCOUNT / NUMBER" : "ACCOUNT NO",
+        value: paymentDetails.account[0].accountNumber || "N/A",
+      },
+    ]
+  : [];
 
   const phoneNumber = paymentDetails.gpay?.[0]?.phoneNumber || "13433414145";
   const message = "Hello, I am interested in your service.";
@@ -430,9 +416,10 @@ const Deposit = () => {
     );
   };
 
+
   return (
     <div className="p-6">
-      {loading &&    <Loader/>}
+      {loading && <Loader />}
       {step === 1 && (
         <>
           {/* HEADER */}
@@ -441,7 +428,7 @@ const Deposit = () => {
               Enter Amount to Continue
             </p>
             <p className="text-[12px] text-gray-500 mt-1">
-              भुगतान विवरण देखने के लिए राशि दर्ज करें
+              পেমেন্ট বিস্তারিত দেখতে অনুগ্রহ করে পরিমাণ লিখুন
             </p>
           </div>
 
@@ -450,9 +437,24 @@ const Deposit = () => {
             {allPayments?.map((item, index) => {
               const isSelected = selectedPayment?._id === item._id;
 
+              // 🔥 TITLE DYNAMIC
               const title =
                 item.method === "qr"
-                  ? "UPI / GPay"
+                  ? isBangladesh
+                    ? "bKash / Nagad"
+                    : "UPI / GPay"
+                  : item.method === "usdt"
+                    ? isBangladesh
+                      ? "bKash"
+                      : "USDT"
+                    : isBangladesh
+                      ? "Bank / Mobile"
+                      : "Bank";
+
+              // 🔥 PAYMENT MODE
+              const paymentMode =
+                item.method === "qr"
+                  ? "QR"
                   : item.method === "usdt"
                     ? "USDT"
                     : "Bank";
@@ -464,22 +466,17 @@ const Deposit = () => {
                     setSelectedPayment(item);
                     setFormData((prev) => ({
                       ...prev,
-                      PaymentMode:
-                        item.method === "qr"
-                          ? "QR"
-                          : item.method === "usdt"
-                            ? "USDT"
-                            : "Bank",
+                      PaymentMode: paymentMode,
                     }));
                   }}
                   className={`relative cursor-pointer rounded-2xl border p-3 transition-all
-          ${
-            isSelected
-              ? "border-[#5f259f] bg-[#f3e8ff] shadow-md scale-[1.02]"
-              : "border-gray-200 bg-white hover:border-[#5f259f]"
-          }`}
+        ${
+          isSelected
+            ? "border-[#5f259f] bg-[#f3e8ff] shadow-md scale-[1.02]"
+            : "border-gray-200 bg-white hover:border-[#5f259f]"
+        }`}
                 >
-                  {/* Selected Tick */}
+                  {/* SELECTED TAG */}
                   {isSelected && (
                     <span className="absolute top-2 right-2 text-[10px] font-semibold text-[#5f259f]">
                       SELECTED
@@ -489,25 +486,27 @@ const Deposit = () => {
                   {/* ICON */}
                   <div
                     className={`h-9 w-9 rounded-full flex items-center justify-center mb-2
-            ${
-              isSelected
-                ? "bg-[#5f259f] text-white"
-                : "bg-gray-100 text-gray-600"
-            }`}
+          ${
+            isSelected ? "bg-[#5f259f] text-white" : "bg-gray-100 text-gray-600"
+          }`}
                   >
                     {item.method === "qr" && <BsQrCode size={18} />}
                     {item.method === "bank" && <BsBank2 size={18} />}
-                    {item.method === "usdt" && (
-                      <img src="/usdt.png" alt="USDT" className="h-5 w-5" />
-                    )}
+                    {item.method === "usdt" &&
+                      (isBangladesh ? (
+                        <img src="/bkash.svg" alt="bkash" className="h-6 w-6" />
+                      ) : (
+                        <img src="/usdt.png" alt="USDT" className="h-5 w-5" />
+                      ))}
                   </div>
 
                   {/* TITLE */}
                   <p className="text-sm font-semibold text-gray-900">{title}</p>
 
-                  {/* MIN / MAX */}
+                  {/* LIMIT */}
                   <div className="mt-1 text-[12px] text-gray-600 leading-snug">
-                    {item.method === "usdt" ? (
+                    {/* USDT */}
+                    {item.method === "usdt" && !isBangladesh ? (
                       <>
                         <div className="flex items-center gap-1">
                           Min <FaDollarSign className="text-[10px]" />
@@ -520,8 +519,14 @@ const Deposit = () => {
                       </>
                     ) : (
                       <>
-                        <div>Min ₹{item.minAmount}</div>
-                        <div>Max ₹{item.maxAmount}</div>
+                        <div>
+                          Min {isBangladesh ? "৳" : "₹"}
+                          {item.minAmount || 0}
+                        </div>
+                        <div>
+                          Max {isBangladesh ? "৳" : "₹"}
+                          {item.maxAmount || "Unlimited"}
+                        </div>
                       </>
                     )}
                   </div>
@@ -632,16 +637,17 @@ const Deposit = () => {
             />
           </p>
 
+          {/* 🔥 TABS */}
           <div className="mt-4 grid grid-cols-4 gap-3">
             {/* QR */}
             <button
               onClick={() => handleTabClick("QR")}
               className={`rounded-xl p-3 border text-center transition
-      ${
-        activeTab === "QR"
-          ? "border-[#5f259f] bg-[#f3e8ff]"
-          : "border-gray-200 bg-white"
-      }`}
+        ${
+          activeTab === "QR"
+            ? "border-[#5f259f] bg-[#f3e8ff]"
+            : "border-gray-200 bg-white"
+        }`}
             >
               <BsQrCode
                 size={22}
@@ -649,18 +655,20 @@ const Deposit = () => {
                   activeTab === "QR" ? "text-[#5f259f]" : "text-gray-500"
                 }`}
               />
-              <p className="text-[11px] mt-1 font-medium">UPI</p>
+              <p className="text-[11px] mt-1 font-medium">
+                {isBangladesh ? "bKash QR" : "UPI"}
+              </p>
             </button>
 
             {/* Bank */}
             <button
               onClick={() => handleTabClick("Bank")}
               className={`rounded-xl p-3 border text-center transition
-      ${
-        activeTab === "Bank"
-          ? "border-[#5f259f] bg-[#f3e8ff]"
-          : "border-gray-200 bg-white"
-      }`}
+        ${
+          activeTab === "Bank"
+            ? "border-[#5f259f] bg-[#f3e8ff]"
+            : "border-gray-200 bg-white"
+        }`}
             >
               <BsBank2
                 size={22}
@@ -668,21 +676,29 @@ const Deposit = () => {
                   activeTab === "Bank" ? "text-[#5f259f]" : "text-gray-500"
                 }`}
               />
-              <p className="text-[11px] mt-1 font-medium">Bank</p>
+              <p className="text-[11px] mt-1 font-medium">
+                {isBangladesh ? "Bank / Mobile" : "Bank"}
+              </p>
             </button>
 
             {/* USDT */}
             <button
               onClick={() => handleTabClick("USDT")}
-              className={`rounded-xl p-3 border text-center transition
-      ${
-        activeTab === "USDT"
-          ? "border-[#5f259f] bg-[#f3e8ff]"
-          : "border-gray-200 bg-white"
-      }`}
+              className={`rounded-xl p-3 flex justify-center items-center flex-col border text-center transition
+        ${
+          activeTab === "USDT"
+            ? "border-[#5f259f] bg-[#f3e8ff]"
+            : "border-gray-200 bg-white"
+        }`}
             >
-              <img src="/usdt.png" className="h-5 mx-auto" />
-              <p className="text-[11px] mt-1 font-medium">USDT</p>
+              {isBangladesh ? (
+              <img src="/bkash.svg" alt="bkash" className="h-6 w-6" />
+              ) : (
+                <img src="/usdt.png" className="h-5 mx-auto" />
+              )}
+              <p className="text-[11px] mt-1 font-medium">
+                {isBangladesh ? "bKash" : "USDT"}
+              </p>
             </button>
 
             {/* WhatsApp */}
@@ -697,12 +713,14 @@ const Deposit = () => {
             )}
           </div>
 
+          {/* ================= QR ================= */}
           {activeTab === "QR" && (
             <div className="mt-6">
-              {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-[17px] font-semibold text-[#5f259f]">
-                  Scan & Pay via UPI
+                  {isBangladesh
+                    ? "Scan & Pay via bKash / Nagad"
+                    : "Scan & Pay via UPI"}
                 </h3>
                 <span className="text-[11px] px-3 py-1 rounded-full bg-[#f3e8ff] text-[#5f259f] border border-[#e9d5ff]">
                   Secure
@@ -710,7 +728,7 @@ const Deposit = () => {
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
-                {/* QR SECTION */}
+                {/* QR */}
                 <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
                   {qrImageUrl ? (
                     <>
@@ -723,7 +741,9 @@ const Deposit = () => {
                       </div>
 
                       <p className="mt-3 text-center text-sm text-gray-600">
-                        Scan using any UPI app (PhonePe, GPay, Paytm)
+                        {isBangladesh
+                          ? "Scan using bKash / Nagad app"
+                          : "Scan using any UPI app (PhonePe, GPay, Paytm)"}
                       </p>
                     </>
                   ) : (
@@ -733,21 +753,21 @@ const Deposit = () => {
                   )}
                 </div>
 
-                {/* DETAILS SECTION */}
+                {/* DETAILS */}
                 <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
-                  {/* Account Holder */}
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase">
-                      Account Holder Name
-                    </p>
-                    <p className="mt-1 px-3 py-2 rounded-md bg-gray-50 text-gray-900 text-sm font-medium">
-                      {paymentDetails.gpay?.[0]?.name || "N/A"}
-                    </p>
-                  </div>
+                  {/* <div>
+              <p className="text-xs text-gray-500 uppercase">
+                {isBangladesh ? "Account Name" : "Account Holder Name"}
+              </p>
+              <p className="mt-1 px-3 py-2 rounded-md bg-gray-50 text-gray-900 text-sm font-medium">
+                {paymentDetails.gpay?.[0]?.name || "N/A"}
+              </p>
+            </div> */}
 
-                  {/* UPI IDs */}
                   <div className="mt-4">
-                    <p className="text-xs text-gray-500 uppercase">UPI ID(s)</p>
+                    <p className="text-xs text-gray-500 uppercase">
+                      {isBangladesh ? "Number(s)" : "UPI ID(s)"}
+                    </p>
 
                     {Array.isArray(paymentDetails?.gpay?.[0]?.upiId) &&
                     paymentDetails.gpay[0].upiId.length > 0 ? (
@@ -755,17 +775,18 @@ const Deposit = () => {
                         {paymentDetails.gpay[0].upiId.map((upi, index) => (
                           <div
                             key={index}
-                            className="flex justify-between items-center
-                    bg-gray-50 border border-gray-200
-                    px-3 py-2 rounded-md text-sm"
+                            className="flex justify-between items-center bg-gray-50 border px-3 py-2 rounded-md text-sm"
                           >
                             <span className="break-all text-gray-800">
                               {upi}
                             </span>
                             <button
                               onClick={() => handleCopyUpi(upi)}
-                              className={`text-xs font-medium transition
-                               ${copiedUpi === upi ? "text-green-600" : "text-[#5f259f]"}`}
+                              className={`text-xs font-medium ${
+                                copiedUpi === upi
+                                  ? "text-green-600"
+                                  : "text-[#5f259f]"
+                              }`}
                             >
                               {copiedUpi === upi ? "COPIED" : "COPY"}
                             </button>
@@ -774,192 +795,127 @@ const Deposit = () => {
                       </div>
                     ) : (
                       <p className="text-sm text-gray-500 mt-2">
-                        No UPI ID available
+                        No data available
                       </p>
                     )}
                   </div>
 
-                  {/* DOWNLOAD */}
                   <button
                     onClick={() => handleDownload("QR")}
                     disabled={!qrImageUrl}
-                    className="mt-5 w-full py-3 rounded-xl font-semibold
-            bg-[#5f259f] text-white
-            flex items-center justify-center gap-2
-            hover:bg-[#4b1f82] transition-all disabled:opacity-50"
+                    className="mt-5 w-full py-3 rounded-xl font-semibold bg-[#5f259f] text-white"
                   >
-                    <IoMdDownload size={18} />
                     Download QR
                   </button>
 
                   <p className="text-[11px] text-gray-500 text-center mt-3">
-                    Amount will be credited after UTR verification
+                    Amount will be credited after verification
                   </p>
                 </div>
               </div>
             </div>
           )}
+
+          {/* ================= USDT ================= */}
           {activeTab === "USDT" && (
             <div className="mt-6">
-              {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-[17px] font-semibold text-[#16a34a]">
-                  Pay using USDT
+                  {isBangladesh ? "Pay via bKash" : "Pay using USDT"}
                 </h3>
                 <span className="text-[11px] px-3 py-1 rounded-full bg-green-50 text-green-700 border border-green-200">
-                  Crypto Payment
+                  Secure
                 </span>
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
-                {/* QR CARD */}
-                <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+                <div className="bg-white rounded-2xl border p-4">
                   {usdtImageUrl ? (
-                    <>
-                      <div className="flex justify-center">
-                        <img
-                          src={usdtImageUrl}
-                          alt="USDT QR Code"
-                          className="h-72 object-contain"
-                        />
-                      </div>
-
-                      <p className="mt-3 text-center text-sm text-gray-600">
-                        Scan this QR from your crypto wallet
-                      </p>
-                    </>
+                    <img
+                      src={usdtImageUrl}
+                      className="h-72 mx-auto object-contain"
+                    />
                   ) : (
-                    <p className="text-center text-gray-500 py-16">
-                      USDT QR Code not available
-                    </p>
+                    <p className="text-center py-16">No QR</p>
                   )}
                 </div>
 
-                {/* DETAILS */}
-                <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
-                  {/* Wallet Address */}
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase">
-                      Wallet Address
-                    </p>
-                    <div className="mt-1 flex items-center justify-between gap-2 bg-gray-50 border border-gray-200 px-3 py-2 rounded-md">
-                      <span className="text-sm text-gray-800 break-all">
-                        {paymentDetails.usdt?.[0]?.walletAddress || "N/A"}
-                      </span>
-                      <button
-                        onClick={() =>
-                          navigator.clipboard.writeText(
-                            paymentDetails.usdt?.[0]?.walletAddress || "",
-                          )
-                        }
-                        className="text-green-600 text-xs font-medium"
-                      >
-                        COPY
-                      </button>
-                    </div>
+                <div className="bg-white rounded-2xl border p-4">
+                  <p className="text-xs text-gray-500">
+                    {isBangladesh ? "Account Number" : "Wallet Address"}
+                  </p>
+
+                  <div className="flex justify-between bg-gray-50 px-3 py-2 rounded mt-1">
+                    <span className="text-sm break-all">
+                      {paymentDetails.usdt?.[0]?.walletAddress || "N/A"}
+                    </span>
+                    <button
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          paymentDetails.usdt?.[0]?.walletAddress || "",
+                        )
+                      }
+                      className="text-green-600 text-xs"
+                    >
+                      COPY
+                    </button>
                   </div>
 
-                  {/* Network */}
-                  <div className="mt-4">
-                    <p className="text-xs text-gray-500 uppercase">Network</p>
-                    <p className="mt-1 px-3 py-2 rounded-md bg-gray-50 text-sm font-medium text-gray-900">
-                      {paymentDetails.usdt?.[0]?.network || "N/A"}
+                  {!isBangladesh && (
+                    <p className="mt-3 text-sm">
+                      Network: {paymentDetails.usdt?.[0]?.network}
                     </p>
-                  </div>
+                  )}
 
-                  {/* Warning */}
-                  <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-md p-3">
-                    <p className="text-[12px] text-yellow-800 leading-relaxed">
-                      ⚠️ Send <b>USDT only</b> on the selected network. Sending
-                      via wrong network may result in permanent loss.
-                    </p>
-                  </div>
-
-                  {/* DOWNLOAD */}
                   <button
                     onClick={() => handleDownload("USDT")}
-                    disabled={!usdtImageUrl}
-                    className="mt-5 w-full py-3 rounded-xl font-semibold
-            bg-[#16a34a] text-white
-            flex items-center justify-center gap-2
-            hover:bg-[#15803d] transition-all disabled:opacity-50"
+                    className="mt-4 w-full bg-green-600 text-white py-2 rounded"
                   >
-                    <IoMdDownload size={18} />
-                    Download USDT QR
+                    Download QR
                   </button>
-
-                  <p className="text-[11px] text-gray-500 text-center mt-3">
-                    Deposit will be credited after blockchain confirmation
-                  </p>
                 </div>
               </div>
             </div>
           )}
 
+          {/* ================= BANK ================= */}
           {activeTab === "Bank" && (
-            <div className="mt-6 bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[16px] font-semibold text-[#1f2937]">
-                  Bank Transfer Details
-                </h3>
-                <span className="text-[11px] px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                  Secure Bank
-                </span>
-              </div>
+            <div className="mt-6 bg-white rounded-2xl border p-4">
+              <h3 className="font-semibold mb-3">
+                {isBangladesh
+                  ? "Bank / Mobile Details"
+                  : "Bank Transfer Details"}
+              </h3>
 
-              {details?.length > 0 ? (
-                <div className="space-y-3">
-                  {details.map((detail, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between
-              bg-gray-50 border border-gray-200
-              rounded-xl px-4 py-3"
-                    >
-                      {/* Left */}
-                      <div className="flex flex-col">
-                        <span className="text-[11px] text-gray-500 uppercase tracking-wide">
-                          {detail.label}
-                        </span>
-                        <span className="text-sm font-semibold text-gray-900 break-all">
-                          {detail.value}
-                        </span>
-                      </div>
+              {details?.map((detail, index) => (
+                <div
+                  key={index}
+                  className="flex justify-between bg-gray-50 px-3 py-2 mb-2 rounded"
+                >
+                  <div>
+                    <p className="text-xs text-gray-500">{detail.label}</p>
+                    <p className="text-sm font-semibold">{detail.value}</p>
+                  </div>
 
-                      {/* Copy */}
-                      <button
-                        onClick={() => handleCopy(detail.value)}
-                        className="flex items-center gap-1 text-blue-600 hover:text-blue-700 text-xs font-medium"
-                      >
-                        <FaCopy className="w-4 h-4" />
-                        COPY
-                      </button>
-                    </div>
-                  ))}
+                  <button
+                    onClick={() => handleCopy(detail.value)}
+                    className="text-blue-600 text-xs"
+                  >
+                    COPY
+                  </button>
                 </div>
-              ) : (
-                <p className="text-center text-gray-500 py-6">
-                  No bank details available
-                </p>
-              )}
-
-              {/* Info Note */}
-              <div className="mt-5 bg-yellow-50 border border-yellow-200 rounded-xl p-3">
-                <p className="text-[12px] text-yellow-800 leading-relaxed">
-                  ⚠️ Please transfer funds only to the above bank account.
-                  Transfers to old or inactive accounts may not be credited.
-                </p>
-              </div>
+              ))}
             </div>
           )}
 
+          {/* UTR */}
           <input
             type="text"
             id="UTR"
             value={formData.UTR}
             onChange={handleFormInputChange}
-            placeholder="ENTER TRANSACTION / UTR / REFERENCE NO."
-            className="w-full uppercase px-4 py-2.5 mt-4 border-[1px] text-[13px] border-[#ababab] rounded-md bg-white focus:bg-transparent text-black focus:outline-none focus:ring-0 cursor-pointer"
+            placeholder="ENTER TRANSACTION NO"
+            className="w-full mt-4 border px-4 py-2 rounded"
           />
 
           <div className="w-full">
@@ -991,14 +947,11 @@ const Deposit = () => {
             )}
           </div>
 
+          {/* SUBMIT */}
           <button
             onClick={handlePayment}
             disabled={loading}
-            className="mt-5 w-full py-3 rounded-xl font-semibold
-    bg-[#5f259f] text-white
-    flex items-center justify-center gap-2
-    hover:bg-[#4b1f82]
-    transition-all disabled:opacity-50"
+            className="mt-5 w-full bg-[#5f259f] text-white py-3 rounded-xl"
           >
             {loading ? "Processing..." : "DEPOSIT"}
           </button>

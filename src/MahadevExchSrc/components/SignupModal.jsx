@@ -237,34 +237,35 @@ const SignupModal = ({ onClose }) => {
 
   // ---------------- send OTP ----------------
 
-  const handleSubmit = async () => {
-    if (!validate()) return;
+const handleSubmit = async () => {
+  if (!validate()) return;
+  if (passwordError) return;
 
-    if (passwordError) return;
+  setIsLoading(true);
 
-    setIsLoading(true);
+  try {
+    const payload = {
+      ...formData,
+      password: form.password,
+      confirmPassword: form.confirmPassword,
+    };
 
-    try {
-      const response = await SendOtp({
-        mobile: form.phone,
-      });
+    const response = await signUp(payload);
 
-      if (response?.data?.success) {
-        toast.success(response?.data?.message || "OTP sent successfully");
-        setStep("otp");
-        setOtpSent(true);
-      } else {
-        toast.error(response?.data?.message || "Failed to send OTP");
-      }
-    } catch (err) {
-      toast.error("Error sending OTP");
-      console.log(err);
-    } finally {
-      setIsLoading(false);
+    if (response?.data?.message === "User created successfully") {
+      toast.success("Registration Successful");
+      onClose();
+      navigate("/");
+    } else {
+      toast.error(response?.data?.message || "Signup failed");
     }
+  } catch (err) {
+    toast.error("Signup failed");
+    console.log(err);
+  }
 
-    setIsLoading(false);
-  };
+  setIsLoading(false);
+};
 
   // ---------------- confirm OTP ----------------
 

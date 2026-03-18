@@ -13,10 +13,9 @@ import {
   deleteAccount,
   createwithdraw,
   checkWithdrawalAllowed,
-}  from "../../../api/index";
+} from "../../../api/index";
 import { Trash2 } from "lucide-react";
 import Loader from "../../components/Loader/Loader";
-
 
 const Withdraw = () => {
   const [step, setStep] = useState(0);
@@ -27,11 +26,11 @@ const Withdraw = () => {
   const [amounts, setAmounts] = useState({});
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [withdrawalCheck, setWithdrawalCheck] = useState({
-    withdrawalAllowed: false
+    withdrawalAllowed: false,
   });
 
   const admindomainId = useSelector(
-    (state) => state?.site?.siteDetails?.admindomainName?._id || ""
+    (state) => state?.site?.siteDetails?.admindomainName?._id || "",
   ); // Added fallback to avoid undefined
   const userId = useSelector(getUserId());
   const UserMobileNo = useSelector(getUserData())?.mobile;
@@ -142,47 +141,46 @@ const Withdraw = () => {
     }
   };
 
-const handleRemoveAccount = async (id) => {
-  try {
-    setLoading(true);
-    setError(null);
+  const handleRemoveAccount = async (id) => {
+    try {
+      setLoading(true);
+      setError(null);
 
-    const res = await deleteAccount(id); // axios request
+      const res = await deleteAccount(id); // axios request
 
-    // ✅ Check if API call succeeded
-    if (res.success) {
-      toast.success(res?.data?.message || "Account removed successfully");
+      // ✅ Check if API call succeeded
+      if (res.success) {
+        toast.success(res?.data?.message || "Account removed successfully");
 
-      setAccounts((prev) => prev?.filter((account) => account._id !== id));
-      setSelectedAccount(null);
+        setAccounts((prev) => prev?.filter((account) => account._id !== id));
+        setSelectedAccount(null);
 
-      setAmounts((prev) => {
-        const newAmounts = { ...prev };
-        delete newAmounts[id];
-        return newAmounts;
-      });
+        setAmounts((prev) => {
+          const newAmounts = { ...prev };
+          delete newAmounts[id];
+          return newAmounts;
+        });
 
-      fetchAccounts();
-    } else {
-      // ❌ Server responded but not successful
-      const message =
-        res?.data?.message || "Failed to delete account. Please try again.";
-      setError(message);
-      toast.error(message);
+        fetchAccounts();
+      } else {
+        // ❌ Server responded but not successful
+        const message =
+          res?.data?.message || "Failed to delete account. Please try again.";
+        setError(message);
+        toast.error(message);
+      }
+    } catch (err) {
+      // ❌ Axios caught an error (network/server/validation)
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "Something went wrong while deleting the account.";
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    // ❌ Axios caught an error (network/server/validation)
-    const errorMessage =
-      err.response?.data?.message ||
-      err.message ||
-      "Something went wrong while deleting the account.";
-    setError(errorMessage);
-    toast.error(errorMessage);
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const handleAddBankClick = (stepNumber) => {
     if (accounts?.length < 3) {
@@ -201,8 +199,8 @@ const handleRemoveAccount = async (id) => {
   };
 
   const handleCreateWithdrawal = async (accountId) => {
-    if(!withdrawalCheck.withdrawalAllowed){
-      return
+    if (!withdrawalCheck.withdrawalAllowed) {
+      return;
     }
     const withdrawAmount = parseFloat(amounts[accountId]);
     if (isNaN(withdrawAmount) || withdrawAmount <= 0) {
@@ -227,9 +225,10 @@ const handleRemoveAccount = async (id) => {
       setError(null);
 
       // Fallback for environments where crypto.randomUUID is not available
-      const uuid = typeof crypto !== "undefined" && crypto.randomUUID
-        ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`; // Fallback UTR generation
+      const uuid =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`; // Fallback UTR generation
 
       const response = await createwithdraw({
         UTR: uuid,
@@ -241,7 +240,9 @@ const handleRemoveAccount = async (id) => {
       });
 
       if (response?.success) {
-        toast.success(`Withdrawal request for ${withdrawAmount} initiated successfully`);
+        toast.success(
+          `Withdrawal request for ${withdrawAmount} initiated successfully`,
+        );
         setAmounts((prev) => ({
           ...prev,
           [accountId]: "",
@@ -263,30 +264,27 @@ const handleRemoveAccount = async (id) => {
     }
   };
 
-
   useEffect(() => {
-
     const fetchWithdrawalAllowed = async () => {
-      setLoading(true)
+      setLoading(true);
       const response = await checkWithdrawalAllowed();
       setWithdrawalCheck(response.data.data);
       setLoading(false);
-    }
-    if(window.location.hostname === "d2.blacklion.club"){
-      fetchWithdrawalAllowed()
-    }else{
-      setWithdrawalCheck({withdrawalAllowed: true});
+    };
+    if (window.location.hostname === "d2.blacklion.club") {
+      fetchWithdrawalAllowed();
+    } else {
+      setWithdrawalCheck({ withdrawalAllowed: true });
     }
 
-    return () => {
+    return () => {};
+  }, []);
 
-    }
-  }, [])
-
+  const isBangladesh = window.location.host === "localhost:5000";
 
   return (
     <>
-      {loading &&    <Loader/>}
+      {loading && <Loader />}
       <p className="text-gray-700 bg-[#08182f] text-[12px] text-white mt-[-1px] text-center">
         Kindly check the bank details before withdrawal
       </p>
@@ -323,28 +321,48 @@ const handleRemoveAccount = async (id) => {
                     </div>
 
                     <div className="bg-[#1e1e1e] text-white">
-                      <div className="border-b border-gray-800 px-4 py-3">
-                        <p className="text-xs text-gray-400">IFSC/SWIFT</p>
-                        <p className="font-medium">{account?.ifscCode}</p>
-                      </div>
+                      {/* IFSC ONLY INDIA */}
+                      {!isBangladesh && (
+                        <div className="border-b border-gray-800 px-4 py-3">
+                          <p className="text-xs text-gray-400">IFSC / SWIFT</p>
+                          <p className="font-medium">
+                            {account?.ifscCode || "N/A"}
+                          </p>
+                        </div>
+                      )}
 
-                      <div className="border-b border-gray-800 px-4 py-3">
-                        <p className="text-xs text-gray-400">BANK NAME</p>
-                        <p className="font-medium">{account?.bankName}</p>
-                      </div>
-
+                      {/* BANK / SERVICE NAME */}
                       <div className="border-b border-gray-800 px-4 py-3">
                         <p className="text-xs text-gray-400">
-                          ACCOUNT HOLDER NAME
+                          {isBangladesh ? "SERVICE NAME" : "BANK NAME"}
                         </p>
                         <p className="font-medium">
-                          {account?.accountHolderName}
+                          {account?.bankName || "N/A"}
                         </p>
                       </div>
 
+                      {/* ACCOUNT HOLDER */}
+                      <div className="border-b border-gray-800 px-4 py-3">
+                        <p className="text-xs text-gray-400">
+                          {isBangladesh
+                            ? "ACCOUNT HOLDER"
+                            : "ACCOUNT HOLDER NAME"}
+                        </p>
+                        <p className="font-medium">
+                          {account?.accountHolderName ||
+                            account?.accountHolder ||
+                            "N/A"}
+                        </p>
+                      </div>
+
+                      {/* ACCOUNT NUMBER */}
                       <div className="px-4 py-3">
-                        <p className="text-xs text-gray-400">ACCOUNT NO:</p>
-                        <p className="font-medium">{account?.accountNumber}</p>
+                        <p className="text-xs text-gray-400">
+                          {isBangladesh ? "ACCOUNT / NUMBER" : "ACCOUNT NO"}
+                        </p>
+                        <p className="font-medium">
+                          {account?.accountNumber || "N/A"}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -362,28 +380,48 @@ const handleRemoveAccount = async (id) => {
                         />
                       </p>
                       <div className="flex flex-wrap gap-2 mt-2">
-                        {["+100", "+200", "+500", "+1000", "+2000", "+5000"].map(
-                          (e, i) => (
-                            <button
-                              onClick={() =>
-                                handleIncreaseAmount(e?.replace("+", ""), account._id)
-                              }
-                              key={i}
-                              className="px-2.5 py-2 border text-[13px] font-[sans-serif] font-[500] border-[#bababa] text-black rounded-md"
-                            >
-                              {e}
-                            </button>
-                          )
-                        )}
+                        {[
+                          "+100",
+                          "+200",
+                          "+500",
+                          "+1000",
+                          "+2000",
+                          "+5000",
+                        ].map((e, i) => (
+                          <button
+                            onClick={() =>
+                              handleIncreaseAmount(
+                                e?.replace("+", ""),
+                                account._id,
+                              )
+                            }
+                            key={i}
+                            className="px-2.5 py-2 border text-[13px] font-[sans-serif] font-[500] border-[#bababa] text-black rounded-md"
+                          >
+                            {e}
+                          </button>
+                        ))}
                       </div>
                       <button
                         onClick={() => handleCreateWithdrawal(account._id)}
                         className="w-full mt-4 bg-[#00723c] font-bold text-white py-3 rounded hover:bg-blue-600 disabled:opacity-50"
-                        disabled={ window.location.hostname === "d2.blacklion.club" ?( loading || !amounts[account._id] || !withdrawalCheck.withdrawalAllowed): ( loading || !amounts[account._id] )}
+                        disabled={
+                          window.location.hostname === "d2.blacklion.club"
+                            ? loading ||
+                              !amounts[account._id] ||
+                              !withdrawalCheck.withdrawalAllowed
+                            : loading || !amounts[account._id]
+                        }
                       >
                         {loading ? "Processing..." : "Request Withdrawal"}
                       </button>
-                      { window.location.hostname === "d2.blacklion.club" && !withdrawalCheck.withdrawalAllowed && <div className="text-sm font-semibold text-orange-500"> {`Note: Play for more exposure of ${withdrawalCheck.moreExposureRequiredToWithdraw} to make the withdrawal.`} </div>}
+                      {window.location.hostname === "d2.blacklion.club" &&
+                        !withdrawalCheck.withdrawalAllowed && (
+                          <div className="text-sm font-semibold text-orange-500">
+                            {" "}
+                            {`Note: Play for more exposure of ${withdrawalCheck.moreExposureRequiredToWithdraw} to make the withdrawal.`}{" "}
+                          </div>
+                        )}
                     </div>
                   )}
                 </div>
@@ -403,77 +441,106 @@ const handleRemoveAccount = async (id) => {
           </div>
         )}
 
-        {showForm && (
-          <div className="w-full">
-            <div className="flex w-full items-center">
-              <div
-                onClick={handleBackClick}
-                className="flex justify-center items-center cursor-pointer"
-              >
-                <CustomSVG />
-              </div>
-              <p className="text-center w-full font-bold text-[20px]">
-                BANK {step}
-              </p>
-            </div>
+       {showForm && (
+  <div className="w-full">
+    <div className="flex w-full items-center">
+      <div
+        onClick={handleBackClick}
+        className="flex justify-center items-center cursor-pointer"
+      >
+        <CustomSVG />
+      </div>
 
-            <div className="w-full p-3 rounded-sm mt-6 border-[1px] border-dotted border-[#6e6e6e]">
-              <p className="text-[11px] mb-1">IFSC/SWIFT</p>
-              <input
-                type="text"
-                name="ifscCode"
-                value={formData.ifscCode}
-                onChange={(e) => handleInputChange(e)}
-                placeholder="IFSC/SWIFT"
-                className="w-full px-4 py-2.5 mb-4 border-[1px] text-[13px] border-[#ababab] rounded-md bg-white focus:bg-transparent text-black focus:outline-none focus:ring-0 cursor-pointer"
-              />
+      <p className="text-center w-full font-bold text-[20px]">
+        {isBangladesh ? "ACCOUNT" : "BANK"} {step}
+      </p>
+    </div>
 
-              <p className="text-[11px] mb-1">Bank Name</p>
-              <input
-                type="text"
-                name="bankName"
-                value={formData.bankName}
-                onChange={(e) => handleInputChange(e)}
-                placeholder="Enter Bank Name"
-                className="w-full px-4 py-2.5 mb-4 border-[1px] text-[13px] border-[#ababab] rounded-md bg-white focus:bg-transparent text-black focus:outline-none focus:ring-0 cursor-pointer"
-              />
+    <div className="w-full p-3 rounded-sm mt-6 border-[1px] border-dotted border-[#6e6e6e]">
 
-              <p className="text-[11px] mb-1">Account Holder Name</p>
-              <input
-                type="text"
-                name="accountHolderName"
-                value={formData.accountHolderName}
-                onChange={(e) => handleInputChange(e)}
-                placeholder="Enter Account Holder Name"
-                className="w-full px-4 py-2.5 mb-4 border-[1px] text-[13px] border-[#ababab] rounded-md bg-white focus:bg-transparent text-black focus:outline-none focus:ring-0 cursor-pointer"
-              />
+      {/* IFSC ONLY INDIA */}
+      {!isBangladesh && (
+        <>
+          <p className="text-[11px] mb-1">IFSC / SWIFT</p>
+          <input
+            type="text"
+            name="ifscCode"
+            value={formData.ifscCode}
+            onChange={handleInputChange}
+            placeholder="IFSC / SWIFT"
+            className="w-full px-4 py-2.5 mb-4 border text-[13px] rounded-md bg-white text-black"
+          />
+        </>
+      )}
 
-              <p className="text-[11px] mb-1">Account No</p>
-              <input
-                type="text"
-                name="accountNumber"
-                value={formData.accountNumber}
-                onChange={(e) => handleInputChange(e)}
-                placeholder="Enter Account No"
-                className="w-full px-4 py-2.5 mb-4 border-[1px] text-[13px] border-[#ababab] rounded-md bg-white focus:bg-transparent text-black focus:outline-none focus:ring-0 cursor-pointer"
-              />
+      {/* BANK / SERVICE */}
+      <p className="text-[11px] mb-1">
+        {isBangladesh ? "Service Name" : "Bank Name"}
+      </p>
+      <input
+        type="text"
+        name="bankName"
+        value={formData.bankName}
+        onChange={handleInputChange}
+        placeholder={
+          isBangladesh
+            ? "e.g. bKash / Nagad / Bank"
+            : "Enter Bank Name"
+        }
+        className="w-full px-4 py-2.5 mb-4 border text-[13px] rounded-md bg-white text-black"
+      />
 
-              <button
-                onClick={handleSaveAccount}
-                className="w-full mt-4 mb-6 bg-[#00723c] font-bold text-white py-3 rounded hover:bg-blue-600 disabled:opacity-50"
-                disabled={
-                  loading ||
-                  !formData.accountNumber ||
-                  !formData.accountHolderName ||
-                  !formData.ifscCode ||
-                  !formData.bankName
-                }
-              >
-                {loading ? "Adding..." : "ADD BANK"}
-              </button>
-            </div>
-          </div>
-        )}
+      {/* ACCOUNT HOLDER */}
+      <p className="text-[11px] mb-1">
+        {isBangladesh ? "Account Holder" : "Account Holder Name"}
+      </p>
+      <input
+        type="text"
+        name="accountHolderName"
+        value={formData.accountHolderName}
+        onChange={handleInputChange}
+        placeholder="Enter Name"
+        className="w-full px-4 py-2.5 mb-4 border text-[13px] rounded-md bg-white text-black"
+      />
+
+      {/* ACCOUNT NUMBER */}
+      <p className="text-[11px] mb-1">
+        {isBangladesh ? "Account / Number" : "Account No"}
+      </p>
+      <input
+        type="text"
+        name="accountNumber"
+        value={formData.accountNumber}
+        onChange={handleInputChange}
+        placeholder={
+          isBangladesh
+            ? "Enter Mobile Number / Account"
+            : "Enter Account No"
+        }
+        className="w-full px-4 py-2.5 mb-4 border text-[13px] rounded-md bg-white text-black"
+      />
+
+      {/* BUTTON */}
+      <button
+        onClick={handleSaveAccount}
+        className="w-full mt-4 mb-6 bg-[#00723c] font-bold text-white py-3 rounded hover:bg-blue-600 disabled:opacity-50"
+        disabled={
+          loading ||
+          !formData.accountNumber ||
+          !formData.accountHolderName ||
+          !formData.bankName ||
+          (!isBangladesh && !formData.ifscCode) // 🔥 CONDITION FIX
+        }
+      >
+        {loading
+          ? "Adding..."
+          : isBangladesh
+            ? "ADD ACCOUNT"
+            : "ADD BANK"}
+      </button>
+    </div>
+  </div>
+)}
       </div>
     </>
   );
