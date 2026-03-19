@@ -388,7 +388,7 @@ const details = paymentDetails.account?.[0]
         value: paymentDetails.account[0].accountHolder || "N/A",
       },
 
-      // 🔥 ONLY INDIA
+
       ...(!isBangladesh
         ? [
             {
@@ -441,7 +441,7 @@ const details = paymentDetails.account?.[0]
               const title =
                 item.method === "qr"
                   ? isBangladesh
-                    ? "bKash / Nagad"
+                    ? "Bangla QR"
                     : "UPI / GPay"
                   : item.method === "usdt"
                     ? isBangladesh
@@ -656,7 +656,7 @@ const details = paymentDetails.account?.[0]
                 }`}
               />
               <p className="text-[11px] mt-1 font-medium">
-                {isBangladesh ? "bKash QR" : "UPI"}
+                {isBangladesh ? "Bangla QR" : "UPI"}
               </p>
             </button>
 
@@ -719,7 +719,7 @@ const details = paymentDetails.account?.[0]
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-[17px] font-semibold text-[#5f259f]">
                   {isBangladesh
-                    ? "Scan & Pay via bKash / Nagad"
+                    ? "Scan & Pay via Bangla QR"
                     : "Scan & Pay via UPI"}
                 </h3>
                 <span className="text-[11px] px-3 py-1 rounded-full bg-[#f3e8ff] text-[#5f259f] border border-[#e9d5ff]">
@@ -742,7 +742,7 @@ const details = paymentDetails.account?.[0]
 
                       <p className="mt-3 text-center text-sm text-gray-600">
                         {isBangladesh
-                          ? "Scan using bKash / Nagad app"
+                          ? "Scan using Bangla QR"
                           : "Scan using any UPI app (PhonePe, GPay, Paytm)"}
                       </p>
                     </>
