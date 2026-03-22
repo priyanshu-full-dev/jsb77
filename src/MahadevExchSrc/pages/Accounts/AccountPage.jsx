@@ -5,28 +5,25 @@ import { resetBetSettings } from "../../../redux/slices/betSettingsSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
-
-
 const AccountPage = () => {
-
-    const getPlColor = () => {
-  if (Pl > 0) return "text-green-600";
-  if (Pl < 0) return "text-red-600";
-  return "text-black";
-};
+  const getPlColor = () => {
+    if (Pl > 0) return "text-green-600";
+    if (Pl < 0) return "text-red-600";
+    return "text-black";
+  };
 
   const userData = useSelector((state) => state?.user?.userData) || {};
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const menuItems = [
-    "Deposit & Withdrawal",
-    "Bet History",
-    "Bank Transfer",
-    "Profit & Loss",
-    "Bonus History",
-    "Activity Log",
-    "Account Statements",
-    "Account Settings",
+    { label: "Deposit & Withdrawal", path: "/balance-overview" },
+    { label: "Unsettled Bet", path: "/unsettled-bet" },
+    { label: "Bet History", path: "/bet-history" },
+    { label: "Bank Transfer", path: "/myAccount/bank-transfer" },
+    { label: "Profit & Loss", path: "/profit-loss-report" },
+    { label: "Activity Log", path: "/activityLog" },
+    { label: "Account Statements", path: "/account-statement" },
+    { label: "Account Settings", path: "/change-password" },
   ];
 
   const exposure = Number(userData?.exposure || 0);
@@ -91,7 +88,7 @@ const AccountPage = () => {
       <div>
         {/* USER CARD */}
         <div className="bg-[#00723B] m-4 text-white flex items-center justify-between p-2 px-2.5 rounded-md mb-4">
-          <h2 className="font-bold text-[16px]">{userData?.userName}</h2>
+          <h2 className="font-bold text-[16px] notranslate" translate="yes">{userData?.userName}</h2>
 
           <FaCircleUser size={28} />
         </div>
@@ -118,9 +115,10 @@ const AccountPage = () => {
           {menuItems.map((item, index) => (
             <button
               key={index}
+              onClick={() => navigate(item.path)}
               className="w-full text-[14px] border border-[#000] bg-white py-2 rounded-xl font-bold"
             >
-              {item}
+              {item.label}
             </button>
           ))}
         </div>

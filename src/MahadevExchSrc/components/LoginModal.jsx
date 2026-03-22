@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { FaEye, FaEyeSlash, FaFacebookF, FaInstagram } from "react-icons/fa";
 import {
@@ -9,13 +9,15 @@ import {
 import { subscribeToLogin } from "../../socketClient";
 import { toast } from "react-toastify";
 import { setAccountType } from "../../redux/slices/accountSlice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { createLoginRecord, Demo } from "../../api";
 import { loginSuccess } from "../../redux/slices/userSlice";
+import { selectSiteLogo } from "../../utils/helper/commonSelectors";
 
 const LoginModal = ({ onClose }) => {
   const [mode, setMode] = useState("login");
   const [showPass, setShowPass] = useState(false);
+  const siteLogo = useSelector(selectSiteLogo());
 
   const [errors, setErrors] = useState({});
   const dispatch = useDispatch();
@@ -149,6 +151,32 @@ const LoginModal = ({ onClose }) => {
     }
   };
 
+  const [logoUrl, setLogoUrl] = useState(null);
+
+  useEffect(() => {
+    const fetchAssets = async () => {
+      try {
+        const cachedLogo = localStorage.getItem("siteLogoUrl");
+        const cachedLogoKey = localStorage.getItem("siteLogoKey");
+
+        if (cachedLogo && cachedLogoKey === siteLogo) {
+          setLogoUrl(cachedLogo);
+        } else if (siteLogo) {
+          const logoPresigned = await generatePresignedUrl(siteLogo);
+          setLogoUrl(logoPresigned);
+          localStorage.setItem("siteLogoUrl", logoPresigned);
+          localStorage.setItem("siteLogoKey", siteLogo);
+        }
+      } catch (error) {
+        console.error("Error fetching site assets:", error);
+      }
+    };
+
+    if (siteLogo) {
+      fetchAssets();
+    }
+  }, [siteLogo]);
+
   const modal = (
     <div className="fixed w-full inset-0 z-[999999] flex items-center justify-center px-2">
       {/* Overlay */}
@@ -188,7 +216,7 @@ const LoginModal = ({ onClose }) => {
           {/* Logo */}
           <div className="flex justify-center ">
             <img
-              src="https://bajiplay365.com/assets/images/logos/bajiplay365_com-logo.png"
+              src={logoUrl}
               className="h-[26px] mb-2"
               alt="logo"
             />

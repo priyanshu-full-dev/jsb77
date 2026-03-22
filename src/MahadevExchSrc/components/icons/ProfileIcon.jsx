@@ -1,13 +1,13 @@
 import React from "react";
 
-const ProfileIcon = () => {
+const ProfileIcon = ({color}) => {
   return (
     <svg
       _ngcontent-wwp-c22=""
       id="Layer_2"
       viewBox="0 0 74.68 74.69"
       xmlns="http://www.w3.org/2000/svg"
-      fill="#ffffff80"
+      fill={color}
       height={29}
       width={29}
     >

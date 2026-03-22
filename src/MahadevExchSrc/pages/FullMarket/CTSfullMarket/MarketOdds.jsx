@@ -1,7 +1,7 @@
 // MarketOdds.jsx – All markets shown + Match Odds always at the top
 import { useDispatch, useSelector } from "react-redux";
 import { isMobile } from "react-device-detect";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ImArrowRight } from "react-icons/im";
 import { useSearchParams } from "react-router-dom";
@@ -260,6 +260,8 @@ export const MarketRunnerContainer = ({
   const dispatch = useDispatch();
 
   const [selfSelectedOdds, setSelfSelectedOdds] = useState(0);
+  const [liveOdds, setLiveOdds] = useState(0);
+  const [selectedBetType, setSelectedBetType] = useState(null);
 
   // const handleMarketCellClick = (betBoxBgColor, price, betType) => {
   //   setSelfSelectedOdds(price);
@@ -280,6 +282,9 @@ export const MarketRunnerContainer = ({
 
   const handleMarketCellClick = (betBoxBgColor, price, betType) => {
     setSelfSelectedOdds(price);
+    setLiveOdds(price);
+    setSelectedBetType(betType);
+
     if (price === 0) return;
     dispatch(
       handleOpenPlaceBet({
@@ -292,9 +297,26 @@ export const MarketRunnerContainer = ({
         selectionId: runner.selectionId,
         betBoxBgColor,
         betType,
-      })
+      }),
     );
   };
+
+useEffect(() => {
+
+  if (!selectedBetType) return;
+
+  const backOdds = runner?.ex?.availableToBack?.[0]?.price;
+  const layOdds = runner?.ex?.availableToLay?.[0]?.price;
+
+  if (selectedBetType === "Back" && backOdds) {
+    setLiveOdds(backOdds);
+  }
+
+  if (selectedBetType === "Lay" && layOdds) {
+    setLiveOdds(layOdds);
+  }
+
+}, [runner?.ex]);
 
   const calculateBetValues = useCallback(
     (runner, marketId) => {
@@ -473,6 +495,7 @@ export const MarketRunnerContainer = ({
         selectionId={runner.selectionId}
         selection={runnerData?.runnerName}
         selectedOdds={selfSelectedOdds}
+        liveOdds={liveOdds}
         setActiveBet={setActiveBet}
         suspendNow={`${
           runner?.status?.toLowerCase() != "active" || selfSelectedOdds == 0

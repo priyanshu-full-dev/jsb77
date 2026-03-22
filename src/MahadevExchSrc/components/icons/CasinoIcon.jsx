@@ -1,13 +1,13 @@
 import React from "react";
 
-const CasinoIcon = () => {
+const CasinoIcon = ({color}) => {
   return (
     <svg
       _ngcontent-wwp-c22=""
       id="Layer_2"
       viewBox="0 0 98.51 74.15"
       xmlns="http://www.w3.org/2000/svg"
-      fill="#ffffff80"
+      fill={color}
       height={30}
       width={40}
     >

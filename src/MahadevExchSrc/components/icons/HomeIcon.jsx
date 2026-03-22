@@ -1,13 +1,13 @@
 import React from "react";
 
-const HomeIcon = () => {
+const HomeIcon = ({color}) => {
   return (
     <svg
       _ngcontent-wwp-c22=""
       id="Layer_2"
       viewBox="0 0 70.73 74.69"
       xmlns="http://www.w3.org/2000/svg"
-      fill="white"
+      fill={color}
       height={29}
       width={30}
     >

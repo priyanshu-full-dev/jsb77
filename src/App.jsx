@@ -15,6 +15,7 @@ import "./App.css";
 import { getUserId } from "./utils/helper/commonSelectors";
 
 import { MahadevExchRouter } from "./MahadevExchSrc/MahadevExchRoutes";
+import Loader from "./MahadevExchSrc/components/Loader/Loader";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -146,7 +147,7 @@ const App = () => {
 
   return (
     <>
-      <Suspense fallback={<>Loading...</>}>
+      <Suspense fallback={<Loader/>}>
         <RouterProvider router={MahadevExchRouter} />
       </Suspense>
     </>

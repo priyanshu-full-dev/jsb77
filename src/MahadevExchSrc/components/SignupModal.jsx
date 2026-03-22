@@ -14,10 +14,11 @@ import {
 } from "react-icons/io5";
 
 import { useDispatch, useSelector } from "react-redux";
-import { selectSite } from "../../utils/helper/commonSelectors";
+import { selectSite, selectSiteLogo } from "../../utils/helper/commonSelectors";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { getSitesByDomain, SendOtp, signUp } from "../../api";
+import { generatePresignedUrl } from "../../utils/helper/generatePresignedUrl";
 
 const SignupModal = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -32,7 +33,7 @@ const SignupModal = ({ onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [params, setParams] = useState({});
-
+  const siteLogo = useSelector(selectSiteLogo());
   const [step, setStep] = useState("signup");
   const [otp, setOtp] = useState("");
 
@@ -236,37 +237,35 @@ const SignupModal = ({ onClose }) => {
 
   // ---------------- send OTP ----------------
 
-  const handleSubmit = async () => {
-    if (!validate()) return;
+const handleSubmit = async () => {
+  if (!validate()) return;
+  if (passwordError) return;
 
-    if (passwordError) return;
+  setIsLoading(true);
 
-    setIsLoading(true);
+  try {
+    const payload = {
+      ...formData,
+      password: form.password,
+      confirmPassword: form.confirmPassword,
+    };
 
-    try {
-      const response = await SendOtp({
-        mobile: form.phone,
-      });
+    const response = await signUp(payload);
 
-
-      
-
-      if (response?.data?.success) {
-        toast.success(response?.data?.message || "OTP sent successfully");
-        setStep("otp");
-        setOtpSent(true);
-      } else {
-        toast.error(response?.data?.message || "Failed to send OTP");
-      }
-    } catch (err) {
-      toast.error("Error sending OTP");
-      console.log(err);
-    } finally {
-      setIsLoading(false);
+    if (response?.data?.message === "User created successfully") {
+      toast.success("Registration Successful");
+      onClose();
+      navigate("/");
+    } else {
+      toast.error(response?.data?.message || "Signup failed");
     }
+  } catch (err) {
+    toast.error("Signup failed");
+    console.log(err);
+  }
 
-    setIsLoading(false);
-  };
+  setIsLoading(false);
+};
 
   // ---------------- confirm OTP ----------------
 
@@ -297,6 +296,34 @@ const SignupModal = ({ onClose }) => {
 
     setIsLoading(false);
   };
+
+  const [logoUrl, setLogoUrl] = useState(null);
+
+  useEffect(() => {
+    const fetchAssets = async () => {
+      try {
+        const cachedLogo = localStorage.getItem("siteLogoUrl");
+        const cachedLogoKey = localStorage.getItem("siteLogoKey");
+
+        if (cachedLogo && cachedLogoKey === siteLogo) {
+          setLogoUrl(cachedLogo);
+        } else if (siteLogo) {
+          const logoPresigned = await generatePresignedUrl(siteLogo);
+          setLogoUrl(logoPresigned);
+          localStorage.setItem("siteLogoUrl", logoPresigned);
+          localStorage.setItem("siteLogoKey", siteLogo);
+        }
+
+      } catch (error) {
+        console.error("Error fetching site assets:", error);
+      }
+    };
+
+    if (siteLogo ) {
+      fetchAssets();
+    }
+  }, [siteLogo]);
+
 
   const modal = (
     <div className="fixed inset-0 z-[999999] flex items-center justify-center px-2">
@@ -330,7 +357,7 @@ const SignupModal = ({ onClose }) => {
           {/* Logo */}
           <div className="flex justify-center mb-6">
             <img
-              src="https://bajiplay365.com/assets/images/logos/bajiplay365_com-logo.png"
+              src={logoUrl}
               className="h-[26px]"
               alt="logo"
             />

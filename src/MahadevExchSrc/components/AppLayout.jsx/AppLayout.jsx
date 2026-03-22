@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import {
   subscribeToGreyhoundMatchesData,
   subscribeToHorseMatchesData,
+  subscribeToJoinMyBets,
   subscribeToKabaddiMatchesData,
   subscribeToMatchData,
 } from "../../../socketClient";
@@ -16,7 +17,23 @@ const AppLayout = () => {
   const hideLayoutRoutes = ["/sport/profile"];
   const hideLayout = hideLayoutRoutes.includes(location.pathname);
 
-const hideFooterRoutes = ["/casino-games", "/sports","/full-market"];
+const hideFooterRoutes = [
+  "/casino-games",
+  "/sports",
+  "/full-market",
+  "/balance-overview",
+  "/bet-history",
+  "/myAccount/bank-transfer",
+  "/profit-loss-report",
+  "/account-statement",
+  "/change-password",
+  "/activityLog",
+  "/horseRacing",
+  "/horse-market",
+  "/greyhoundRacing",
+  "/greyhound-market"
+];
+
 const hideFooter = hideFooterRoutes.some((route) =>
   location.pathname.startsWith(route)
 );
@@ -46,6 +63,11 @@ const hideFooter = hideFooterRoutes.some((route) =>
     subscribeToKabaddiMatchesData();
     subscribeToGreyhoundMatchesData();
     subscribeToHorseMatchesData();
+  }, []);
+
+
+    useEffect(() => {
+    subscribeToJoinMyBets();
   }, []);
 
   return (

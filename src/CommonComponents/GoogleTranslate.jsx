@@ -2,32 +2,40 @@ import { useEffect } from "react";
 
 const GoogleTranslate = () => {
   useEffect(() => {
-    const addGoogleTranslateScript = () => {
-      if (window.google && window.google.translate) {
-        new window.google.translate.TranslateElement(
-          { pageLanguage: "en" },
-          "google_translate_element"
-        );
-      } else {
-        const script = document.createElement("script");
-        script.src =
-          "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
-        script.async = true;
-        document.body.appendChild(script);
+    // Default Bengali
+    const langCookie = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("googtrans="));
+
+    if (!langCookie) {
+      document.cookie = "googtrans=/en/bn; path=/";
+    }
+
+    const addScript = () => {
+      if (!window.googleTranslateElementInit) {
+        window.googleTranslateElementInit = () => {
+          new window.google.translate.TranslateElement(
+            {
+              pageLanguage: "en",
+              includedLanguages: "en,hi,ta,te,kn,mr,gu,bn,ne",
+              autoDisplay: false,
+            },
+            "google_translate_element"
+          );
+        };
       }
 
-      window.googleTranslateElementInit = () => {
-        new window.google.translate.TranslateElement(
-          { pageLanguage: "en" },
-          "google_translate_element"
-        );
-      };
+      const script = document.createElement("script");
+      script.src =
+        "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+      script.async = true;
+      document.body.appendChild(script);
     };
 
-    addGoogleTranslateScript();
+    addScript();
   }, []);
 
-  return <div id="google_translate_element"></div>;
+  return <div id="google_translate_element" style={{ display: "none" }} />;
 };
 
 export default GoogleTranslate;

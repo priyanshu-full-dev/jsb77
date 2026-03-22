@@ -8,6 +8,7 @@ import { selectDomainID } from "../../../utils/helper/commonSelectors";
 import { useEffect, useState } from "react";
 import { updateCasinoSlice } from "../../../redux/slices/casinoSlice";
 import axios from "axios";
+import WhatsAppFloat from "../../components/WhatsAppFloat";
 
 const images = ["/1.png", "/2.png", "/3.png", "/4.png", "/5.png", "/6.png"];
 
@@ -173,6 +174,7 @@ const Home = () => {
       <BannerSlider images={images}/>
 
       <CategoryGrid />
+      <WhatsAppFloat />
 
       <TrendingSection
         title="Trending"

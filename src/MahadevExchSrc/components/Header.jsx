@@ -7,21 +7,28 @@ import { useDispatch, useSelector } from "react-redux";
 import { IoWallet } from "react-icons/io5";
 import { getCasinoBalance } from "../../api";
 import { updateSiteCasinoSlice } from "../../redux/slices/siteCasinoSlice";
-import { selectSite, selectSiteFevicon, selectSiteLogo, selectSiteName } from "../../utils/helper/commonSelectors";
+import {
+  selectSite,
+  selectSiteFevicon,
+  selectSiteLogo,
+  selectSiteName,
+} from "../../utils/helper/commonSelectors";
 import { generatePresignedUrl } from "../../utils/helper/generatePresignedUrl";
-
-
+import { useNavigate, useLocation } from "react-router-dom";
+import { IoChevronBack } from "react-icons/io5";
+import GoogleTranslate from "../../CommonComponents/GoogleTranslate";
 
 const languages = [
-  "ENGLISH",
-  "हिन्दी",
-  "தமிழ்",
-  "తెలుగు",
-  "ಕನ್ನಡ",
-  "मराठी",
-  "ગુજરાતી",
-  "বাংলা",
-  "नेपाली",
+  { name: "ENGLISH", code: "en" },
+  { name: "বাংলা", code: "bn" },
+  { name: "हिन्दी", code: "hi" },
+  { name: "தமிழ்", code: "ta" },
+  { name: "తెలుగు", code: "te" },
+  { name: "ಕನ್ನಡ", code: "kn" },
+  { name: "मराठी", code: "mr" },
+  { name: "ગુજરાતી", code: "gu" },
+  { name: "বাংলা", code: "bn" },
+  { name: "नेपाली", code: "ne" },
 ];
 
 const Header = () => {
@@ -31,7 +38,31 @@ const Header = () => {
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
   const siteDetails = useSelector(selectSite());
   const userData = useSelector((state) => state?.user?.userData) || {};
+  const navigate = useNavigate();
+  const location = useLocation();
 
+  const accountPaths = [
+    "/balance-overview",
+    "/bet-history",
+    "/myAccount/bank-transfer",
+    "/profit-loss-report",
+    "/account-statement",
+    "/change-password",
+    "/full-market",
+    "/activityLog",
+    "/greyhound-market",
+    "/horse-market",
+  ];
+
+const changeLanguage = (lang) => {
+  document.cookie = `googtrans=/en/${lang}; path=/`;
+
+
+  setTimeout(() => {
+    window.location.reload();
+  }, 500); 
+};
+  const showBack = accountPaths.includes(location.pathname);
 
   const siteName = useSelector(selectSiteName());
   const siteLogo = useSelector(selectSiteLogo());
@@ -59,13 +90,11 @@ const Header = () => {
     fetchData();
   }, []);
 
-
-    const [logoUrl, setLogoUrl] = useState(null);
+  const [logoUrl, setLogoUrl] = useState(null);
 
   useEffect(() => {
     const fetchAssets = async () => {
       try {
-
         const cachedLogo = localStorage.getItem("siteLogoUrl");
         const cachedLogoKey = localStorage.getItem("siteLogoKey");
 
@@ -78,10 +107,7 @@ const Header = () => {
           localStorage.setItem("siteLogoKey", siteLogo);
         }
 
-        if (siteFavIcon) {
-          const favPresigned = await generatePresignedUrl(siteFavIcon);
-          setFavIconUrl(favPresigned);
-        }
+
 
         if (siteName) {
           document.title = siteName;
@@ -101,10 +127,17 @@ const Header = () => {
       <div className="max-w-[1200px] mx-auto flex items-center justify-between px-3 h-[42px]">
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <img
-            src={logoUrl}
-            className="h-[20px]"
-          />
+          {showBack ? (
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center text-white text-[14px] font-semibold"
+            >
+              <IoChevronBack size={20} />
+              BACK
+            </button>
+          ) : (
+            <img src={logoUrl} className="h-[22px]"   onClick={() => navigate("/")}/>
+          )}
         </div>
 
         {/* Right Buttons */}
@@ -128,6 +161,12 @@ const Header = () => {
             </>
           ) : (
             <>
+              {showBack && (
+                <div className="flex items-center gap-1 text-[12px] text-[white]">
+                  <p>EXP</p>
+                  <span className="font-bold"> {exposure?.toFixed(2)}</span>
+                </div>
+              )}
               <button className="bg-[#08391e] flex gap-1 items-center text-white text-[12px] font-semibold px-[6px] h-[26px] rounded-[5px]">
                 <IoWallet />
                 <p className="pr-1">CI</p>{" "}
@@ -145,11 +184,14 @@ const Header = () => {
             <IoMdArrowDropdown className="text-[16px] text-[black]" />
           </button>
 
+          <GoogleTranslate />
+
           {/* Dropdown */}
           {open && (
             <div className="absolute -right-2 top-[32px] w-[110px] rounded-md overflow-hidden shadow-lg border border-green-600">
               {languages.map((lang, i) => (
                 <div
+                  onClick={() => changeLanguage(lang.code)}
                   key={i}
                   className={`px-4 py-2 text-[10px] cursor-pointer border-b border-green-600
                   ${
@@ -158,7 +200,7 @@ const Header = () => {
                       : "bg-[#0b7a3b] text-white hover:bg-[#096a33]"
                   }`}
                 >
-                  {lang}
+                  {lang.name}
                 </div>
               ))}
             </div>

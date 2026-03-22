@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+  top: 0px !important;
+  position: static !important;
+}
+
 /* tunable variables for pixel-perfect control */
 :root{
   --news-height: 36px;        /* change if you need micro tuning */
@@ -117,4 +122,59 @@ width: 28px;
   0% { opacity: 0.5 }
   50% { opacity: 1 }
   100% { opacity: 0.5 }
+}
+
+
+.VIpgJd-ZVi9od-l4eHX-hSRGPd {
+  display: none !important;
+}
+
+.VIpgJd-ZVi9od-ORHb-OEVmcd.skiptranslate {
+  display: none !important;
+}
+
+.skiptranslate.goog-te-gadget {
+  height: 35px;
+  overflow: hidden;
+}
+
+.goog-te-combo {
+  padding: 5px 12px !important;
+  width: 100% !important;
+  font-size: 14px !important;
+  border: 1px solid #ccc !important;
+  border-radius: 8px !important;
+  background-color: #f9f9f9 !important;
+  color: #333 !important;
+  outline: none !important;
+  transition: all 0.3s ease-in-out !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  position: relative;
+}
+
+.skiptranslate.goog-te-gadget {
+  padding: 0px 10px !important;
+}
+
+.goog-te-combo:hover,
+.goog-te-combo:focus {
+  border-color: #007bff !important;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25) !important;
+  background-color: #fff !important;
+}
+
+.VIpgJd-ZVi9od-aZ2wEe-wOHMyf.VIpgJd-ZVi9od-aZ2wEe-wOHMyf-ti6hGc {
+  display: none !important;
+}
+
+/* .VIpgJd-yAWNEb-VIpgJd-fmcmS-sn54Q{
+  display: none !important;
+} */
+
+.VIpgJd-suEOdc.VIpgJd-yAWNEb-L7lbkb.skiptranslate {
+  display: none !important;
+}
+
+.VIpgJd-yAWNEb-VIpgJd-fmcmS-sn54Q {
+  all: unset !important;
 }

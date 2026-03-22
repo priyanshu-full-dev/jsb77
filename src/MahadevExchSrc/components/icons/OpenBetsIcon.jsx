@@ -1,13 +1,13 @@
 import React from "react";
 
-const OpenBetsIcon = () => {
+const OpenBetsIcon = ({color}) => {
   return (
     <svg
       _ngcontent-wwp-c22=""
       id="Layer_2"
       viewBox="0 0 88.1 73.31"
       xmlns="http://www.w3.org/2000/svg"
-      fill="#ffffff80"
+      fill={color}
       height={30}
       width={36}
     >
