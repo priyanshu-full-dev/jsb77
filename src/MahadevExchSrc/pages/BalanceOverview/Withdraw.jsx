@@ -280,7 +280,7 @@ const Withdraw = () => {
     return () => {};
   }, []);
 
-  const isBangladesh = window.location.host === "playbangla777.com";
+  const isBangladesh = window.location.host === "localhost:5000";
 
   return (
     <>
@@ -322,14 +322,14 @@ const Withdraw = () => {
 
                     <div className="bg-[#1e1e1e] text-white">
                       {/* IFSC ONLY INDIA */}
-                      {!isBangladesh && (
+
                         <div className="border-b border-gray-800 px-4 py-3">
                           <p className="text-xs text-gray-400">IFSC / SWIFT</p>
                           <p className="font-medium">
                             {account?.ifscCode || "N/A"}
                           </p>
                         </div>
-                      )}
+                
 
                       {/* BANK / SERVICE NAME */}
                       <div className="border-b border-gray-800 px-4 py-3">
@@ -459,7 +459,7 @@ const Withdraw = () => {
     <div className="w-full p-3 rounded-sm mt-6 border-[1px] border-dotted border-[#6e6e6e]">
 
       {/* IFSC ONLY INDIA */}
-      {!isBangladesh && (
+
         <>
           <p className="text-[11px] mb-1">IFSC / SWIFT</p>
           <input
@@ -471,7 +471,7 @@ const Withdraw = () => {
             className="w-full px-4 py-2.5 mb-4 border text-[13px] rounded-md bg-white text-black"
           />
         </>
-      )}
+ 
 
       {/* BANK / SERVICE */}
       <p className="text-[11px] mb-1">

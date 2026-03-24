@@ -481,10 +481,10 @@ const handleSubmit = async () => {
               </p>
 
               {/* WhatsApp */}
-              <button className="w-full flex items-center justify-center gap-3 bg-green-500 py-2 text-[14px] rounded-[8px] text-white font-extrabold mb-6">
+              {/* <button className="w-full flex items-center justify-center gap-3 bg-green-500 py-2 text-[14px] rounded-[8px] text-white font-extrabold mb-6">
                 <FaWhatsapp size={22} />
                 WHATSAPP FOR YOUR ID
-              </button>
+              </button> */}
 
               {/* Features */}
               <div className="flex justify-between text-white text-[11px] mb-4">
