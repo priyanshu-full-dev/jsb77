@@ -176,13 +176,13 @@ const changeLanguage = (lang) => {
           )}
 
           {/* Language */}
-          <button
+          {/* <button
             onClick={() => setOpen(!open)}
             className="bg-white text-[#00723B] text-[10px] font-semibold px-1  rounded-[3px] flex items-center"
           >
             EN
             <IoMdArrowDropdown className="text-[16px] text-[black]" />
-          </button>
+          </button> */}
 
           <GoogleTranslate />
 
