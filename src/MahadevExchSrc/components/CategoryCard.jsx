@@ -20,6 +20,7 @@ gap-1
       <Icon className="text-white mb-1 h-[45px] w-[45px]" />
 
       <p
+        translate="no"
         className="
         text-[13.5px]
         font-bold

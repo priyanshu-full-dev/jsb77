@@ -375,7 +375,7 @@ const Deposit = () => {
   };
 
 
-  const isBangladesh = window.location.host === "playbangla777.com";
+  const isBangladesh = window.location.host === "localhost:5000";
 
 const details = paymentDetails.account?.[0]
   ? [
@@ -511,22 +511,22 @@ const details = paymentDetails.account?.[0]
                     {item.method === "usdt" && !isBangladesh ? (
                       <>
                         <div className="flex items-center gap-1">
-                          Min <FaDollarSign className="text-[10px]" />
+                          Min ৳
                           {item.minAmount}
                         </div>
                         <div className="flex items-center gap-1">
-                          Max <FaDollarSign className="text-[10px]" />
+                          Max ৳
                           {item.maxAmount}
                         </div>
                       </>
                     ) : (
                       <>
                         <div>
-                          Min {isBangladesh ? "৳" : "₹"}
+                          Min {isBangladesh ? "৳" : "৳"}
                           {item.minAmount || 0}
                         </div>
                         <div>
-                          Max {isBangladesh ? "৳" : "₹"}
+                          Max {isBangladesh ? "৳" : "৳"}
                           {item.maxAmount || "Unlimited"}
                         </div>
                       </>

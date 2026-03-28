@@ -10,10 +10,15 @@ import { BiSolidTennisBall } from "react-icons/bi";
 
 
 export const categories = [
- { title:"IN-PLAY", icon:InPlayIcon, path:"/sports/cricket/inplay" },
- { title:"SPORTSBOOK", icon:SportsbookIcon, path:"/sports/cricket/tomorrow?sportsbook" },
- { title:"HOURSE RACE", icon:VirtualIcon, path:"/horseRacing" },
- { title:"GREYHOUND", icon:PlayerBattleIcon, path:"/greyhoundRacing" },
- { title:"CRICKET", icon:BiSolidCricketBall, path:"/sports/cricket/tomorrow?sportsbook" },
- { title:"TENNIS", icon:BiSolidTennisBall, path:"/sports/tennis/tomorrow?sportsbook" },
+ { title:"IN-PLAY", bn:"লাইভ ম্যাচ", icon:InPlayIcon, path:"/sports/cricket/inplay" },
+
+ { title:"SPORTSBOOK", bn:"স্পোর্টসবুক", icon:SportsbookIcon, path:"/sports/cricket/tomorrow?sportsbook" },
+
+ { title:"HORSE RACE", bn:"ঘোড়দৌড়", icon:VirtualIcon, path:"/horseRacing" },
+
+ { title:"GREYHOUND", bn:"গ্রেহাউন্ড রেস", icon:PlayerBattleIcon, path:"/greyhoundRacing" },
+
+ { title:"CRICKET", bn:"ক্রিকেট", icon:BiSolidCricketBall, path:"/sports/cricket/tomorrow?sportsbook" },
+
+ { title:"TENNIS", bn:"টেনিস", icon:BiSolidTennisBall, path:"/sports/tennis/tomorrow?sportsbook" },
 ];

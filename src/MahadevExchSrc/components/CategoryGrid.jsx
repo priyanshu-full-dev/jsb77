@@ -3,7 +3,6 @@ import CategoryCard from "./CategoryCard";
 import { categories } from "../data/categories";
 
 const CategoryGrid = () => {
-
   const navigate = useNavigate();
 
   return (
@@ -11,7 +10,7 @@ const CategoryGrid = () => {
       {categories.map((item, i) => (
         <CategoryCard
           key={i}
-          title={item.title}
+          title={item.bn}
           icon={item.icon}
           onClick={() => navigate(item.path)}
         />
