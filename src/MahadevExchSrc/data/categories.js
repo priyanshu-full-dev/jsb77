@@ -14,7 +14,7 @@ export const categories = [
 
  { title:"SPORTSBOOK", bn:"স্পোর্টসবুক", icon:SportsbookIcon, path:"/sports/cricket/tomorrow?sportsbook" },
 
- { title:"HORSE RACE", bn:"ঘোড়দৌড়", icon:VirtualIcon, path:"/horseRacing" },
+ { title:"HORSE RACE", bn:"হর্স রেসিং", icon:VirtualIcon, path:"/horseRacing" },
 
  { title:"GREYHOUND", bn:"গ্রেহাউন্ড রেস", icon:PlayerBattleIcon, path:"/greyhoundRacing" },
 
