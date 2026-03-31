@@ -24,7 +24,7 @@ const SignupModal = ({ onClose }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const siteDetails = useSelector(selectSite());
-
+  const siteData = useSelector(selectSite());
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [userData, setUserData] = useState(null);
@@ -481,10 +481,12 @@ const handleSubmit = async () => {
               </p>
 
               {/* WhatsApp */}
-              {/* <button className="w-full flex items-center justify-center gap-3 bg-green-500 py-2 text-[14px] rounded-[8px] text-white font-extrabold mb-6">
+              <a  href={`https://wa.me/${siteData?.whatsappSupport}`}
+      target="_blank"
+      rel="noopener noreferrer" className="w-full flex items-center justify-center gap-3 bg-green-500 py-2 text-[14px] rounded-[8px] text-white font-extrabold mb-6">
                 <FaWhatsapp size={22} />
                 WHATSAPP FOR YOUR ID
-              </button> */}
+              </a>
 
               {/* Features */}
               <div className="flex justify-between text-white text-[11px] mb-4">

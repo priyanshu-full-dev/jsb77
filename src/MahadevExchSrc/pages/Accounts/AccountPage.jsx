@@ -71,7 +71,7 @@ const AccountPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[white]">
+    <div className="min-h-screen bg-[white] mb-[80px]">
       {/* HEADER */}
       <div className="bg-[#00723B] text-white flex items-center justify-between px-2 py-2.5">
         <div
