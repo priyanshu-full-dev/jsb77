@@ -375,7 +375,7 @@ const Deposit = () => {
   };
 
 
-  const isBangladesh = window.location.host === "localhost:5000";
+  const isBangladesh = window.location.host === "playbangla777.com";
 
 const details = paymentDetails.account?.[0]
   ? [

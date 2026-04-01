@@ -7,36 +7,46 @@ import {
   subscribeToGreyhoundMatchesData,
   subscribeToHorseMatchesData,
   subscribeToJoinMyBets,
+  subscribeToJoinProfileRoom,
   subscribeToKabaddiMatchesData,
   subscribeToMatchData,
 } from "../../../socketClient";
+import { getUserId } from "../../../utils/helper/commonSelectors";
+import { useSelector } from "react-redux";
 
 const AppLayout = () => {
   const location = useLocation();
-
+  const currentUserId = useSelector(getUserId());
   const hideLayoutRoutes = ["/sport/profile"];
   const hideLayout = hideLayoutRoutes.includes(location.pathname);
 
-const hideFooterRoutes = [
-  "/casino-games",
-  "/sports",
-  "/full-market",
-  "/balance-overview",
-  "/bet-history",
-  "/myAccount/bank-transfer",
-  "/profit-loss-report",
-  "/account-statement",
-  "/change-password",
-  "/activityLog",
-  "/horseRacing",
-  "/horse-market",
-  "/greyhoundRacing",
-  "/greyhound-market"
-];
+    useEffect(() => {
+    if (currentUserId) {
+      subscribeToJoinProfileRoom(currentUserId);
+      subscribeToJoinMyBets(currentUserId);
+    }
+  }, [currentUserId]);
 
-const hideFooter = hideFooterRoutes.some((route) =>
-  location.pathname.startsWith(route)
-);
+  const hideFooterRoutes = [
+    "/casino-games",
+    "/sports",
+    "/full-market",
+    "/balance-overview",
+    "/bet-history",
+    "/myAccount/bank-transfer",
+    "/profit-loss-report",
+    "/account-statement",
+    "/change-password",
+    "/activityLog",
+    "/horseRacing",
+    "/horse-market",
+    "/greyhoundRacing",
+    "/greyhound-market",
+  ];
+
+  const hideFooter = hideFooterRoutes.some((route) =>
+    location.pathname.startsWith(route),
+  );
 
   useEffect(() => {
     subscribeToMatchData({
@@ -66,9 +76,6 @@ const hideFooter = hideFooterRoutes.some((route) =>
   }, []);
 
 
-    useEffect(() => {
-    subscribeToJoinMyBets();
-  }, []);
 
   return (
     <>
