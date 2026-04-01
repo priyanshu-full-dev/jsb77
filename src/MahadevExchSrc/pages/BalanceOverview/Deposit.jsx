@@ -6,8 +6,6 @@ import { IoMdDownload } from "react-icons/io";
 import { AiOutlinePaperClip } from "react-icons/ai";
 import { FaCopy, FaDollarSign } from "react-icons/fa";
 
-
-
 import { getUserId, selectSite } from "../../../utils/helper/commonSelectors";
 import {
   createPayment,
@@ -374,38 +372,32 @@ const Deposit = () => {
     }
   };
 
+  const isBangladesh =
+    window.location.host === "playbangla777.com" ||
+    window.location.host === "localhost:5000";
 
-  const isBangladesh = window.location.host === "playbangla777.com";
+  const details = paymentDetails.account?.[0]
+    ? [
+        {
+          label:  "BANK NAME",
+          value: paymentDetails.account[0].bankName || "N/A",
+        },
+        {
+          label:  "ACCOUNT HOLDER NAME",
+          value: paymentDetails.account[0].accountHolder || "N/A",
+        },
+         {
+                label: "SWIFT CODE",
+                value: paymentDetails.account[0].ifscCode || "N/A",
+              },
 
-const details = paymentDetails.account?.[0]
-  ? [
-      {
-        label: isBangladesh ? "SERVICE NAME" : "BANK NAME",
-        value: paymentDetails.account[0].bankName || "N/A",
-      },
-      {
-        label: isBangladesh
-          ? "ACCOUNT HOLDER"
-          : "ACCOUNT HOLDER NAME",
-        value: paymentDetails.account[0].accountHolder || "N/A",
-      },
 
-
-      ...(!isBangladesh
-        ? [
-            {
-              label: "IFSC CODE",
-              value: paymentDetails.account[0].ifscCode || "N/A",
-            },
-          ]
-        : []),
-
-      {
-        label: isBangladesh ? "ACCOUNT / NUMBER" : "ACCOUNT NO",
-        value: paymentDetails.account[0].accountNumber || "N/A",
-      },
-    ]
-  : [];
+        {
+          label:  "ACCOUNT NUMBER",
+          value: paymentDetails.account[0].accountNumber || "N/A",
+        },
+      ]
+    : [];
 
   const phoneNumber = paymentDetails.gpay?.[0]?.phoneNumber || "13433414145";
   const message = "Hello, I am interested in your service.";
@@ -417,7 +409,6 @@ const details = paymentDetails.account?.[0]
       "_blank",
     );
   };
-
 
   return (
     <div className="p-6">
@@ -511,12 +502,10 @@ const details = paymentDetails.account?.[0]
                     {item.method === "usdt" && !isBangladesh ? (
                       <>
                         <div className="flex items-center gap-1">
-                          Min ৳
-                          {item.minAmount}
+                          Min ৳{item.minAmount}
                         </div>
                         <div className="flex items-center gap-1">
-                          Max ৳
-                          {item.maxAmount}
+                          Max ৳{item.maxAmount}
                         </div>
                       </>
                     ) : (
@@ -645,11 +634,11 @@ const details = paymentDetails.account?.[0]
             <button
               onClick={() => handleTabClick("QR")}
               className={`rounded-xl p-3 border text-center transition
-        ${
-          activeTab === "QR"
-            ? "border-[#5f259f] bg-[#f3e8ff]"
-            : "border-gray-200 bg-white"
-        }`}
+              ${
+                activeTab === "QR"
+                  ? "border-[#5f259f] bg-[#f3e8ff]"
+                  : "border-gray-200 bg-white"
+              }`}
             >
               <BsQrCode
                 size={22}
@@ -666,11 +655,11 @@ const details = paymentDetails.account?.[0]
             <button
               onClick={() => handleTabClick("Bank")}
               className={`rounded-xl p-3 border text-center transition
-        ${
-          activeTab === "Bank"
-            ? "border-[#5f259f] bg-[#f3e8ff]"
-            : "border-gray-200 bg-white"
-        }`}
+              ${
+                activeTab === "Bank"
+                  ? "border-[#5f259f] bg-[#f3e8ff]"
+                  : "border-gray-200 bg-white"
+              }`}
             >
               <BsBank2
                 size={22}
@@ -687,14 +676,14 @@ const details = paymentDetails.account?.[0]
             <button
               onClick={() => handleTabClick("USDT")}
               className={`rounded-xl p-3 flex justify-center items-center flex-col border text-center transition
-        ${
-          activeTab === "USDT"
-            ? "border-[#5f259f] bg-[#f3e8ff]"
-            : "border-gray-200 bg-white"
-        }`}
+              ${
+                activeTab === "USDT"
+                  ? "border-[#5f259f] bg-[#f3e8ff]"
+                  : "border-gray-200 bg-white"
+              }`}
             >
               {isBangladesh ? (
-              <img src="/bkash.svg" alt="bkash" className="h-6 w-6" />
+                <img src="/bkash.svg" alt="bkash" className="h-6 w-6" />
               ) : (
                 <img src="/usdt.png" className="h-5 mx-auto" />
               )}
