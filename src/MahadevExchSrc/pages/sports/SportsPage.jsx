@@ -12,7 +12,7 @@ const SportsPage = () => {
   const lockData = useSelector(SelectUserLockApplications());
   const [searchParams] = useSearchParams();
 
-      const isSportsbook = searchParams.has("sportsbook");
+  const isSportsbook = searchParams.has("sportsbook");
   const { matches: cricketMatches } = useSelector(
     (state) => state.matches.cricket,
   );
@@ -53,8 +53,6 @@ const SportsPage = () => {
 
     const isTomorrow = matchDate.toDateString() === tomorrow.toDateString();
 
-
-
     if (type === "inplay") return isInPlay;
     if (type === "today") return isToday;
     if (type === "tomorrow") return isTomorrow;
@@ -62,15 +60,19 @@ const SportsPage = () => {
     return true;
   });
 
+  const sportMap = {
+    cricket: "ক্রিকেট",
+    soccer: "ফুটবল",
+    tennis: "টেনিস",
+  };
+
   return (
     <div className="bg-[#D9D9D9] min-h-screen pb-[100px]">
-
-
       {isSportsbook ? (
         <SportsHeader />
       ) : (
         <>
-              <AnnouncementBar />
+          <AnnouncementBar />
           <SportsTabs />
           <SportsNav type={type} />
         </>
@@ -100,7 +102,7 @@ const SportsPage = () => {
               <div className="flex items-end w-[97%] mx-auto absolute top-0 left-0 right-0 z-0">
                 <div className="bg-[#2d2d2d] text-white px-3 h-[55px] rounded-t-[10px] flex items-center font-semibold">
                   <div className="flex items-center -mt-6 gap-2.5 text-[12px]">
-                    {sport?.toUpperCase()}
+                    <span>{sportMap[sport] || sport}</span>
 
                     <img
                       src={`/SportsIcon/${sport}.svg`}

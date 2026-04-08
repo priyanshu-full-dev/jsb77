@@ -177,13 +177,13 @@ const Home = () => {
       <WhatsAppFloat />
 
       <TrendingSection
-        title="Trending"
+        title="ট্রেন্ডিং"
         id="1"
         games={gamesByCategory.trending}
       />
 
       <TrendingSection
-        title="Roulette"
+        title="রুলেট"
         id="2"
         games={gamesByCategory.roulette}
       />
@@ -191,24 +191,24 @@ const Home = () => {
       <MatchLive />
 
       <TrendingSection
-        title="Teen Patti"
+        title="তিন পত্তি"
         id="3"
         games={gamesByCategory.teenpatti}
       />
 
       <TrendingSection
-        title="Dragon Tiger"
+        title="ড্রাগন টাইগার"
         id="4"
         games={gamesByCategory.dragontiger}
       />
 
       <TrendingSection
-        title="Baccarat"
+        title="ব্যাকারাট"
         id="5"
         games={gamesByCategory.baccarat}
       />
 
-      <TrendingSection title="Poker" id="6" games={gamesByCategory.poker} />
+      <TrendingSection title="পোকার" id="6" games={gamesByCategory.poker} />
     </div>
   );
 };

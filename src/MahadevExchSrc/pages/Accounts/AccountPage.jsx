@@ -15,16 +15,16 @@ const AccountPage = () => {
   const userData = useSelector((state) => state?.user?.userData) || {};
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const menuItems = [
-    { label: "Deposit & Withdrawal", path: "/balance-overview" },
-    { label: "Unsettled Bet", path: "/unsettled-bet" },
-    { label: "Bet History", path: "/bet-history" },
-    { label: "Bank Transfer", path: "/myAccount/bank-transfer" },
-    { label: "Profit & Loss", path: "/profit-loss-report" },
-    { label: "Activity Log", path: "/activityLog" },
-    { label: "Account Statements", path: "/account-statement" },
-    { label: "Account Settings", path: "/change-password" },
-  ];
+const menuItems = [
+  { label: "ডিপোজিট ও উত্তোলন", path: "/balance-overview" },
+  { label: "অসম্পূর্ণ বাজি", path: "/unsettled-bet" },
+  { label: "বাজির ইতিহাস", path: "/bet-history" },
+  { label: "ব্যাংক ট্রান্সফার", path: "/myAccount/bank-transfer" },
+  { label: "লাভ ও ক্ষতি", path: "/profit-loss-report" },
+  { label: "অ্যাক্টিভিটি লগ", path: "/activityLog" },
+  { label: "অ্যাকাউন্ট স্টেটমেন্ট", path: "/account-statement" },
+  { label: "অ্যাকাউন্ট সেটিংস", path: "/change-password" },
+];
 
   const exposure = Number(userData?.exposure || 0);
 
@@ -34,28 +34,28 @@ const AccountPage = () => {
     (userData?.availableBalance || 0) - (userData?.creditReference || 0),
   );
 
-  const balanceList = [
-    {
-      label: "Available Balance",
-      value: availableBalance.toFixed(2),
-      color: "text-black",
-    },
-    {
-      label: "Wallet Balance",
-      value: Number(userData?.bonusBalance || 0).toFixed(2),
-      color: "text-black",
-    },
-    {
-      label: "Loosing",
-      value: Pl.toFixed(2),
-      color: getPlColor(),
-    },
-    {
-      label: "Exposure",
-      value: exposure.toFixed(2),
-      color: "text-red-600",
-    },
-  ];
+const balanceList = [
+  {
+    label: "উপলব্ধ ব্যালেন্স",
+    value: availableBalance.toFixed(2),
+    color: "text-black",
+  },
+  {
+    label: "ওয়ালেট ব্যালেন্স",
+    value: Number(userData?.bonusBalance || 0).toFixed(2),
+    color: "text-black",
+  },
+  {
+    label: "লাভ/ক্ষতি",
+    value: Pl.toFixed(2),
+    color: getPlColor(),
+  },
+  {
+    label: "এক্সপোজার",
+    value: exposure.toFixed(2),
+    color: "text-red-600",
+  },
+];
 
   const handleLogout = (e) => {
     e.preventDefault();
@@ -79,7 +79,7 @@ const AccountPage = () => {
           className="flex items-center gap-1 font-bold text-[14px]"
         >
           <IoChevronBack size={20} />
-          BACK
+          ফিরে যান
         </div>
 
         <IoNotifications size={17} />
@@ -129,7 +129,7 @@ const AccountPage = () => {
             onClick={handleLogout}
             className="bg-[#ff0000] text-[16px] text-white font-bold py-2.5 rounded-[8px] w-[75%]"
           >
-            LOGOUT
+            লগআউট
           </button>
         </div>
       </div>

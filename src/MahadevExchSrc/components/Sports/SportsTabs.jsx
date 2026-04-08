@@ -1,9 +1,9 @@
 import { NavLink, useParams } from "react-router-dom";
 
 const tabs = [
-  { type: "inplay", label: "IN-PLAY" },
-  { type: "today", label: "TODAY" },
-  { type: "tomorrow", label: "TOMORROW" },
+  { type: "inplay", label: "লাইভ" },
+  { type: "today", label: "আজ" },
+  { type: "tomorrow", label: "আগামীকাল" },
 ];
 
 const SportsTabs = () => {

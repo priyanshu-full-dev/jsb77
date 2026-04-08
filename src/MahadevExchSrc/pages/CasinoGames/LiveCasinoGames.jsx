@@ -14,7 +14,10 @@ import "swiper/css/navigation";
 import "swiper/css/grid";
 import { useNavigate } from "react-router-dom";
 import { launcherUrl, updateCasinoBalance } from "../../../api";
-import { updateAvailableBalance, updateUserCasinoBalance } from "../../../redux/slices/userSlice";
+import {
+  updateAvailableBalance,
+  updateUserCasinoBalance,
+} from "../../../redux/slices/userSlice";
 
 const normalizeGameId = (id) => {
   if (!id) return null;
@@ -280,9 +283,6 @@ const LiveCasinoPage = ({ tab }) => {
     }
   };
 
-
-
-
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
   const loginType = useSelector((state) => state.user.loggedInType);
 
@@ -303,7 +303,7 @@ const LiveCasinoPage = ({ tab }) => {
 
     setIsProcessing(true);
 
-    const gameId = game.gameId
+    const gameId = game.gameId;
 
     if (loginType === "" || loginType === "demo") {
       toast.error("login with real id");
@@ -371,7 +371,7 @@ const LiveCasinoPage = ({ tab }) => {
       <div className="px-3 bg-[#151515] mt-4 pt-3 pb-3">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-white text-[14px] font-semibold uppercase">
-            SELECT A PROVIDER
+            প্রোভাইডার নির্বাচন করুন
           </h2>
 
           <div className="flex gap-2">
@@ -427,7 +427,7 @@ const LiveCasinoPage = ({ tab }) => {
                   : "bg-[#2a2a2a] text-white"
               }`}
             >
-              ALL PROVIDERS
+              সমস্ত প্রোভাইডার
             </button>
           </SwiperSlide>
 
@@ -506,7 +506,7 @@ const LiveCasinoPage = ({ tab }) => {
           <div className="relative w-1/2">
             <input
               type="text"
-              placeholder="Search"
+              placeholder="অনুসন্ধান করুন"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="bg-[#00723B] focus:bg-transparent text-white placeholder:text-white border border-[#ffffff33] h-[26px] pl-2 pr-6 text-[11px] rounded w-full outline-none"
@@ -522,7 +522,9 @@ const LiveCasinoPage = ({ tab }) => {
               onClick={() => setShowDropdown(!showDropdown)}
               className="bg-[#00723B] text-white h-[26px] border border-[#ffffff33] text-[11px] w-full rounded flex items-center justify-between px-2"
             >
-              <span className="truncate">{activeCategory}</span>
+              <span className="truncate">
+                {activeCategory === "All" ? "সব" : activeCategory}
+              </span>
 
               <FaChevronDown
                 className={`text-[10px] transition-transform duration-200 ${

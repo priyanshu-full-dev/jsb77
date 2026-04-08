@@ -103,7 +103,7 @@ const LoginModal = ({ onClose }) => {
           }),
         );
 
-        toast.success(response.message || "Login successful");
+        toast.success(response.message || "লগইন সফল হয়েছে");
 
         onClose();
 
@@ -141,7 +141,7 @@ const LoginModal = ({ onClose }) => {
         }),
       );
 
-      toast.success("Demo account created successfully");
+      toast.success("ডেমো অ্যাকাউন্ট তৈরি হয়েছে");
     } catch (error) {
       console.error("Error creating demo account:", error);
       toast.error("Failed to create demo account. Please try again.");
@@ -201,7 +201,7 @@ const LoginModal = ({ onClose }) => {
           className="absolute font-bold h-[50px] right-0 top-[-29px] bg-[#2c2c2c] text-white text-[12px] px-4 rounded-[10px]"
         >
           <div className="flex items-center gap-2 -mt-5">
-            <span>CLOSE</span>
+            <span>বন্ধ করুন</span>
             <IoCloseSharp size={18} />
           </div>
         </button>
@@ -225,7 +225,7 @@ const LoginModal = ({ onClose }) => {
           {mode === "login" && (
             <>
               <h3 className="text-white text-center font-extrabold text-[24px] mb-8">
-                Welcome Back!
+               আবার স্বাগতম!
               </h3>
 
               {/* Username */}
@@ -233,7 +233,7 @@ const LoginModal = ({ onClose }) => {
                 name="userName"
                 value={formData.userName}
                 onChange={handleChange}
-                placeholder="Username"
+                placeholder="ইউজারনেম"
                 className="w-full mb-1 bg-transparent border border-white rounded-[8px] px-3 py-1.5 text-[12px] text-white"
               />
 
@@ -248,7 +248,7 @@ const LoginModal = ({ onClose }) => {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="Password"
+                  placeholder="পাসওয়ার্ড"
                   className="w-full bg-transparent border border-white rounded-[8px] px-3 py-1.5 text-[12px] text-white"
                 />
 
@@ -267,7 +267,7 @@ const LoginModal = ({ onClose }) => {
                   onClick={() => setMode("forgot")}
                   className="text-[12px]  underline text-[white]"
                 >
-                  Forgot Username/Password?
+                  ইউজারনেম/পাসওয়ার্ড ভুলে গেছেন?
                 </p>
               </div>
 
@@ -277,7 +277,7 @@ const LoginModal = ({ onClose }) => {
                 disabled={loading.real}
                 className="w-full bg-white text-black font-extrabold py-2 mt-12 text-[14px] rounded-[8px] mb-4"
               >
-                {loading.real ? "Logging in..." : "LOG IN"}
+                {loading.real ? "লগইন হচ্ছে..." : "লগইন"}
               </button>
 
               <button
@@ -285,7 +285,7 @@ const LoginModal = ({ onClose }) => {
                 disabled={loading.demo}
                 className="w-full border border-white text-white text-[14px] py-2 rounded-[8px] mb-4 font-bold"
               >
-                {loading.demo ? "Creating Demo..." : "LOG IN WITH DEMO"}
+                {loading.demo ? "ডেমো তৈরি হচ্ছে..." : "ডেমো লগইন"}
               </button>
             </>
           )}
@@ -294,7 +294,7 @@ const LoginModal = ({ onClose }) => {
           {mode === "forgot" && (
             <>
               <h3 className="text-white text-center font-extrabold text-[24px] mb-8">
-                Forgot Username
+                ইউজারনেম ভুলে গেছেন
               </h3>
 
               <div className="flex gap-3 mb-1">
@@ -310,7 +310,7 @@ const LoginModal = ({ onClose }) => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  placeholder="Phone no."
+                  placeholder="ফোন নম্বর"
                   className="flex-1 bg-transparent border border-white rounded-[8px] px-3 py-2 text-[12px] text-white"
                 />
               </div>
@@ -323,7 +323,7 @@ const LoginModal = ({ onClose }) => {
                 onClick={handleSendOTP}
                 className="w-full bg-white text-black font-extrabold py-2 mt-10 text-[14px] rounded-[8px] mb-6"
               >
-                SEND OTP
+                ওটিপি পাঠান
               </button>
             </>
           )}

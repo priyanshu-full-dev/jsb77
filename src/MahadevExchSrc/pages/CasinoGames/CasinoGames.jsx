@@ -9,11 +9,11 @@ import LiveCasinoPage from "./LiveCasinoGames";
 const CasinoGames = () => {
   const [activeTab, setActiveTab] = useState("ace");
 
-  const tabs = [
-    { id: "ace", name: "ACE CASINO", icon: IceCasinoIcon },
-    { id: "live", name: "LIVE CASINO", icon: LiveCasinoIcon },
-    { id: "slots", name: "SLOTS", icon: SlotsIcon },
-  ];
+const tabs = [
+  { id: "ace", name: "এইস ক্যাসিনো", icon: IceCasinoIcon },
+  { id: "live", name: "লাইভ ক্যাসিনো", icon: LiveCasinoIcon },
+  { id: "slots", name: "স্লটস", icon: SlotsIcon },
+];  
 
   const images = ["/1.png","/2.png","/3.png","/4.png","/5.png","/6.png"];
 

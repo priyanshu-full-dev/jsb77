@@ -4,7 +4,11 @@ import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaFutbol, FaGavel } from "react-icons/fa";
 import { MdSportsCricket } from "react-icons/md";
-import { setMarketName, setMarketOddsData, setRunningData } from "../../redux/slices/fullmarketSlice";
+import {
+  setMarketName,
+  setMarketOddsData,
+  setRunningData,
+} from "../../redux/slices/fullmarketSlice";
 
 const MatchLive = () => {
   const navigate = useNavigate();
@@ -61,7 +65,6 @@ const MatchLive = () => {
        NAVIGATION
   ========================= */
   const handleClick = (e) => {
-
     dispatch(setRunningData(e?.matchRunners));
     dispatch(setMarketName(e?.markets));
 
@@ -83,8 +86,14 @@ const MatchLive = () => {
     <div className="px-3 py-3 bg-black overflow-x-auto hide-scrollbar">
       <div ref={scrollRef} className="flex gap-[10px] min-w-max">
         {mergedInplayMatches.map((match, i) => {
-          const team1 = match?.matchOdds?.[0]?.runners?.[0]?.runnerName;
-          const team2 = match?.matchOdds?.[0]?.runners?.[1]?.runnerName;
+          const event = match?.eventName || "";
+
+          const teams = event.includes(" vs ")
+            ? event.split(" vs ")
+            : event.split(" v ");
+
+          const team1 = teams?.[0]?.trim();
+          const team2 = teams?.[1]?.trim();
 
           const odds1 =
             match?.matchOdds?.[0]?.runners?.[0]?.ex?.availableToBack?.[0]

@@ -237,35 +237,35 @@ const SignupModal = ({ onClose }) => {
 
   // ---------------- send OTP ----------------
 
-const handleSubmit = async () => {
-  if (!validate()) return;
-  if (passwordError) return;
+  const handleSubmit = async () => {
+    if (!validate()) return;
+    if (passwordError) return;
 
-  setIsLoading(true);
+    setIsLoading(true);
 
-  try {
-    const payload = {
-      ...formData,
-      password: form.password,
-      confirmPassword: form.confirmPassword,
-    };
+    try {
+      const payload = {
+        ...formData,
+        password: form.password,
+        confirmPassword: form.confirmPassword,
+      };
 
-    const response = await signUp(payload);
+      const response = await signUp(payload);
 
-    if (response?.data?.message === "User created successfully") {
-      toast.success("Registration Successful");
-      onClose();
-      navigate("/");
-    } else {
-      toast.error(response?.data?.message || "Signup failed");
+      if (response?.data?.message === "User created successfully") {
+        toast.success("Registration Successful");
+        onClose();
+        navigate("/");
+      } else {
+        toast.error(response?.data?.message || "Signup failed");
+      }
+    } catch (err) {
+      toast.error("Signup failed");
+      console.log(err);
     }
-  } catch (err) {
-    toast.error("Signup failed");
-    console.log(err);
-  }
 
-  setIsLoading(false);
-};
+    setIsLoading(false);
+  };
 
   // ---------------- confirm OTP ----------------
 
@@ -313,17 +313,15 @@ const handleSubmit = async () => {
           localStorage.setItem("siteLogoUrl", logoPresigned);
           localStorage.setItem("siteLogoKey", siteLogo);
         }
-
       } catch (error) {
         console.error("Error fetching site assets:", error);
       }
     };
 
-    if (siteLogo ) {
+    if (siteLogo) {
       fetchAssets();
     }
   }, [siteLogo]);
-
 
   const modal = (
     <div className="fixed inset-0 z-[999999] flex items-center justify-center px-2">
@@ -348,7 +346,7 @@ const handleSubmit = async () => {
           className="absolute font-bold h-[50px] right-0 top-[-29px] bg-[#2c2c2c] text-white text-[12px] px-4 rounded-[10px]"
         >
           <div className="flex items-center gap-2 -mt-5">
-            <span>CLOSE</span>
+            <span>বন্ধ করুন</span>
             <IoCloseSharp size={18} />
           </div>
         </button>
@@ -356,11 +354,7 @@ const handleSubmit = async () => {
         <div className="relative bg-[#1a1a1a] w-full md:w-[420px] rounded-[10px] p-4 px-6 shadow-xl">
           {/* Logo */}
           <div className="flex justify-center mb-6">
-            <img
-              src={logoUrl}
-              className="h-[26px]"
-              alt="logo"
-            />
+            <img src={logoUrl} className="h-[26px]" alt="logo" />
           </div>
 
           {step === "signup" && (
@@ -378,7 +372,7 @@ const handleSubmit = async () => {
                   name="phone"
                   value={form.phone}
                   onChange={handlePhoneChange}
-                  placeholder="Phone no."
+                  placeholder="ফোন নম্বর"
                   className="flex-1 bg-transparent border border-white rounded-[8px] px-3 py-1.5 text-[12px] text-white"
                 />
               </div>
@@ -392,7 +386,7 @@ const handleSubmit = async () => {
                 name="username"
                 value={form.username}
                 onChange={handleChange}
-                placeholder="Username"
+                placeholder="ইউজারনেম"
                 className="w-full mb-1 bg-transparent border border-white rounded-[8px] px-3 py-1.5 text-[12px] text-white"
               />
 
@@ -410,7 +404,7 @@ const handleSubmit = async () => {
                     handleChange(e);
                     validatePassword(e.target.value);
                   }}
-                  placeholder="Password"
+                  placeholder="পাসওয়ার্ড"
                   className="w-full bg-transparent border border-white rounded-[8px] px-3 py-1.5 text-[12px] text-white"
                 />
 
@@ -434,7 +428,7 @@ const handleSubmit = async () => {
                   name="confirmPassword"
                   value={form.confirmPassword}
                   onChange={handleChange}
-                  placeholder="Confirm Password"
+                  placeholder="পাসওয়ার্ড নিশ্চিত করুন"
                   className="w-full bg-transparent border border-white rounded-[8px] px-3 py-1.5 text-[12px] text-white"
                 />
 
@@ -456,15 +450,15 @@ const handleSubmit = async () => {
                 name="signupCode"
                 value={form.signupCode}
                 onChange={handleChange}
-                placeholder="Enter Signup Code (optional)"
+                placeholder="সাইনআপ কোড লিখুন (ঐচ্ছিক)"
                 className="w-full mb-4 bg-transparent border border-white rounded-[8px] px-3 py-1.5 text-[12px] text-white"
               />
 
               {/* Terms */}
               <p className="text-white text-[10px] mb-2">
-                By clicking the 'Sign up' button, you confirm that you have
-                attained the age of majority in your country of residence and
-                accept the Terms & Conditions Bajiplay365.
+                'সাইন আপ' বোতামে ক্লিক করে আপনি নিশ্চিত করছেন যে আপনি আপনার
+                দেশের প্রাপ্তবয়স্ক বয়সে পৌঁছেছেন এবং playbangla777.com-এর
+                শর্তাবলী মেনে নিচ্ছেন।
               </p>
 
               {/* Signup */}
@@ -473,19 +467,22 @@ const handleSubmit = async () => {
                 disabled={isLoading}
                 className="w-full bg-white text-black font-extrabold py-2 text-[14px] rounded-[8px] mb-1"
               >
-                {isLoading ? "Sending OTP..." : "SIGN UP"}
+                {isLoading ? "ওটিপি পাঠানো হচ্ছে..." : "সাইন আপ"}
               </button>
 
               <p className="text-center text-[14px] font-extrabold text-white mb-1">
-                OR
+                অথবা
               </p>
 
               {/* WhatsApp */}
-              <a  href={`https://wa.me/${siteData?.whatsappSupport}`}
-      target="_blank"
-      rel="noopener noreferrer" className="w-full flex items-center justify-center gap-3 bg-green-500 py-2 text-[14px] rounded-[8px] text-white font-extrabold mb-6">
+              <a
+                href={`https://wa.me/${siteData?.whatsappSupport}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-3 bg-green-500 py-2 text-[14px] rounded-[8px] text-white font-extrabold mb-6"
+              >
                 <FaWhatsapp size={22} />
-                WHATSAPP FOR YOUR ID
+                হোয়াটসঅ্যাপে আইডি নিন
               </a>
 
               {/* Features */}
@@ -493,24 +490,24 @@ const handleSubmit = async () => {
                 <div className="flex items-center gap-1">
                   <img src="/upgrade-plan.png" height={32} width={32} alt="" />
                   <div className="flex flex-col text-[10px] items-start">
-                    <p className="-mb-1">Bajiplay365</p>
-                    <p>upgrade</p>
+                    <p className="-mb-1">playbangla777.com</p>
+                    <p>আপগ্রেড সুবিধা</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-1">
                   <img src="/user-sign-up.png" height={32} width={32} alt="" />
                   <div className="flex flex-col text-[10px] items-start">
-                    <p className="-mb-1">1 to 1 customer</p>
-                    <p>support</p>
+                    <p className="-mb-1">ব্যক্তিগত সাপোর্ট</p>
+                    <p>২৪/৭ সহায়তা</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-1">
                   <img src="/support-24.png" height={32} width={32} alt="" />
                   <div className="flex flex-col text-[10px] items-start">
-                    <p className="-mb-1">24/7 instant</p>
-                    <p>withdrawal</p>
+                    <p className="-mb-1">২৪/৭ দ্রুত</p>
+                    <p>উত্তোলন</p>
                   </div>
                 </div>
               </div>
