@@ -2,13 +2,17 @@ import { useEffect } from "react";
 
 const GoogleTranslate = () => {
   useEffect(() => {
-    // Default Bengali
-    const langCookie = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("googtrans="));
+    const isPort5177 = window.location.host==="kuberbook.online";
+    if (isPort5177) {
+      document.cookie = "googtrans=/en/en; path=/";
+    } else {
+      const langCookie = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("googtrans="));
 
-    if (!langCookie) {
-      document.cookie = "googtrans=/en/bn; path=/";
+      if (!langCookie) {
+        document.cookie = "googtrans=/en/bn; path=/";
+      }
     }
 
     const addScript = () => {

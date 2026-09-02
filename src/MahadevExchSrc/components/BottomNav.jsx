@@ -11,6 +11,7 @@ import OpenBets from "./OpenBets";
 import { getUserId } from "../../utils/helper/commonSelectors";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
+import { t } from "../utils/language";
 
 const BottomNav = () => {
   const [showPopup, setShowPopup] = useState(false);
@@ -18,16 +19,16 @@ const BottomNav = () => {
   const navigate = useNavigate();
 
 const navItems = [
-  { path: "/", label: "হোম", icon: HomeIcon },
-  { path: "/casino-games", label: "ক্যাসিনো", icon: CasinoIcon },
-  { path: "/sports/cricket/inplay", label: "লাইভ", icon: HomeInplayIcon },
+  { path: "/", label: t("Home", "হোম"), icon: HomeIcon },
+  { path: "/casino-games", label: t("Casino", "ক্যাসিনো"), icon: CasinoIcon },
+  { path: "/sports/cricket/inplay", label: t("Live", "লাইভ"), icon: HomeInplayIcon },
   {
     path: "/open-bets",
-    label: "খোলা বাজি",
+    label: t("Open Bets", "খোলা বাজি"),
     icon: OpenBetsIcon,
     isPopup: true,
   },
-  { path: "/sport/profile", label: "অ্যাকাউন্ট", icon: ProfileIcon },
+  { path: "/sport/profile", label: t("Account", "অ্যাকাউন্ট"), icon: ProfileIcon },
 ];
 
   return (
