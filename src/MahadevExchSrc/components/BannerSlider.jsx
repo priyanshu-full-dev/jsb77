@@ -3,9 +3,11 @@ import { Pagination, Autoplay } from "swiper/modules";
 
 import "swiper/css";
 import "swiper/css/pagination";
+import { useNavigate } from "react-router-dom";
 
 const BannerSlider = ({ images = [] }) => {
-  if (!images.length) return null;
+    const navigate = useNavigate();
+  if (!images?.length) return null;
 
   return (
     <div
@@ -21,13 +23,14 @@ const BannerSlider = ({ images = [] }) => {
         modules={[Pagination, Autoplay]}
         autoplay={{ delay: 3000, disableOnInteraction: false }}
         pagination={{ clickable: true }}
-        loop={images.length > 1}
+        loop={images?.length > 1}
         className="bannerSwiper"
       >
-        {images.map((img, i) => (
+        {images?.map((img, i) => (
           <SwiperSlide key={i}>
             <img
-              src={img}
+              onClick={() => img?.path && navigate(`/${img?.path}` || "/home")}
+              src={img?.url}
               alt={`banner-${i}`}
               className="w-full h-[200px] object-cover rounded-md"
               loading="lazy"

@@ -4,18 +4,77 @@ import CategoryGrid from "../../components/CategoryGrid";
 import MatchLive from "../../components/MatchLive";
 import Navbar from "../../components/Navbar";
 import TrendingSection from "../../components/TrendingSection";
-import { selectDomainID } from "../../../utils/helper/commonSelectors";
+import {
+  selectDomainID,
+  selectSiteBanners,
+} from "../../../utils/helper/commonSelectors";
 import { useEffect, useState } from "react";
 import { updateCasinoSlice } from "../../../redux/slices/casinoSlice";
+import { generatePresignedUrl } from "../../../utils/helper/generatePresignedUrl";
 import axios from "axios";
 import WhatsAppFloat from "../../components/WhatsAppFloat";
 
-const images = ["/1.png", "/2.png", "/3.png", "/4.png", "/5.png", "/6.png"];
+
+
+const CACHE_KEY = "site_banners_cache";
+const CACHE_DURATION = 1000 * 60 * 10;
 
 const Home = () => {
   const dispatch = useDispatch();
   const domainId = useSelector(selectDomainID());
   const casinoApiData = useSelector((state) => state.casino.casinoApiData);
+
+  const siteBanners = useSelector(selectSiteBanners());
+  const [banners, setBanners] = useState([]);
+
+
+
+  
+
+  const fetchBanners = async () => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < CACHE_DURATION) {
+          setBanners(data);
+          return;
+        }
+      }
+
+      if (Array.isArray(siteBanners) && siteBanners.length > 0) {
+        const bannersWithPresignedUrls = await Promise.all(
+          siteBanners.map(async (banner) => {
+            const signedUrl = await generatePresignedUrl(banner?.url || banner);
+            return {
+              url: signedUrl,
+              path: banner?.path || "",
+            };
+          }),
+        );
+
+        setBanners(bannersWithPresignedUrls);
+
+        localStorage.setItem(
+          CACHE_KEY,
+          JSON.stringify({
+            data: bannersWithPresignedUrls,
+            timestamp: Date.now(),
+          }),
+        );
+      } else {
+        setBanners([]);
+      }
+    } catch (error) {
+      console.error("Error fetching banners:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (siteBanners) {
+      fetchBanners();
+    }
+  }, [siteBanners]);
 
   const [gamesByCategory, setGamesByCategory] = useState({});
 
@@ -171,7 +230,7 @@ const Home = () => {
     <div className="bg-[#1a1a1a] min-h-screen pb-20">
       <Navbar />
 
-      <BannerSlider images={images}/>
+      <BannerSlider images={banners} />
 
       <CategoryGrid />
       <WhatsAppFloat />
@@ -182,11 +241,7 @@ const Home = () => {
         games={gamesByCategory.trending}
       />
 
-      <TrendingSection
-        title="রুলেট"
-        id="2"
-        games={gamesByCategory.roulette}
-      />
+      <TrendingSection title="রুলেট" id="2" games={gamesByCategory.roulette} />
 
       <MatchLive />
 
