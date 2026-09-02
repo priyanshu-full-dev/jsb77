@@ -17,6 +17,7 @@ import { generatePresignedUrl } from "../../utils/helper/generatePresignedUrl";
 import { useNavigate, useLocation } from "react-router-dom";
 import { IoChevronBack } from "react-icons/io5";
 import GoogleTranslate from "../../CommonComponents/GoogleTranslate";
+import { t } from "../utils/language";
 
 const languages = [
   { name: "ENGLISH", code: "en" },
@@ -133,7 +134,7 @@ const changeLanguage = (lang) => {
               className="flex items-center text-white text-[14px] font-semibold"
             >
               <IoChevronBack size={20} />
-              ফিরে যান
+              {t("Back", "ফিরে যান")}
             </button>
           ) : (
             <img src={logoUrl} className="h-[22px]"   onClick={() => navigate("/")}/>
@@ -149,14 +150,14 @@ const changeLanguage = (lang) => {
                 onClick={() => setShowSignup(true)}
                 className="bg-black text-white text-[10px] font-semibold px-[7px] h-[24px] rounded-[5px]"
               >
-                সাইন আপ
+                {t("Sign Up", "সাইন আপ")}
               </button>
               {/* Login */}
               <button
                 onClick={() => setShowLogin(true)}
                 className="border border-white text-white text-[10px] font-semibold px-[9px] h-[24px] rounded-[5px]  hover:bg-white hover:text-black transition"
               >
-                লগইন
+                {t("Login", "লগইন")}
               </button>
             </>
           ) : (

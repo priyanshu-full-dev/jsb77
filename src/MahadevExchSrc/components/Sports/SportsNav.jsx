@@ -1,14 +1,15 @@
 import { NavLink } from "react-router-dom";
+import { t } from "../../utils/language";
 
-const sports = [
-  { name: "ক্রিকেট", slug: "cricket", icon: "/SportsIcon/cricket.svg" },
-  { name: "ফুটবল", slug: "soccer", icon: "/SportsIcon/soccer.svg" },
-  { name: "টেনিস", slug: "tennis", icon: "/SportsIcon/tennis.svg" },
-  { name: "গেমস", slug: "games", icon: "/SportsIcon/games-white.svg" },
-  { name: "আইস হকি", slug: "ice-hockey", icon: "/SportsIcon/ice_Hockey.svg" },
-  { name: "ব্যাডমিন্টন", slug: "badminton", icon: "/SportsIcon/badminton.svg" },
-  { name: "ভলিবল", slug: "volleyball", icon: "/SportsIcon/volleyball.svg" },
-  { name: "টেবিল টেনিস", slug: "table-tennis", icon: "/SportsIcon/table_Tennis.svg" },
+const getSports = () => [
+  { name: t("Cricket", "ক্রিকেট"), slug: "cricket", icon: "/SportsIcon/cricket.svg" },
+  { name: t("Soccer", "ফুটবল"), slug: "soccer", icon: "/SportsIcon/soccer.svg" },
+  { name: t("Tennis", "টেনিস"), slug: "tennis", icon: "/SportsIcon/tennis.svg" },
+  { name: t("Games", "গেমস"), slug: "games", icon: "/SportsIcon/games-white.svg" },
+  { name: t("Ice Hockey", "আইস হকি"), slug: "ice-hockey", icon: "/SportsIcon/ice_Hockey.svg" },
+  { name: t("Badminton", "ব্যাডমিন্টন"), slug: "badminton", icon: "/SportsIcon/badminton.svg" },
+  { name: t("Volleyball", "ভলিবল"), slug: "volleyball", icon: "/SportsIcon/volleyball.svg" },
+  { name: t("Table Tennis", "টেবিল টেনিস"), slug: "table-tennis", icon: "/SportsIcon/table_Tennis.svg" },
 ];
 
 const SportsNav = ({ type = "inplay" }) => {
@@ -22,7 +23,7 @@ const SportsNav = ({ type = "inplay" }) => {
       }}
     >
       <div className="flex overflow-x-auto whitespace-nowrap hide-scrollbar">
-        {sports.map((sport) => (
+        {getSports().map((sport) => (
           <NavLink
             key={sport.slug}
             to={`/sports/${sport.slug}/${type}`}

@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { updateCasinoSlice } from "../../../redux/slices/casinoSlice";
 import axios from "axios";
 import WhatsAppFloat from "../../components/WhatsAppFloat";
+import { t } from "../../utils/language";
 
 const images = ["/1.png", "/2.png", "/3.png", "/4.png", "/5.png", "/6.png"];
 
@@ -177,13 +178,13 @@ const Home = () => {
       <WhatsAppFloat />
 
       <TrendingSection
-        title="ট্রেন্ডিং"
+        title={t("Trending", "ট্রেন্ডিং")}
         id="1"
         games={gamesByCategory.trending}
       />
 
       <TrendingSection
-        title="রুলেট"
+        title={t("Roulette", "রুলেট")}
         id="2"
         games={gamesByCategory.roulette}
       />
@@ -191,24 +192,24 @@ const Home = () => {
       <MatchLive />
 
       <TrendingSection
-        title="তিন পত্তি"
+        title={t("Teen Patti", "তিন পত্তি")}
         id="3"
         games={gamesByCategory.teenpatti}
       />
 
       <TrendingSection
-        title="ড্রাগন টাইগার"
+        title={t("Dragon Tiger", "ড্রাগন টাইগার")}
         id="4"
         games={gamesByCategory.dragontiger}
       />
 
       <TrendingSection
-        title="ব্যাকারাট"
+        title={t("Baccarat", "ব্যাকারাট")}
         id="5"
         games={gamesByCategory.baccarat}
       />
 
-      <TrendingSection title="পোকার" id="6" games={gamesByCategory.poker} />
+      <TrendingSection title={t("Poker", "পোকার")} id="6" games={gamesByCategory.poker} />
     </div>
   );
 };

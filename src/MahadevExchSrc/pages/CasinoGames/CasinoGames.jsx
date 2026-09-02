@@ -5,14 +5,15 @@ import LiveCasinoIcon from "../../components/icons/LiveCasinoIcon";
 import SlotsIcon from "../../components/icons/SlotsIcon";
 
 import LiveCasinoPage from "./LiveCasinoGames";
+import { t } from "../../utils/language";
 
 const CasinoGames = () => {
   const [activeTab, setActiveTab] = useState("ace");
 
 const tabs = [
-  { id: "ace", name: "এইস ক্যাসিনো", icon: IceCasinoIcon },
-  { id: "live", name: "লাইভ ক্যাসিনো", icon: LiveCasinoIcon },
-  { id: "slots", name: "স্লটস", icon: SlotsIcon },
+  { id: "ace", name: t("Ace Casino", "এইস ক্যাসিনো"), icon: IceCasinoIcon },
+  { id: "live", name: t("Live Casino", "লাইভ ক্যাসিনো"), icon: LiveCasinoIcon },
+  { id: "slots", name: t("Slots", "স্লটস"), icon: SlotsIcon },
 ];  
 
   const images = ["/1.png","/2.png","/3.png","/4.png","/5.png","/6.png"];

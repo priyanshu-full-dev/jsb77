@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { getSitesByDomain, SendOtp, signUp } from "../../api";
 import { generatePresignedUrl } from "../../utils/helper/generatePresignedUrl";
+import { t } from "../utils/language";
 
 const SignupModal = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -346,7 +347,7 @@ const SignupModal = ({ onClose }) => {
           className="absolute font-bold h-[50px] right-0 top-[-29px] bg-[#2c2c2c] text-white text-[12px] px-4 rounded-[10px]"
         >
           <div className="flex items-center gap-2 -mt-5">
-            <span>বন্ধ করুন</span>
+            <span>{t("Close", "বন্ধ করুন")}</span>
             <IoCloseSharp size={18} />
           </div>
         </button>
@@ -372,7 +373,7 @@ const SignupModal = ({ onClose }) => {
                   name="phone"
                   value={form.phone}
                   onChange={handlePhoneChange}
-                  placeholder="ফোন নম্বর"
+                  placeholder={t("Phone Number", "ফোন নম্বর")}
                   className="flex-1 bg-transparent border border-white rounded-[8px] px-3 py-1.5 text-[12px] text-white"
                 />
               </div>
@@ -386,7 +387,7 @@ const SignupModal = ({ onClose }) => {
                 name="username"
                 value={form.username}
                 onChange={handleChange}
-                placeholder="ইউজারনেম"
+                placeholder={t("Username", "ইউজারনেম")}
                 className="w-full mb-1 bg-transparent border border-white rounded-[8px] px-3 py-1.5 text-[12px] text-white"
               />
 
@@ -404,7 +405,7 @@ const SignupModal = ({ onClose }) => {
                     handleChange(e);
                     validatePassword(e.target.value);
                   }}
-                  placeholder="পাসওয়ার্ড"
+                  placeholder={t("Password", "পাসওয়ার্ড")}
                   className="w-full bg-transparent border border-white rounded-[8px] px-3 py-1.5 text-[12px] text-white"
                 />
 
@@ -428,7 +429,7 @@ const SignupModal = ({ onClose }) => {
                   name="confirmPassword"
                   value={form.confirmPassword}
                   onChange={handleChange}
-                  placeholder="পাসওয়ার্ড নিশ্চিত করুন"
+                  placeholder={t("Confirm Password", "পাসওয়ার্ড নিশ্চিত করুন")}
                   className="w-full bg-transparent border border-white rounded-[8px] px-3 py-1.5 text-[12px] text-white"
                 />
 
@@ -450,15 +451,16 @@ const SignupModal = ({ onClose }) => {
                 name="signupCode"
                 value={form.signupCode}
                 onChange={handleChange}
-                placeholder="সাইনআপ কোড লিখুন (ঐচ্ছিক)"
+                placeholder={t("Enter Signup Code (Optional)", "সাইনআপ কোড লিখুন (ঐচ্ছিক)")}
                 className="w-full mb-4 bg-transparent border border-white rounded-[8px] px-3 py-1.5 text-[12px] text-white"
               />
 
               {/* Terms */}
               <p className="text-white text-[10px] mb-2">
-                'সাইন আপ' বোতামে ক্লিক করে আপনি নিশ্চিত করছেন যে আপনি আপনার
-                দেশের প্রাপ্তবয়স্ক বয়সে পৌঁছেছেন এবং playbangla777.com-এর
-                শর্তাবলী মেনে নিচ্ছেন।
+                {t(
+                  "'By clicking 'Sign Up', you confirm that you are of legal age in your country and accept the terms of playbangla777.com.",
+                  "'সাইন আপ' বোতামে ক্লিক করে আপনি নিশ্চিত করছেন যে আপনি আপনার দেশের প্রাপ্তবয়স্ক বয়সে পৌঁছেছেন এবং playbangla777.com-এর শর্তাবলী মেনে নিচ্ছেন।"
+                )}
               </p>
 
               {/* Signup */}
@@ -467,11 +469,11 @@ const SignupModal = ({ onClose }) => {
                 disabled={isLoading}
                 className="w-full bg-white text-black font-extrabold py-2 text-[14px] rounded-[8px] mb-1"
               >
-                {isLoading ? "ওটিপি পাঠানো হচ্ছে..." : "সাইন আপ"}
+                {isLoading ? t("Sending OTP...", "ওটিপি পাঠানো হচ্ছে...") : t("Sign Up", "সাইন আপ")}
               </button>
 
               <p className="text-center text-[14px] font-extrabold text-white mb-1">
-                অথবা
+                {t("OR", "অথবা")}
               </p>
 
               {/* WhatsApp */}
@@ -482,7 +484,7 @@ const SignupModal = ({ onClose }) => {
                 className="w-full flex items-center justify-center gap-3 bg-green-500 py-2 text-[14px] rounded-[8px] text-white font-extrabold mb-6"
               >
                 <FaWhatsapp size={22} />
-                হোয়াটসঅ্যাপে আইডি নিন
+                {t("Get ID on WhatsApp", "হোয়াটসঅ্যাপে আইডি নিন")}
               </a>
 
               {/* Features */}
@@ -491,23 +493,23 @@ const SignupModal = ({ onClose }) => {
                   <img src="/upgrade-plan.png" height={32} width={32} alt="" />
                   <div className="flex flex-col text-[10px] items-start">
                     <p className="-mb-1">playbangla777.com</p>
-                    <p>আপগ্রেড সুবিধা</p>
+                    <p>{t("Upgrade Benefits", "আপগ্রেড সুবিধা")}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-1">
                   <img src="/user-sign-up.png" height={32} width={32} alt="" />
                   <div className="flex flex-col text-[10px] items-start">
-                    <p className="-mb-1">ব্যক্তিগত সাপোর্ট</p>
-                    <p>২৪/৭ সহায়তা</p>
+                    <p className="-mb-1">{t("Personal Support", "ব্যক্তিগত সাপোর্ট")}</p>
+                    <p>{t("24/7 Assistance", "২৪/৭ সহায়তা")}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-1">
                   <img src="/support-24.png" height={32} width={32} alt="" />
                   <div className="flex flex-col text-[10px] items-start">
-                    <p className="-mb-1">২৪/৭ দ্রুত</p>
-                    <p>উত্তোলন</p>
+                    <p className="-mb-1">{t("24/7 Instant", "২৪/৭ দ্রুত")}</p>
+                    <p>{t("Withdrawal", "উত্তোলন")}</p>
                   </div>
                 </div>
               </div>

@@ -4,6 +4,7 @@ import { resetApp } from "../../../redux/appReset";
 import { resetBetSettings } from "../../../redux/slices/betSettingsSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { t } from "../../utils/language";
 
 const AccountPage = () => {
   const getPlColor = () => {
@@ -16,14 +17,14 @@ const AccountPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 const menuItems = [
-  { label: "ডিপোজিট ও উত্তোলন", path: "/balance-overview" },
-  { label: "অসম্পূর্ণ বাজি", path: "/unsettled-bet" },
-  { label: "বাজির ইতিহাস", path: "/bet-history" },
-  { label: "ব্যাংক ট্রান্সফার", path: "/myAccount/bank-transfer" },
-  { label: "লাভ ও ক্ষতি", path: "/profit-loss-report" },
-  { label: "অ্যাক্টিভিটি লগ", path: "/activityLog" },
-  { label: "অ্যাকাউন্ট স্টেটমেন্ট", path: "/account-statement" },
-  { label: "অ্যাকাউন্ট সেটিংস", path: "/change-password" },
+  { label: t("Deposit & Withdrawal", "ডিপোজিট ও উত্তোলন"), path: "/balance-overview" },
+  { label: t("Unsettled Bet", "অসম্পূর্ণ বাজি"), path: "/unsettled-bet" },
+  { label: t("Bet History", "বাজির ইতিহাস"), path: "/bet-history" },
+  { label: t("Bank Transfer", "ব্যাংক ট্রান্সফার"), path: "/myAccount/bank-transfer" },
+  { label: t("Profit & Loss", "লাভ ও ক্ষতি"), path: "/profit-loss-report" },
+  { label: t("Activity Log", "অ্যাক্টিভিটি লগ"), path: "/activityLog" },
+  { label: t("Account Statement", "অ্যাকাউন্ট স্টেটমেন্ট"), path: "/account-statement" },
+  { label: t("Account Settings", "অ্যাকাউন্ট সেটিংস"), path: "/change-password" },
 ];
 
   const exposure = Number(userData?.exposure || 0);
@@ -36,22 +37,22 @@ const menuItems = [
 
 const balanceList = [
   {
-    label: "উপলব্ধ ব্যালেন্স",
+    label: t("Available Balance", "উপলব্ধ ব্যালেন্স"),
     value: availableBalance.toFixed(2),
     color: "text-black",
   },
   {
-    label: "ওয়ালেট ব্যালেন্স",
+    label: t("Wallet Balance", "ওয়ালেট ব্যালেন্স"),
     value: Number(userData?.bonusBalance || 0).toFixed(2),
     color: "text-black",
   },
   {
-    label: "লাভ/ক্ষতি",
+    label: t("Profit/Loss", "লাভ/ক্ষতি"),
     value: Pl.toFixed(2),
     color: getPlColor(),
   },
   {
-    label: "এক্সপোজার",
+    label: t("Exposure", "এক্সপোজার"),
     value: exposure.toFixed(2),
     color: "text-red-600",
   },
@@ -79,7 +80,7 @@ const balanceList = [
           className="flex items-center gap-1 font-bold text-[14px]"
         >
           <IoChevronBack size={20} />
-          ফিরে যান
+          {t("Back", "ফিরে যান")}
         </div>
 
         <IoNotifications size={17} />
@@ -129,7 +130,7 @@ const balanceList = [
             onClick={handleLogout}
             className="bg-[#ff0000] text-[16px] text-white font-bold py-2.5 rounded-[8px] w-[75%]"
           >
-            লগআউট
+            {t("Logout", "লগআউট")}
           </button>
         </div>
       </div>

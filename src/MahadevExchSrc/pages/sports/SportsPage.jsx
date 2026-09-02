@@ -6,6 +6,7 @@ import { useSelector } from "react-redux";
 import { SelectUserLockApplications } from "../../../utils/helper/commonSelectors";
 import MatchList from "../../components/Sports/MatchList";
 import SportsHeader from "../../components/SportsHeader";
+import { t } from "../../utils/language";
 
 const SportsPage = () => {
   const { sport, type } = useParams();
@@ -61,9 +62,9 @@ const SportsPage = () => {
   });
 
   const sportMap = {
-    cricket: "ক্রিকেট",
-    soccer: "ফুটবল",
-    tennis: "টেনিস",
+    cricket: t("Cricket", "ক্রিকেট"),
+    soccer: t("Soccer", "ফুটবল"),
+    tennis: t("Tennis", "টেনিস"),
   };
 
   return (

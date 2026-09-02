@@ -14,6 +14,7 @@ import {
 } from "../../../api";
 import { generatePresignedUrl } from "../../../utils/helper/generatePresignedUrl";
 import Loader from "../../components/Loader/Loader";
+import { t } from "../../utils/language";
 
 const INITIAL_FORM_DATA = {
   UTR: "",
@@ -421,7 +422,7 @@ const Deposit = () => {
               Enter Amount to Continue
             </p>
             <p className="text-[12px] text-gray-500 mt-1">
-              পেমেন্ট বিস্তারিত দেখতে অনুগ্রহ করে পরিমাণ লিখুন
+              {t("Please enter amount to view payment details", "পেমেন্ট বিস্তারিত দেখতে অনুগ্রহ করে পরিমাণ লিখুন")}
             </p>
           </div>
 

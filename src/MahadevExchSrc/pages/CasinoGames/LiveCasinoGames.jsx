@@ -18,6 +18,7 @@ import {
   updateAvailableBalance,
   updateUserCasinoBalance,
 } from "../../../redux/slices/userSlice";
+import { t } from "../../utils/language";
 
 const normalizeGameId = (id) => {
   if (!id) return null;
@@ -371,7 +372,7 @@ const LiveCasinoPage = ({ tab }) => {
       <div className="px-3 bg-[#151515] mt-4 pt-3 pb-3">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-white text-[14px] font-semibold uppercase">
-            প্রোভাইডার নির্বাচন করুন
+            {t("Select Provider", "প্রোভাইডার নির্বাচন করুন")}
           </h2>
 
           <div className="flex gap-2">
@@ -427,7 +428,7 @@ const LiveCasinoPage = ({ tab }) => {
                   : "bg-[#2a2a2a] text-white"
               }`}
             >
-              সমস্ত প্রোভাইডার
+              {t("All Providers", "সমস্ত প্রোভাইডার")}
             </button>
           </SwiperSlide>
 
@@ -506,7 +507,7 @@ const LiveCasinoPage = ({ tab }) => {
           <div className="relative w-1/2">
             <input
               type="text"
-              placeholder="অনুসন্ধান করুন"
+              placeholder={t("Search", "অনুসন্ধান করুন")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="bg-[#00723B] focus:bg-transparent text-white placeholder:text-white border border-[#ffffff33] h-[26px] pl-2 pr-6 text-[11px] rounded w-full outline-none"
@@ -523,7 +524,7 @@ const LiveCasinoPage = ({ tab }) => {
               className="bg-[#00723B] text-white h-[26px] border border-[#ffffff33] text-[11px] w-full rounded flex items-center justify-between px-2"
             >
               <span className="truncate">
-                {activeCategory === "All" ? "সব" : activeCategory}
+                {activeCategory === "All" ? t("All", "সব") : activeCategory}
               </span>
 
               <FaChevronDown

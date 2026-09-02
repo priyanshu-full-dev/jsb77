@@ -10,8 +10,10 @@ import { subscribeToLogin } from "../../socketClient";
 import { toast } from "react-toastify";
 import { setAccountType } from "../../redux/slices/accountSlice";
 import { useDispatch, useSelector } from "react-redux";
-import { createLoginRecord, Demo } from "../../api";
+import { createLoginRecord, Demo, login } from "../../api";
 import { loginSuccess } from "../../redux/slices/userSlice";
+import { generatePresignedUrl } from "../../utils/helper/generatePresignedUrl";
+import { t, isPort5177 } from "../utils/language";
 import { selectSiteLogo } from "../../utils/helper/commonSelectors";
 
 const LoginModal = ({ onClose }) => {
@@ -103,7 +105,7 @@ const LoginModal = ({ onClose }) => {
           }),
         );
 
-        toast.success(response.message || "লগইন সফল হয়েছে");
+        toast.success(response.message || t("Login successful", "লগইন সফল হয়েছে"));
 
         onClose();
 
@@ -130,9 +132,10 @@ const LoginModal = ({ onClose }) => {
       }
 
       const { token, userdata } = res.data;
-      console.log(res.data);
 
-      dispatch(setAccountType({ type: "demo" }));
+      localStorage.setItem("token", token);
+      localStorage.setItem("userId", userdata?._id);
+
       dispatch(
         loginSuccess({
           userData: userdata,
@@ -141,7 +144,14 @@ const LoginModal = ({ onClose }) => {
         }),
       );
 
-      toast.success("ডেমো অ্যাকাউন্ট তৈরি হয়েছে");
+      dispatch(
+        setAccountType({
+          userData: userdata,
+          type: "demo",
+        }),
+      );
+
+      toast.success(t("Demo account created", "ডেমো অ্যাকাউন্ট তৈরি হয়েছে"));
     } catch (error) {
       console.error("Error creating demo account:", error);
       toast.error("Failed to create demo account. Please try again.");
@@ -201,14 +211,14 @@ const LoginModal = ({ onClose }) => {
           className="absolute font-bold h-[50px] right-0 top-[-29px] bg-[#2c2c2c] text-white text-[12px] px-4 rounded-[10px]"
         >
           <div className="flex items-center gap-2 -mt-5">
-            <span>বন্ধ করুন</span>
+            <span>{t("Close", "বন্ধ করুন")}</span>
             <IoCloseSharp size={18} />
           </div>
         </button>
 
         <div className="relative bg-[#1a1a1a] w-[100%] md:w-[420px] rounded-[10px] p-4 px-4  shadow-xl">
           <img
-            src="/Welcome516.png"
+            src={isPort5177() ? "/Welcome516_en.jpg" : "/Welcome516.png"}
             alt=""
             className="w-full h-[182px] rounded"
           />
@@ -225,7 +235,7 @@ const LoginModal = ({ onClose }) => {
           {mode === "login" && (
             <>
               <h3 className="text-white text-center font-extrabold text-[24px] mb-8">
-               আবার স্বাগতম!
+               {t("Welcome Back!", "আবার স্বাগতম!")}
               </h3>
 
               {/* Username */}
@@ -233,7 +243,7 @@ const LoginModal = ({ onClose }) => {
                 name="userName"
                 value={formData.userName}
                 onChange={handleChange}
-                placeholder="ইউজারনেম"
+                placeholder={t("Username", "ইউজারনেম")}
                 className="w-full mb-1 bg-transparent border border-white rounded-[8px] px-3 py-1.5 text-[12px] text-white"
               />
 
@@ -248,7 +258,7 @@ const LoginModal = ({ onClose }) => {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="পাসওয়ার্ড"
+                  placeholder={t("Password", "পাসওয়ার্ড")}
                   className="w-full bg-transparent border border-white rounded-[8px] px-3 py-1.5 text-[12px] text-white"
                 />
 
@@ -267,7 +277,7 @@ const LoginModal = ({ onClose }) => {
                   onClick={() => setMode("forgot")}
                   className="text-[12px]  underline text-[white]"
                 >
-                  ইউজারনেম/পাসওয়ার্ড ভুলে গেছেন?
+                  {t("Forgot Username/Password?", "ইউজারনেম/পাসওয়ার্ড ভুলে গেছেন?")}
                 </p>
               </div>
 
@@ -277,7 +287,7 @@ const LoginModal = ({ onClose }) => {
                 disabled={loading.real}
                 className="w-full bg-white text-black font-extrabold py-2 mt-12 text-[14px] rounded-[8px] mb-4"
               >
-                {loading.real ? "লগইন হচ্ছে..." : "লগইন"}
+                {loading.real ? t("Logging in...", "লগইন হচ্ছে...") : t("Login", "লগইন")}
               </button>
 
               <button
@@ -285,7 +295,7 @@ const LoginModal = ({ onClose }) => {
                 disabled={loading.demo}
                 className="w-full border border-white text-white text-[14px] py-2 rounded-[8px] mb-4 font-bold"
               >
-                {loading.demo ? "ডেমো তৈরি হচ্ছে..." : "ডেমো লগইন"}
+                {loading.demo ? t("Creating Demo...", "ডেমো তৈরি হচ্ছে...") : t("Demo Login", "ডেমো লগইন")}
               </button>
             </>
           )}
@@ -294,7 +304,7 @@ const LoginModal = ({ onClose }) => {
           {mode === "forgot" && (
             <>
               <h3 className="text-white text-center font-extrabold text-[24px] mb-8">
-                ইউজারনেম ভুলে গেছেন
+                {t("Forgot Username", "ইউজারনেম ভুলে গেছেন")}
               </h3>
 
               <div className="flex gap-3 mb-1">
@@ -310,7 +320,7 @@ const LoginModal = ({ onClose }) => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  placeholder="ফোন নম্বর"
+                  placeholder={t("Phone Number", "ফোন নম্বর")}
                   className="flex-1 bg-transparent border border-white rounded-[8px] px-3 py-2 text-[12px] text-white"
                 />
               </div>
@@ -323,7 +333,7 @@ const LoginModal = ({ onClose }) => {
                 onClick={handleSendOTP}
                 className="w-full bg-white text-black font-extrabold py-2 mt-10 text-[14px] rounded-[8px] mb-6"
               >
-                ওটিপি পাঠান
+                {t("Send OTP", "ওটিপি পাঠান")}
               </button>
             </>
           )}

@@ -1,9 +1,10 @@
 import { NavLink, useParams } from "react-router-dom";
+import { t } from "../../utils/language";
 
-const tabs = [
-  { type: "inplay", label: "লাইভ" },
-  { type: "today", label: "আজ" },
-  { type: "tomorrow", label: "আগামীকাল" },
+const getTabs = () => [
+  { type: "inplay", label: t("In-Play", "লাইভ") },
+  { type: "today", label: t("Today", "আজ") },
+  { type: "tomorrow", label: t("Tomorrow", "আগামীকাল") },
 ];
 
 const SportsTabs = () => {
@@ -12,7 +13,7 @@ const SportsTabs = () => {
   return (
     <div className="flex  justify-around px-6 pb-1 pt-1 bg-[#00723B] text-white">
 
-      {tabs.map((tab) => (
+      {getTabs().map((tab) => (
         <NavLink
           key={tab.type}
           to={`/sports/${sport}/${tab.type}`}
