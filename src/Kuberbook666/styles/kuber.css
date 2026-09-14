@@ -1,0 +1,100 @@
+/* ==========================================================================
+   KUBERBOOK666 - INDUSTRY-GRADE STYLES (LIGHTWEIGHT, 60FPS OPTIMIZED)
+   ========================================================================== */
+
+:root {
+  --color-bg-headerBg-casino: linear-gradient(90deg, #6e081d, #c10931);
+  --kb-primary-red: #7c0a0a;
+  --kb-primary-dark: #580606;
+  --kb-header-gradient: linear-gradient(90deg, #6e081d, #c10931);
+  --kb-gold: #f5b300;
+  --kb-gold-gradient: linear-gradient(135deg, #ffd700 0%, #ffae00 100%);
+  --kb-body-bg: #0d0e14;
+  --kb-card-bg: #151622;
+  --kb-text-primary: #ffffff;
+  --kb-text-secondary: #9ca3af;
+  --kb-border-color: #272733;
+  --kb-green: #10b981;
+  --kb-blue-odds: #72bbef;
+  --kb-pink-odds: #f9a9ba;
+}
+
+[data-theme="light"] {
+  --kb-body-bg: #f0f2f5;
+  --kb-card-bg: #ffffff;
+  --kb-text-primary: #111827;
+  --kb-text-secondary: #4b5563;
+  --kb-border-color: #e5e7eb;
+}
+
+[data-theme="dark"] {
+  --kb-body-bg: #0d0e14;
+  --kb-card-bg: #151622;
+  --kb-text-primary: #ffffff;
+  --kb-text-secondary: #9ca3af;
+  --kb-border-color: #272733;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Smooth GPU accelerated transitions */
+.kb-card-hover {
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease;
+  will-change: transform;
+}
+
+.kb-card-hover:active {
+  transform: scale(0.96);
+}
+
+@media (hover: hover) {
+  .kb-card-hover:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  }
+}
+
+/* Pulsing live dot */
+@keyframes kb-pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.kb-live-pulse {
+  animation: kb-pulse 2s infinite;
+}
+
+/* Skeleton shimmer */
+@keyframes kb-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.kb-skeleton {
+  background: linear-gradient(90deg, #23242e 25%, #2f313f 50%, #23242e 75%);
+  background-size: 200% 100%;
+  animation: kb-shimmer 1.5s infinite;
+}

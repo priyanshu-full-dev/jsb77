@@ -15,7 +15,9 @@ import "./App.css";
 import { getUserId } from "./utils/helper/commonSelectors";
 
 import { MahadevExchRouter } from "./MahadevExchSrc/MahadevExchRoutes";
+import { Kuberbook666Router } from "./Kuberbook666/Kuberbook666Routes";
 import Loader from "./MahadevExchSrc/components/Loader/Loader";
+import PageSkeleton from "./Kuberbook666/components/Loader/PageSkeleton";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -145,10 +147,36 @@ const App = () => {
     return () => clearInterval(id);
   }, [dispatch]);
 
+  // --- Select Active Project Router (Mahadev vs Kuberbook666) ---
+  const activeRouter = useMemo(() => {
+    try {
+      const searchParams = new URLSearchParams(window.location.search);
+      const requested = searchParams.get("project") || searchParams.get("layout");
+      if (requested === "mahadev") {
+        localStorage.setItem("active_project", "mahadev");
+        return MahadevExchRouter;
+      }
+      if (requested === "kuber" || requested === "kuberbook666") {
+        localStorage.setItem("active_project", "kuber");
+        return Kuberbook666Router;
+      }
+      const saved = localStorage.getItem("active_project");
+      if (saved === "mahadev") {
+        return MahadevExchRouter;
+      }
+      if (domainName.includes("mahadev")) {
+        return MahadevExchRouter;
+      }
+    } catch {
+      // ignore
+    }
+    return Kuberbook666Router;
+  }, [domainName, siteDetails?.layout]);
+
   return (
     <>
-      <Suspense fallback={<Loader/>}>
-        <RouterProvider router={MahadevExchRouter} />
+      <Suspense fallback={<PageSkeleton />}>
+        <RouterProvider router={activeRouter} />
       </Suspense>
     </>
   );
