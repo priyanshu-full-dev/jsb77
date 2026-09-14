@@ -3,7 +3,15 @@
    ========================================================================== */
 
 :root {
+  --color-primary: #c10831;
+  --color-primary-new: #c10931;
   --color-bg-headerBg-casino: linear-gradient(90deg, #6e081d, #c10931);
+  --color-text-secondary-game: #ffffff;
+  --color-text-ternary2: #9ca3af;
+  --color-bg-quaternary: #1c1f2b;
+  --color-bg-quaternary-new: #151822;
+  --color-bg-quaternary1: #1f2230;
+  --color-bg-foundation: #282c3c;
   --kb-primary-red: #7c0a0a;
   --kb-primary-dark: #580606;
   --kb-header-gradient: linear-gradient(90deg, #6e081d, #c10931);
@@ -20,6 +28,14 @@
 }
 
 [data-theme="light"] {
+  --color-primary: #c10831;
+  --color-primary-new: #c10931;
+  --color-text-secondary-game: #111827;
+  --color-text-ternary2: #6b7280;
+  --color-bg-quaternary: #ffffff;
+  --color-bg-quaternary-new: #f8fafc;
+  --color-bg-quaternary1: #f1f5f9;
+  --color-bg-foundation: #e2e8f0;
   --kb-body-bg: #f0f2f5;
   --kb-card-bg: #ffffff;
   --kb-text-primary: #111827;
@@ -36,19 +52,27 @@
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+.no-scrollbar::-webkit-scrollbar,
+#scrollShow::-webkit-scrollbar,
+div::-webkit-scrollbar {
+  display: none !important;
+  width: 0px !important;
+  height: 0px !important;
+  background: transparent !important;
 }
 
 /* Hide scrollbar for IE, Edge and Firefox */
-.no-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+.no-scrollbar,
+#scrollShow {
+  -ms-overflow-style: none !important; /* IE and Edge */
+  scrollbar-width: none !important; /* Firefox */
 }
 
 /* Smooth GPU accelerated transitions */
 .kb-card-hover {
-  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease;
+  transition:
+    transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.2s ease;
   will-change: transform;
 }
 
@@ -97,4 +121,544 @@
   background: linear-gradient(90deg, #23242e 25%, #2f313f 50%, #23242e 75%);
   background-size: 200% 100%;
   animation: kb-shimmer 1.5s infinite;
+}
+
+/* Quick Buttons & Banner helpers */
+.shadow-quickAccessBtnBoxShadows {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.bg-bg_SkeletonBgLoaderColor {
+  background-color: #242838;
+}
+
+.scrollSmooth {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.autoAnimate {
+  transition: all 0.2s ease-in-out;
+}
+
+.font-lato-bold {
+  font-weight: 700;
+}
+
+/* Casino Card Game Utilities */
+.bg-bg_Quaternary-new {
+  background-color: var(--color-bg-quaternary-new, #151822);
+}
+.bg-bg_Quaternary {
+  background-color: var(--color-bg-quaternary, #1c1f2b);
+}
+.bg-bg_Quaternary1 {
+  background-color: var(--color-bg-quaternary1, #1f2230);
+}
+.bg-bg_Foundation {
+  background-color: var(--color-bg-foundation, #282c3c);
+}
+.text-text_Secondary_game {
+  color: var(--color-text-secondary-game, #ffffff);
+}
+.text-text_Ternary2 {
+  color: var(--color-text-ternary2, #9ca3af);
+}
+.shadow-homeCasinoCardGamesShadow {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+.shadow-GameShadow {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+.border-primary {
+  border-color: var(--color-primary-new, #c10931);
+}
+
+/* InPlay Exchange Odds & Market Classes */
+:root {
+  --color-quaternary: #ffffff;
+  --toltips-bg-color: linear-gradient(135deg, #c10931, #800020);
+  --color-iconsColor: #8c92a4;
+  --border-borderColorOfMarket: rgba(255, 255, 255, 0.1);
+  --inplay-tv-color: #28a745;
+  --color-bg-inPlayBlockBg: linear-gradient(89deg, #40af52, #2e924b 89.28%);
+  --color-bg-competetionInPlayUpComingBg: linear-gradient(
+    89deg,
+    rgb(204, 95, 54),
+    rgb(167, 59, 31) 89.28%
+  );
+  --color-text-upcomingEvents: #ea580c;
+  --color-text-HeaderDeskNavMenu: #440a57;
+  --color-bg-Ternary8: #f2f2f2;
+  --color-bg-Ternary9: #e5e5e5;
+  --cricket-icon-color: #c10b32;
+  --horse-icon-color: #333333;
+}
+
+[data-theme="light"] {
+  --color-quaternary: #ffffff;
+  --color-iconsColor: #4b5563;
+  --border-borderColorOfMarket: #e5e7eb;
+  --color-text-HeaderDeskNavMenu: #440a57;
+  --color-bg-Ternary8: #f2f2f2;
+  --color-bg-Ternary9: #e5e5e5;
+  --horse-icon-color: #333333;
+}
+
+[data-theme="dark"] {
+  --color-text-HeaderDeskNavMenu: #ffffff;
+  --color-bg-Ternary8: #1d1f2b;
+  --color-bg-Ternary9: #282b3c;
+  --horse-icon-color: #ffffff;
+}
+
+.text-text_HeaderDeskNavMenu {
+  color: var(--color-text-HeaderDeskNavMenu, #440a57) !important;
+}
+
+.bg-bg_Ternary8 {
+  background-color: var(--color-bg-Ternary8, #f2f2f2) !important;
+}
+
+.hover\:bg-bg_Ternary9:hover,
+.bg-bg_Ternary8:hover {
+  background-color: var(--color-bg-Ternary9, #e5e5e5) !important;
+}
+
+.bg-inPlayBlockBg {
+  background: var(
+    --color-bg-inPlayBlockBg,
+    linear-gradient(89deg, #40af52, #2e924b 89.28%)
+  ) !important;
+}
+
+.bg-UpcomingBg {
+  background: var(
+    --color-bg-competetionInPlayUpComingBg,
+    linear-gradient(90deg, #c10931, #6e081d)
+  ) !important;
+}
+
+.text-text_UpcomingEvents {
+  color: var(--color-text-upcomingEvents, #ea580c) !important;
+}
+
+.bg-bg_BackBtnBg {
+  background-color: #72bbef !important;
+}
+
+.border-backBtn {
+  border-color: #5aaae6 !important;
+}
+
+.bg-bg_LayBtnBg {
+  background-color: #faa9ba !important;
+}
+
+.border-layBtn {
+  border-color: #f78da3 !important;
+}
+
+.text-text_OddValue {
+  color: #111827 !important;
+}
+
+.text-text_Quaternary-new {
+  color: #ffffff !important;
+}
+
+.text-text_Ternary-new {
+  color: var(--color-text-ternary, #ffffff);
+}
+
+[data-theme="light"] .text-text_Ternary-new {
+  color: #111827;
+}
+
+.border-borderColorOfMarket {
+  border-color: var(
+    --border-borderColorOfMarket,
+    rgba(255, 255, 255, 0.1)
+  ) !important;
+}
+
+.text-x {
+  font-size: 10px;
+}
+
+.tracking-0\.3 {
+  letter-spacing: 0.3px;
+}
+
+.text-selection-none {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.text-text_InPlayEventsScoreAndTime {
+  color: #29ab2b !important;
+}
+
+.bg-bg_inPlayBlockBg {
+  background-color: #29ab2b;
+}
+
+.border-ternary4 {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="light"] .border-ternary4 {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+.text-text_color_primary2 {
+  color: #ffffff;
+}
+
+.bg-bg_brand_primary {
+  background-color: #c10931;
+}
+
+.odd-button__volume {
+  font-size: 10px;
+  line-height: 12px;
+}
+
+.bg-bg_text_brand_secondary {
+  background-image: linear-gradient(90deg, #c10931, #e11d48);
+}
+
+.text-text_Ternary {
+  color: var(--color-text-secondary-game, #ffffff);
+}
+
+[data-theme="light"] .text-text_Ternary {
+  color: #111827;
+}
+
+/* ==========================================================================
+   FOOTER STYLES & TOKENS
+   ========================================================================== */
+:root {
+  --icon-color-brand-secondary: #c10931;
+  --icon-color-brand-tertiary: #6e081c;
+  --footer-down-bg-color: linear-gradient(180deg, #444550 0%, #2f303a 100%);
+  --bg-color-primary: #151622;
+  --border-color-primary1: rgba(255, 255, 255, 0.08);
+  --text-color-primary1: #9ca3af;
+  --bg-color-icon: rgba(193, 9, 49, 0.22);
+}
+
+[data-theme="light"] {
+  --bg-color-primary: #ffffff;
+  --border-color-primary1: #e5e7eb;
+  --text-color-primary1: #111827;
+  --bg-color-icon: #fbe6ea;
+  --icon-color-brand-secondary: #c10931;
+  --icon-color-brand-tertiary: #6e081c;
+  --footer-down-bg-color: linear-gradient(180deg, #444550 0%, #2f303a 100%);
+}
+
+[data-theme="dark"] {
+  --bg-color-primary: #151622;
+  --border-color-primary1: rgba(255, 255, 255, 0.08);
+  --text-color-primary1: #9ca3af;
+  --bg-color-icon: rgba(193, 9, 49, 0.22);
+  --icon-color-brand-secondary: #c10931;
+  --icon-color-brand-tertiary: #6e081c;
+  --footer-down-bg-color: linear-gradient(180deg, #444550 0%, #2f303a 100%);
+}
+
+.bg-bg_color_primary {
+  background-color: var(--bg-color-primary, #ffffff) !important;
+}
+
+.border-border_color_primary1 {
+  border-color: var(--border-color-primary1, #e5e7eb) !important;
+}
+
+.text-text_color_primary1 {
+  color: var(--text-color-primary1, #111827);
+}
+
+.text-text_color_primary2 {
+  color: #ffffff !important;
+}
+
+.text-text_color_primary3 {
+  color: #8b8b8b;
+}
+
+.bg-bg_color_icon {
+  background-color: var(--bg-color-icon, #fbe6ea) !important;
+}
+
+.bg-bg_scoreAndAndroidAppBtn {
+  background-image: var(--footer-down-bg-color, linear-gradient(180deg, #444550 0%, #2f303a 100%)) !important;
+  background-color: #353640;
+}
+
+.bg-bg_text_brand_primary {
+  background-color: #c10931 !important;
+}
+
+.text-text_brand_primary {
+  color: #c10931 !important;
+}
+
+.hover\:text-text_brand_primary:hover {
+  color: #c10931 !important;
+}
+
+.active\:text-text_brand_primary:active {
+  color: #c10931 !important;
+}
+
+.font-lato {
+  font-family: "Lato", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.tw-text-nowrap {
+  white-space: nowrap;
+}
+
+@keyframes popUpOpenAnimation {
+  0% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+.popUpOpenAnimation {
+  transform-origin: left;
+  animation: popUpOpenAnimation 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (min-width: 380px) {
+  .xxs\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (min-width: 480px) {
+  .xs\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Footer partner/payment logo invert handling */
+[data-theme="light"] #homeFooterMobile .footer-partner-logo {
+  filter: brightness(0) !important;
+}
+
+[data-theme="dark"] #homeFooterMobile .footer-partner-logo {
+  filter: brightness(0) invert(1) !important;
+}
+
+/* Floating Telegram Repeating Green Wave (1 second me bar-bar bg se wave nikalti hai) */
+@keyframes telegramGreenWave {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.85;
+  }
+  60% {
+    transform: scale(1.38);
+    opacity: 0.35;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+.telegram-green-wave {
+  animation: telegramGreenWave 1.3s cubic-bezier(0.15, 0.7, 0.3, 1) infinite;
+  will-change: transform, opacity;
+}
+
+/* ==========================================================================
+   SIDEBAR DRAWER STYLES
+   ========================================================================== */
+:root {
+  --bg-Quaternary-side-right: #151822;
+  --divide-color-primary6: rgba(255, 255, 255, 0.08);
+  --color-text-primary-new: #ffffff;
+}
+
+[data-theme="light"] {
+  --bg-Quaternary-side-right: #ffffff;
+  --divide-color-primary6: #e5e7eb;
+  --color-text-primary-new: #111827;
+}
+
+[data-theme="dark"] {
+  --bg-Quaternary-side-right: #151822;
+  --divide-color-primary6: rgba(255, 255, 255, 0.08);
+  --color-text-primary-new: #ffffff;
+}
+
+.bg-bg_Quaternary-side-right {
+  background-color: var(--bg-Quaternary-side-right, #151822) !important;
+}
+
+.divide-divide_color_primary6 > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--divide-color-primary6, rgba(255, 255, 255, 0.08)) !important;
+}
+
+.text-text_Primary-new {
+  color: var(--color-text-primary-new, #ffffff) !important;
+}
+
+@keyframes openDrawerAnim {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.openDrawer {
+  animation: openDrawerAnim 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform;
+}
+
+/* ==========================================================================
+   PROFILE DRAWER & LOGGED-IN HEADER TOKENS
+   ========================================================================== */
+:root {
+  --bg-HeaderDepositBtnBgColor: #c10931;
+  --border-depositBtn: #e11d48;
+  --bg-HomeDepositBtnBgColor: #c10931;
+  --bg-HomeWithdrawBtnBgColor: #374151;
+  --bg-Secondary-new2: rgba(0, 0, 0, 0.35);
+  --bg-Ternary11: #1f2330;
+  --text-color-brand-primary-but: #c10931;
+  --color-quaternary: #ffffff;
+  --color-iconsColor: #c10931;
+  --color-ternary1: #9ca3af;
+  --icon-color-brand-secondary: #c10931;
+  --color-text-ternary-new: #ffffff;
+  --color-login-text: #ffffff;
+  --color-login-btn-bg: #c10931;
+  --color-login-btn-text: #ffffff;
+  --border-ternary3: #374151;
+}
+
+[data-theme="light"] {
+  --bg-Secondary-new2: #f3f4f6;
+  --bg-Ternary11: #f8fafc;
+  --color-quaternary: #ffffff;
+  --color-text-ternary-new: #111827;
+  --color-login-text: #111827;
+  --border-ternary3: #d1d5db;
+}
+
+[data-theme="dark"] {
+  --bg-Secondary-new2: rgba(0, 0, 0, 0.35);
+  --bg-Ternary11: #1f2330;
+  --color-quaternary: #ffffff;
+  --color-text-ternary-new: #ffffff;
+  --color-login-text: #ffffff;
+  --border-ternary3: #374151;
+}
+
+.bg-bg_HeaderDepositBtnBgColor {
+  background-color: var(--bg-HeaderDepositBtnBgColor, #c10931) !important;
+}
+
+.border-depositBtn {
+  border-color: var(--border-depositBtn, #e11d48) !important;
+}
+
+.bg-bg_HomeDepositBtnBgColor {
+  background-color: var(--bg-HomeDepositBtnBgColor, #c10931) !important;
+}
+
+.bg-bg_HomeWithdrawBtnBgColor {
+  background-color: var(--bg-HomeWithdrawBtnBgColor, #374151) !important;
+}
+
+.bg-bg_Secondary-new2 {
+  background-color: var(--bg-Secondary-new2, rgba(0, 0, 0, 0.35)) !important;
+}
+
+.bg-bg_Ternary11 {
+  background-color: var(--bg-Ternary11, #1f2330) !important;
+}
+
+.text-text_Ternary-new {
+  color: var(--color-text-ternary-new, #ffffff) !important;
+}
+
+.text-text_LoginTextColor {
+  color: var(--color-login-text, #ffffff) !important;
+}
+
+.bg-bg_color_LoginBtnBgColor {
+  background-color: var(--color-login-btn-bg, #c10931) !important;
+}
+
+.text-text_color_loginButtonTextColor {
+  color: var(--color-login-btn-text, #ffffff) !important;
+}
+
+.text-text_Quaternary1 {
+  color: #ffd54f !important;
+}
+
+.text-text_Success {
+  color: #10b981 !important;
+}
+
+.text-text_Danger {
+  color: #ef4444 !important;
+}
+
+.border-ternary3 {
+  border-color: var(--border-ternary3, #374151) !important;
+}
+
+@keyframes openDrawerFromRightAnim {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.openDrawerFromRight {
+  animation: openDrawerFromRightAnim 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform;
+}
+
+/* Shimmer animation for mobile deposit button */
+.shimmer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmerMove 2.2s infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmerMove {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }

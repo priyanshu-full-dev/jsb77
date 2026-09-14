@@ -3,6 +3,8 @@ import CategoryBanners from "../../components/CategoryBanners";
 import GameSectionCarousel from "../../components/GameSectionCarousel";
 import InPlaySportsWidget from "../../components/InPlaySportsWidget";
 import IndianCardGamesSection from "../../components/IndianCardGamesSection";
+import Trendinggame from "../../components/Trendinggame";
+import UpcomingEvent from "../../components/UpcomingEvent";
 import { ORIGINALS_GAMES, GAME_SHOW_GAMES } from "../../data/kuberMockData";
 import { useNavigate } from "react-router-dom";
 
@@ -20,6 +22,7 @@ const Home = () => {
 
       {/* Section 1: Originals / Crash Games / Live Roulette / Money Wheel */}
       <GameSectionCarousel
+        title="Trending Games"
         tabs={["Originals", "Crash Games", "Live Roulette", "Money Wheel"]}
         games={ORIGINALS_GAMES}
         onGameClick={handleGameSelect}
@@ -39,6 +42,12 @@ const Home = () => {
 
       {/* Section 4: Indian Card Games with Live Dealers */}
       <IndianCardGamesSection />
+
+      {/* Section 5: Trending Game */}
+      <Trendinggame />
+
+      {/* Section 6: Upcoming Events */}
+      <UpcomingEvent />
     </div>
   );
 };

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 100" width="300" height="100" fill="none">
+  <!-- Rounded container border -->
+  <rect x="25" y="10" width="250" height="80" rx="10" stroke="#111111" stroke-width="4.5" fill="none" />
+  
+  <g fill="#111111" transform="translate(42, 22)">
+    <!-- Checkmark icon -->
+    <path d="M12 25L3 16l-3 3 12 12 22-22-3-3L12 25z" transform="translate(0, 0) scale(1.1)" />
+    <path d="M26 12L15 23l-4-4" stroke="#111111" stroke-width="2.5" stroke-linecap="round" fill="none" />
+    <!-- eCOGRA text -->
+    <text x="36" y="27" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="900" letter-spacing="-0.5">eCOGRA</text>
+    
+    <!-- Divider line -->
+    <line x1="0" y1="36" x2="216" y2="36" stroke="#111111" stroke-width="1.8" />
+    
+    <!-- ISO 27001 Certified -->
+    <text x="14" y="56" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="16.5" font-weight="600" letter-spacing="0.5">ISO 27001 Certified</text>
+  </g>
+</svg>
