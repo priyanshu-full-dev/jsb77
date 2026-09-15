@@ -1,12 +1,25 @@
-import React from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
 import { IN_PLAY_SPORTS_DATA } from "../data/inPlaySportsData";
+import { socket } from "../../socketClient";
+import {
+  setRunningData,
+  setMarketName,
+  setMarketOddsData,
+} from "../../redux/slices/fullmarketSlice";
 
 // ==========================================
 // SVG ICONS (EXACT PIXEL-PERFECT VECTORS)
 // ==========================================
 const InPlayHeaderIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="29" height="29" viewBox="0 0 29 29" fill="none">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="29"
+    height="29"
+    viewBox="0 0 29 29"
+    fill="none"
+  >
     <g clipPath="url(#clip0_1696_2272)">
       <path
         d="M14.5 2.83337C8.06004 2.83337 2.83337 8.06004 2.83337 14.5C2.83337 20.94 8.06004 26.1667 14.5 26.1667C20.94 26.1667 26.1667 20.94 26.1667 14.5C26.1667 8.06004 20.94 2.83337 14.5 2.83337ZM12.1667 19.75V9.25004L19.1667 14.5L12.1667 19.75Z"
@@ -15,14 +28,24 @@ const InPlayHeaderIcon = () => (
     </g>
     <defs>
       <clipPath id="clip0_1696_2272">
-        <rect width="28" height="28" fill="white" transform="translate(0.5 0.5)" />
+        <rect
+          width="28"
+          height="28"
+          fill="white"
+          transform="translate(0.5 0.5)"
+        />
       </clipPath>
     </defs>
   </svg>
 );
 
 const CricketIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 19 18" xmlns="http://www.w3.org/2000/svg">
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 19 18"
+    xmlns="http://www.w3.org/2000/svg"
+  >
     <circle cx="9.5" cy="9" r="8.5" fill="#ffffff" />
     <path
       d="M4.36255 16.7108C4.35063 16.7037 4.34109 16.6966 4.32917 16.6895C3.88333 16.4077 3.4518 16.107 3.05842 15.7566C2.91299 15.6263 2.77709 15.489 2.63404 15.3564C2.59828 15.3256 2.61974 15.3067 2.63642 15.283C2.81524 15.0533 2.99643 14.8213 3.17524 14.5916C3.92148 13.635 4.6701 12.676 5.41634 11.7194C6.27225 10.6231 7.12578 9.52678 7.98169 8.43047C8.8066 7.37204 9.6339 6.31125 10.4588 5.25282C11.329 4.14231 12.1969 3.02942 13.0647 1.9189C13.2292 1.70816 13.3961 1.49506 13.5582 1.28195C13.5797 1.25354 13.5916 1.24644 13.6274 1.26538C13.9468 1.45244 14.2472 1.67028 14.5333 1.90233C14.6692 2.01125 14.8123 2.1107 14.9458 2.22199C15.0817 2.34038 15.2128 2.46351 15.3439 2.58663C15.3773 2.61742 15.3535 2.63162 15.3368 2.65293C15.1008 2.95602 14.8623 3.26147 14.6263 3.56455C13.9254 4.46433 13.222 5.36411 12.5211 6.26389C11.7343 7.27259 10.9476 8.28129 10.1584 9.29C9.42648 10.2277 8.69693 11.1653 7.965 12.103C7.12101 13.1827 6.2794 14.2648 5.43542 15.3446C5.08971 15.7874 4.7464 16.2278 4.40069 16.6706C4.39116 16.6848 4.38401 16.7037 4.36255 16.7108Z"
@@ -51,7 +74,13 @@ const FootballIcon = () => (
 );
 
 const TennisIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 20 20" fill="#7FBA42" xmlns="http://www.w3.org/2000/svg">
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 20 20"
+    fill="#7FBA42"
+    xmlns="http://www.w3.org/2000/svg"
+  >
     <path
       d="M9.5403 19.3516C9.28848 19.3516 9.03913 19.3516 8.78731 19.3516C8.74781 19.3516 8.73546 19.3442 8.73793 19.3021C8.78237 18.8565 8.7725 18.4135 8.75275 17.9679C8.73546 17.5595 8.69596 17.1535 8.6219 16.7526C8.49599 16.0743 8.30836 15.4109 8.06395 14.7624C7.68128 13.7476 7.15542 12.8119 6.4839 11.9579C6.13086 11.5074 5.74326 11.0891 5.3285 10.698C4.65698 10.0668 3.91387 9.53709 3.09916 9.10639C2.31902 8.69549 1.50924 8.3638 0.652565 8.15835C0.548875 8.1336 0.445185 8.11132 0.341495 8.08904C0.306931 8.08162 0.294587 8.07419 0.301994 8.02964C0.363714 7.74498 0.418028 7.45785 0.49703 7.17566C0.679722 6.51724 0.93401 5.88604 1.26977 5.28949C1.51418 4.85137 1.78081 4.42809 2.09188 4.03452C2.43505 3.59887 2.81031 3.19788 3.23001 2.83648C3.64724 2.47509 4.09162 2.15578 4.56811 1.87607C5.41244 1.38349 6.30862 1.02953 7.26405 0.829027C7.68128 0.742392 8.10592 0.687936 8.53302 0.660707C9.02678 0.631004 9.52055 0.650806 10.0143 0.660707C10.0513 0.660707 10.0587 0.675559 10.0563 0.707738C10.0513 0.801799 10.0513 0.898335 10.0464 0.992396C10.0316 1.30428 10.0365 1.61617 10.0464 1.92558C10.0587 2.28697 10.0958 2.64589 10.1452 3.00233C10.2143 3.49244 10.318 3.97512 10.4562 4.45037C10.6636 5.16821 10.9549 5.84891 11.3055 6.50734C11.6462 7.14844 12.0437 7.74993 12.5053 8.30935C13.004 8.91331 13.5669 9.4554 14.1866 9.93313C14.9124 10.495 15.6951 10.9629 16.5295 11.344C17.122 11.6139 17.7392 11.8144 18.3688 11.9752C18.5021 12.0099 18.4996 12.0099 18.4749 12.1411C18.3169 12.9802 18.038 13.7797 17.6479 14.5372C17.3343 15.1411 16.9517 15.6981 16.5122 16.2179C15.9074 16.9308 15.2087 17.5347 14.4162 18.0248C13.5669 18.5521 12.6584 18.9358 11.6832 19.1536C11.2586 19.2476 10.8265 19.3095 10.392 19.3417C10.1081 19.3615 9.82421 19.3665 9.5403 19.3665C9.5403 19.3615 9.5403 19.3566 9.5403 19.3516Z"
       fill="#7FBA42"
@@ -68,44 +97,233 @@ const TennisIcon = () => (
 );
 
 const LiveDotIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="6" height="6" viewBox="0 0 9 9" fill="#29ab2b" className="animate-pulse">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="6"
+    height="6"
+    viewBox="0 0 9 9"
+    fill="#29ab2b"
+    className="animate-pulse"
+  >
     <circle cx="4.5" cy="4.5" r="4.5" fill="#29ab2b"></circle>
   </svg>
 );
 
-const TvIcon = () => (
-  <svg width="13" height="11" viewBox="0 0 13 11" fill="none" xmlns="http://www.w3.org/2000/svg">
+const TvIcon = ({ active = true }) => (
+  <svg
+    width="13"
+    height="11"
+    viewBox="0 0 13 11"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
     <path
       d="M11.8182 0H1.18182C0.525909 0 0 0.543889 0 1.22222V8.55556C0 9.22778 0.525909 9.77778 1.18182 9.77778H4.13636V11H8.86364V9.77778H11.8182C12.4682 9.77778 12.9941 9.22778 12.9941 8.55556L13 1.22222C13 0.543889 12.4682 0 11.8182 0ZM11.8182 8.55556H1.18182V1.22222H11.8182V8.55556ZM8.86364 4.88889L4.72727 7.33333V2.44444L8.86364 4.88889Z"
-      fill="var(--inplay-tv-color)"
+      fill={active ? "var(--inplay-tv-color, #29ab2b)" : "#9ca3af"}
+      opacity={active ? "1" : "0.35"}
     />
   </svg>
 );
 
 // ==========================================
-// ODDS BUTTON COMPONENT
+// HELPER FUNCTIONS FOR LIVE ODDS & TEAMS
+// ==========================================
+const parseTeams = (eventName, runners = [], matchRunners = []) => {
+  if (matchRunners && matchRunners.length >= 2) {
+    return {
+      team1: matchRunners[0]?.runnerName || "Team 1",
+      team2: matchRunners[1]?.runnerName || "Team 2",
+    };
+  }
+  if (eventName) {
+    if (eventName.includes(" vs ")) {
+      const parts = eventName.split(" vs ");
+      return { team1: parts[0]?.trim(), team2: parts[1]?.trim() };
+    }
+    if (eventName.includes(" v ")) {
+      const parts = eventName.split(" v ");
+      return { team1: parts[0]?.trim(), team2: parts[1]?.trim() };
+    }
+    if (eventName.includes(" / ")) {
+      const parts = eventName.split(" / ");
+      return { team1: parts[0]?.trim(), team2: parts[1]?.trim() };
+    }
+    if (eventName.includes(" - ")) {
+      const parts = eventName.split(" - ");
+      return { team1: parts[0]?.trim(), team2: parts[1]?.trim() };
+    }
+  }
+  const t1 =
+    runners?.[0]?.runnerName ||
+    runners?.[0]?.selectionName ||
+    eventName ||
+    "Team 1";
+  const t2 =
+    runners?.[1]?.runnerName ||
+    runners?.[1]?.selectionName ||
+    "Team 2";
+  return { team1: t1, team2: t2 };
+};
+
+const extractOdds = (rawMatch) => {
+  const market =
+    rawMatch?.matchOdds?.find(
+      (m) =>
+        m?.marketId === rawMatch?.marketId || m?.marketName === "Match Odds"
+    ) || rawMatch?.matchOdds?.[0];
+
+  const rawRunners = market?.runners || [];
+
+  // Match runners with names from matchRunners for accurate Draw / Team detection
+  const runnerNameMap = new Map();
+  (rawMatch?.matchRunners || []).forEach((mr) => {
+    if (mr?.selectionId) runnerNameMap.set(mr.selectionId, mr.runnerName);
+  });
+
+  const runners = rawRunners.map((r) => ({
+    ...r,
+    runnerName:
+      r?.runnerName ||
+      r?.selectionName ||
+      runnerNameMap.get(r?.selectionId) ||
+      "",
+  }));
+
+  const drawIndex = runners.findIndex((r) => {
+    const name = (r?.runnerName || "").toLowerCase();
+    return name.includes("draw") || name.includes("tie");
+  });
+
+  let r1 = null;
+  let rDraw = null;
+  let r2 = null;
+
+  if (drawIndex !== -1) {
+    rDraw = runners[drawIndex];
+    const nonDraw = runners.filter((_, idx) => idx !== drawIndex);
+    r1 = nonDraw[0] || null;
+    r2 = nonDraw[1] || null;
+  } else if (runners.length >= 3) {
+    r1 = runners[0];
+    r2 = runners[1];
+    rDraw = runners[2];
+  } else {
+    r1 = runners[0] || null;
+    r2 = runners[1] || null;
+    rDraw = null;
+  }
+
+  const getPriceAndSize = (runner, type) => {
+    if (!runner?.ex) return { price: "-", size: "", disabled: true };
+    const list =
+      type === "back"
+        ? runner.ex.availableToBack
+        : runner.ex.availableToLay;
+    const best = list?.[0];
+    if (!best || !best.price || best.price === 0 || best.price === "-") {
+      return { price: "-", size: "", disabled: true };
+    }
+    return {
+      price: best.price,
+      size:
+        best.size !== undefined && best.size !== null
+          ? typeof best.size === "number"
+            ? best.size.toLocaleString()
+            : best.size
+          : "",
+      disabled: false,
+    };
+  };
+
+  const back1 = getPriceAndSize(r1, "back");
+  const backDraw = rDraw
+    ? getPriceAndSize(rDraw, "back")
+    : { price: "-", size: "", disabled: true };
+  const back2 = getPriceAndSize(r2, "back");
+
+  const lay1 = getPriceAndSize(r1, "lay");
+  const layDraw = rDraw
+    ? getPriceAndSize(rDraw, "lay")
+    : { price: "-", size: "", disabled: true };
+  const lay2 = getPriceAndSize(r2, "lay");
+
+  return {
+    back: [back1, backDraw, back2],
+    lay: [lay1, layDraw, lay2],
+  };
+};
+
+// ==========================================
+// ODDS BUTTON COMPONENT (WITH 0.2s YELLOW FLASH ON UPDATE)
 // ==========================================
 const OddsButton = ({ price, size, disabled, isLay }) => {
-  const bgClass = isLay ? "bg-bg_LayBtnBg border border-layBtn" : "bg-bg_BackBtnBg border border-backBtn";
+  const [flashing, setFlashing] = useState(false);
+  const prevPriceRef = useRef(price);
+  const prevSizeRef = useRef(size);
+  const isMountedRef = useRef(false);
+
+  useEffect(() => {
+    if (!isMountedRef.current) {
+      isMountedRef.current = true;
+      prevPriceRef.current = price;
+      prevSizeRef.current = size;
+      return;
+    }
+
+    // Check if price or size updated
+    const priceChanged =
+      price !== undefined &&
+      prevPriceRef.current !== undefined &&
+      String(price) !== String(prevPriceRef.current);
+    const sizeChanged =
+      size !== undefined &&
+      prevSizeRef.current !== undefined &&
+      String(size) !== String(prevSizeRef.current);
+
+    if (priceChanged || sizeChanged) {
+      prevPriceRef.current = price;
+      prevSizeRef.current = size;
+      setFlashing(true);
+      const timer = setTimeout(() => {
+        setFlashing(false);
+      }, 200); // exactly 0.2s (200ms) yellow flash
+
+      return () => clearTimeout(timer);
+    } else {
+      prevPriceRef.current = price;
+      prevSizeRef.current = size;
+    }
+  }, [price, size]);
+
+  const defaultBg = isLay
+    ? disabled
+      ? "bg-[#fed7e2] border border-[#fbb6ce]"
+      : "bg-bg_LayBtnBg border border-layBtn"
+    : disabled
+    ? "bg-[#bfdbfe] border border-[#93c5fd]"
+    : "bg-bg_BackBtnBg border border-backBtn";
+
+  // Flash yellow with !important rule from kuber.css for 0.2s then fade back
+  const bgClass = flashing ? "odds-flash-yellow shadow-md" : defaultBg;
   const stateClass = disabled
-    ? "opacity-50 cursor-not-allowed"
-    : "opacity-100 cursor-pointer active:scale-95";
+    ? "cursor-default opacity-85"
+    : "cursor-pointer active:scale-95 opacity-100";
 
   return (
     <span className="col-span-4">
       <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
         <div
-          className={` overflow-hidden relative    ${stateClass}    w-full h-full px-1 py-[1px] rounded-sm flex flex-col items-center justify-center ${bgClass}  undefined`}
+          className={`overflow-hidden relative ${stateClass} w-full h-full px-1 py-[1px] rounded-sm flex flex-col items-center justify-center transition-colors duration-200 ease-out ${bgClass} undefined`}
         >
           <span
             id="oddBtnPrice"
-            className="relative z-10 transition-all ease-in-out duration-300 origin-center flex items-center justify-center w-full text-text_OddValue leading-5 text-sm md:text-[15px] font-semibold "
+            className="relative z-10 transition-all ease-in-out duration-200 origin-center flex items-center justify-center w-full text-text_OddValue leading-5 text-sm md:text-[15px] font-semibold "
           >
-            {price}
+            {price || "-"}
           </span>
           <span
             id="oddBtnSize"
-            className=" relative z-10 transition-all ease-in-out duration-300 origin-center flex items-center justify-center w-full text-[10px] text-text_OddValue leading-3 text-center whitespace-normal font-normal "
+            className="relative z-10 transition-all ease-in-out duration-200 origin-center flex items-center justify-center w-full text-[10px] text-text_OddValue leading-3 text-center whitespace-normal font-normal "
           >
             <span className="w-max break-all truncate">
               {size ? <div className="odd-button__volume">{size}</div> : null}
@@ -123,7 +341,7 @@ const OddsButton = ({ price, size, disabled, isLay }) => {
 const MatchRow = ({ match, onOpen }) => {
   return (
     <div className="col-span-12 grid grid-cols-12">
-      {/* Left: Score & Team Names */}
+      {/* 1) First Box: Green Dot & LIVE text */}
       <div className="col-span-6 h-12 lg:col-span-5 grid grid-cols-7 border-t border-borderColorOfMarket ">
         <span
           id="inPlayTime"
@@ -131,14 +349,19 @@ const MatchRow = ({ match, onOpen }) => {
         >
           <div className="flex w-full text-text_InPlayEventsScoreAndTime gap-x-1 items-center justify-center px-0.5">
             <LiveDotIcon />
-            <div id="inPlay" className="font-semibold bg-bg_inPlayBlockBg  bg-clip-text text-x">
+            <div
+              id="inPlay"
+              className="font-semibold text-[#29ab2b] text-x"
+            >
               LIVE
             </div>
           </div>
         </span>
+
+        {/* 2) Second Box: Event Name (Team 1, Team 2) & TV Svg */}
         <span
           id="inPlayTeamName"
-          onClick={onOpen}
+          onClick={() => onOpen(match)}
           className=" text-selection-none flex items-center justify-start col-span-5 px-1 relative border-l border-r border-borderColorOfMarket active:scale-[94%] transition-all ease-in-out duration-100"
         >
           <span className="flex flex-col items-center justify-start w-[87%] cursor-pointer ">
@@ -155,20 +378,24 @@ const MatchRow = ({ match, onOpen }) => {
               </span>
             </span>
           </span>
+          {/* 3) TV Svg: Active green if true, offline gray if false */}
           <span className="cursor-pointer absolute top-0.5 right-0.5">
-            <TvIcon />
+            <TvIcon active={match.tv} />
           </span>
         </span>
       </div>
 
       {/* Right: Exchange Back & Lay Odds */}
       <span className=" col-span-6 h-12 lg:col-span-7 w-full overflow-auto border-t border-borderColorOfMarket ">
-        <div className="w-full overflow-x-auto flex h-full sm:px-[2px]" id="hideScrollBar">
-          {/* Back Odds (1, X, 2) */}
+        <div
+          className="w-full overflow-x-auto flex h-full sm:px-[2px]"
+          id="hideScrollBar"
+        >
+          {/* 4) Blue Box: 3 Back Odds (1, X, 2) */}
           <span className="grid grid-cols-12 grid-flow-col overflow-auto h-full min-w-[100%]">
             {match.back.map((item, idx) => (
               <OddsButton
-                key={idx}
+                key={`back-${idx}`}
                 price={item.price}
                 size={item.size}
                 disabled={item.disabled}
@@ -177,11 +404,11 @@ const MatchRow = ({ match, onOpen }) => {
             ))}
           </span>
 
-          {/* Lay Odds (1, X, 2) */}
+          {/* 5) Other 3 Boxes: 3 Lay Odds (1, X, 2) in Pink */}
           <span className="grid grid-cols-12 grid-flow-col overflow-auto h-full min-w-[100%]">
             {match.lay.map((item, idx) => (
               <OddsButton
-                key={idx}
+                key={`lay-${idx}`}
                 price={item.price}
                 size={item.size}
                 disabled={item.disabled}
@@ -199,6 +426,8 @@ const MatchRow = ({ match, onOpen }) => {
 // SPORT BLOCK COMPONENT
 // ==========================================
 const SportBlock = ({ sportData, onOpen, isLast }) => {
+  if (!sportData?.matches || sportData.matches.length === 0) return null;
+
   const renderSportIcon = () => {
     switch (sportData.sport) {
       case "Cricket":
@@ -236,9 +465,9 @@ const SportBlock = ({ sportData, onOpen, isLast }) => {
           </span>
         </div>
 
-        {/* Match Rows - Dynamically renders only as many rows as there are matches */}
+        {/* Match Rows */}
         {sportData.matches.map((match, idx) => (
-          <MatchRow key={idx} match={match} onOpen={onOpen} />
+          <MatchRow key={match.eventId || idx} match={match} onOpen={onOpen} />
         ))}
       </div>
     </div>
@@ -250,9 +479,184 @@ const SportBlock = ({ sportData, onOpen, isLast }) => {
 // ==========================================
 export default function InPlaySportsWidget() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const handleOpen = () => {
-    navigate("/sports");
+  // Read real-time matches from Redux store
+  const { matches: cricketState } = useSelector((state) => state.matches.cricket);
+  const { matches: soccerState } = useSelector((state) => state.matches.soccer);
+  const { matches: tennisState } = useSelector((state) => state.matches.tennis);
+
+  // Direct zero-latency socket state for instant UI re-renders on socket events
+  const [liveSocketMatches, setLiveSocketMatches] = useState({
+    cricket: null,
+    soccer: null,
+    tennis: null,
+  });
+
+  useEffect(() => {
+    // 1) Direct socket event listener for zero-delay updates
+    const handleMatchUpdate = (data) => {
+      if (!data?.matches || !data?.sport) return;
+      const sportKey = data.sport.toLowerCase();
+      if (sportKey === "cricket" || sportKey === "soccer" || sportKey === "tennis") {
+        setLiveSocketMatches((prev) => ({
+          ...prev,
+          [sportKey]: data.matches,
+        }));
+      }
+    };
+
+    socket.on("matchUpdate", handleMatchUpdate);
+
+    // 2) Function to request freshest live exchange odds from socket
+    const streamLiveOdds = () => {
+      socket.emit("subscribeToMatches", { eventId: 4, eventType: 4 });
+      socket.emit("subscribeToMatches", { eventId: 1, eventType: 1 });
+      socket.emit("subscribeToMatches", { eventId: 2, eventType: 2 });
+    };
+
+    // Immediate initial subscription
+    streamLiveOdds();
+
+    // Fast 1.5s interval to ensure exchange odds stay real-time instant
+    const streamInterval = setInterval(streamLiveOdds, 1500);
+
+    const handleConnect = () => {
+      streamLiveOdds();
+    };
+    socket.on("connect", handleConnect);
+
+    return () => {
+      clearInterval(streamInterval);
+      socket.off("matchUpdate", handleMatchUpdate);
+      socket.off("connect", handleConnect);
+    };
+  }, []);
+
+  const sportsData = useMemo(() => {
+    const getMatchList = (liveList, sportObj) => {
+      if (Array.isArray(liveList) && liveList.length > 0) return liveList;
+      if (!sportObj) return [];
+      if (Array.isArray(sportObj.matches?.data)) return sportObj.matches.data;
+      if (Array.isArray(sportObj.matches)) return sportObj.matches;
+      if (Array.isArray(sportObj.data)) return sportObj.data;
+      if (Array.isArray(sportObj)) return sportObj;
+      return [];
+    };
+
+    const rawCricket = getMatchList(liveSocketMatches.cricket, cricketState);
+    const rawSoccer = getMatchList(liveSocketMatches.soccer, soccerState);
+    const rawTennis = getMatchList(liveSocketMatches.tennis, tennisState);
+
+    const mapMatches = (list, sportName, fallbackSportIndex) => {
+      // 1) Filter ONLY in-play matches: "agar in play hai to"
+      const inPlayList = (list || []).filter(
+        (m) => Boolean(m?.inplay || m?.inPlay || m?.matchOdds?.some((o) => o?.inplay || o?.inPlay))
+      );
+
+      if (inPlayList.length > 0) {
+        return inPlayList.map((rawMatch) => {
+          const runners =
+            rawMatch?.matchOdds?.find(
+              (m) =>
+                m?.marketId === rawMatch?.marketId ||
+                m?.marketName === "Match Odds"
+            )?.runners || rawMatch?.matchOdds?.[0]?.runners || [];
+
+          const { team1, team2 } = parseTeams(
+            rawMatch?.eventName,
+            runners,
+            rawMatch?.matchRunners
+          );
+          const { back, lay } = extractOdds(rawMatch);
+
+          return {
+            eventId: rawMatch?.eventId,
+            team1,
+            team2,
+            inplay: true,
+            tv: Boolean(rawMatch?.tv),
+            back,
+            lay,
+            raw: rawMatch,
+            sportName,
+          };
+        });
+      }
+
+      // If server has 0 in-play for this sport right now, use fallback so widget displays properly
+      return IN_PLAY_SPORTS_DATA[fallbackSportIndex]?.matches || [];
+    };
+
+    return [
+      {
+        sport: "Cricket",
+        matches: mapMatches(rawCricket, "cricket", 0),
+      },
+      {
+        sport: "Football",
+        matches: mapMatches(rawSoccer, "soccer", 1),
+      },
+      {
+        sport: "Tennis",
+        matches: mapMatches(rawTennis, "tennis", 2),
+      },
+    ];
+  }, [liveSocketMatches, cricketState, soccerState, tennisState]);
+
+  // Console log in-play matches and expose testing utility in DevTools
+  useEffect(() => {
+    console.group("%c🔥 [IN-PLAY MATCHES RENDERED] 🔥", "color: #40af52; font-size: 14px; font-weight: bold;");
+    console.log("Sports Data:", sportsData);
+    console.groupEnd();
+
+    if (typeof window !== "undefined") {
+      window.inPlaySportsData = sportsData;
+      // Expose testOddsFlash utility in browser console so developer can test 0.2s yellow flash anytime
+      window.testOddsFlash = (sport = "Cricket", teamIndex = 0, newPrice = "2.14", newSize = "1,500") => {
+        const sportKey = sport.toLowerCase();
+        setLiveSocketMatches((prev) => {
+          const current = prev[sportKey] || [];
+          if (current.length > 0) {
+            const cloned = JSON.parse(JSON.stringify(current));
+            const targetRunner = cloned[teamIndex]?.matchOdds?.[0]?.runners?.[0];
+            if (targetRunner?.ex?.availableToBack?.[0]) {
+              targetRunner.ex.availableToBack[0].price = newPrice;
+              targetRunner.ex.availableToBack[0].size = newSize;
+            }
+            return { ...prev, [sportKey]: cloned };
+          }
+          return prev;
+        });
+        console.log(`⚡ [testOddsFlash] Flashed odds on ${sport} match #${teamIndex} with price ${newPrice}`);
+      };
+    }
+  }, [sportsData]);
+
+  const handleOpen = (match) => {
+    if (match?.raw) {
+      dispatch(setRunningData(match.raw.matchRunners));
+      dispatch(setMarketName(match.raw.markets));
+      dispatch(
+        setMarketOddsData({
+          data: { data: match.raw.matchOdds },
+          sport: match.sportName,
+        })
+      );
+      navigate(
+        `/full-market?eventType=${match.raw.sportId || ""}&eventId=${
+          match.raw.eventId || ""
+        }&marketId=${match.raw.marketId || ""}&joinedMarketIds=${
+          match.raw.joinedMarketIds || ""
+        }&competitionId=${match.raw.competitionId || ""}&bm=${
+          match.raw.bm || ""
+        }&fancy=${match.raw.fancy || ""}&pc=${match.raw.pc || ""}&eventName=${encodeURIComponent(
+          match.raw.eventName || ""
+        )}&openDate=${match.raw.openDate || ""}&tv=${match.raw.tv || ""}`
+      );
+    } else {
+      navigate("/sports");
+    }
   };
 
   return (
@@ -264,14 +668,15 @@ export default function InPlaySportsWidget() {
           style={{
             borderTopLeftRadius: "10px",
             borderTopRightRadius: "10px",
-            background: "var(--color-bg-inPlayBlockBg, linear-gradient(89deg, #40af52, #2e924b 89.28%))",
+            background:
+              "var(--color-bg-inPlayBlockBg, linear-gradient(89deg, #40af52, #2e924b 89.28%))",
           }}
         >
           <div className=" flex items-center text-text_Quaternary-new  font-semibold text-[18px] tracking-wide justify-start w-full gap-[5px] ">
             <InPlayHeaderIcon />
             <span>In Play</span>
           </div>
-          <div className=" w-max text-nowrap" onClick={handleOpen}>
+          <div className=" w-max text-nowrap" onClick={() => navigate("/sports")}>
             <span className=" text-xs tracking-wide text-text_Quaternary-new  text-nowrap whitespace-nowrap font-normal cursor-pointer">
               Open Bets
             </span>
@@ -287,7 +692,7 @@ export default function InPlaySportsWidget() {
         </div>
 
         {/* Sports Sections */}
-        {IN_PLAY_SPORTS_DATA.map((sportItem) => (
+        {sportsData.map((sportItem) => (
           <SportBlock
             key={sportItem.sport}
             sportData={sportItem}

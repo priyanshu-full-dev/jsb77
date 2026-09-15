@@ -259,6 +259,13 @@ div::-webkit-scrollbar {
   border-color: #f78da3 !important;
 }
 
+.odds-flash-yellow {
+  background-color: #fef08a !important;
+  border-color: #eab308 !important;
+  color: #713f12 !important;
+  transition: background-color 0.2s ease-out, border-color 0.2s ease-out !important;
+}
+
 .text-text_OddValue {
   color: #111827 !important;
 }

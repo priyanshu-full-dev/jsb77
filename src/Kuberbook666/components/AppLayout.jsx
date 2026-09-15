@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Outlet } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { Outlet, useLocation } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
 import Header from "./Header";
 import TopNavChips from "./TopNavChips";
 import BottomNav from "./BottomNav";
@@ -13,7 +13,20 @@ import SignupModal from "./AuthModals/SignupModal";
 import Footer from "./Footer";
 import "../styles/kuber.css";
 
+import { fetchMatchesByEventId } from "../../redux/slices/matchSlice";
+import {
+  subscribeToMatchData,
+  subscribeToKabaddiMatchesData,
+  subscribeToHorseMatchesData,
+  subscribeToGreyhoundMatchesData,
+  subscribeToJoinProfileRoom,
+  subscribeToJoinMyBets,
+} from "../../socketClient";
+import { getUserId } from "../../utils/helper/commonSelectors";
+
 const AppLayout = () => {
+  const dispatch = useDispatch();
+  const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [profileDrawerOpen, setProfileDrawerOpen] = useState(false);
   const [depositModalOpen, setDepositModalOpen] = useState(false);
@@ -21,10 +34,63 @@ const AppLayout = () => {
   const [signupOpen, setSignupOpen] = useState(false);
 
   const isLoggedIn = useSelector((state) => state?.user?.isLoggedIn);
+  const currentUserId = useSelector(getUserId());
 
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem("kuber_theme") || "dark";
   });
+
+  // Log active route for developer inspection
+  useEffect(() => {
+    console.log(`📍 [KUBER ACTIVE ROUTE]: "${location.pathname}"`);
+  }, [location.pathname]);
+
+  // Fast REST fetch for instant zero-latency loading
+  useEffect(() => {
+    dispatch(fetchMatchesByEventId({ eventId: 4, sport: "cricket" }));
+    dispatch(fetchMatchesByEventId({ eventId: 1, sport: "soccer" }));
+    dispatch(fetchMatchesByEventId({ eventId: 2, sport: "tennis" }));
+  }, [dispatch]);
+
+  // Real-time Socket.IO subscriptions for live in-play odds and events
+  useEffect(() => {
+    console.log("🚀 [KUBER] Initiating sports Socket.IO subscriptions...");
+    subscribeToMatchData({
+      eventId: 4,
+      eventType: 4,
+      competitionId: null,
+      matchId: null,
+      marketId: null,
+      sport: "cricket",
+    });
+    subscribeToMatchData({
+      eventId: 1,
+      eventType: 1,
+      competitionId: null,
+      matchId: null,
+      marketId: null,
+      sport: "soccer",
+    });
+    subscribeToMatchData({
+      eventId: 2,
+      eventType: 2,
+      competitionId: null,
+      matchId: null,
+      marketId: null,
+      sport: "tennis",
+    });
+    subscribeToKabaddiMatchesData();
+    subscribeToHorseMatchesData();
+    subscribeToGreyhoundMatchesData();
+  }, []);
+
+  // User balance, bets, and exposure real-time socket updates
+  useEffect(() => {
+    if (currentUserId) {
+      subscribeToJoinProfileRoom(currentUserId);
+      subscribeToJoinMyBets(currentUserId);
+    }
+  }, [currentUserId]);
 
   useEffect(() => {
     localStorage.setItem("kuber_theme", theme);

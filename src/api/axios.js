@@ -73,9 +73,10 @@ import { revertUser } from "../redux/slices/userSlice";
 import { revertAccount } from "../redux/slices/accountSlice";
 import { encryptPayload, decryptPayload } from "../utils/cryptoUtil";
 
-export const baseUrl = import.meta.env.PROD
-  ? import.meta.env.VITE_API_BASE_URL_PROD
-  : import.meta.env.VITE_API_BASE_URL_DEV;
+export const baseUrl =
+  (import.meta.env.PROD
+    ? import.meta.env.VITE_API_BASE_URL_PROD
+    : import.meta.env.VITE_API_BASE_URL_DEV) || "https://api.professor.monster";
 
 const API = axios.create({
   baseURL: baseUrl,
