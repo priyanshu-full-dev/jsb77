@@ -153,11 +153,11 @@ const MarketPage = () => {
     if (sportId && urlEventId) {
       dispatch(fetchMarketOdds({ eventType: sportId, competitionId, eventId: urlEventId, marketId: marketId || urlEventId }));
     }
-    if (isCricket || hasBmQuery) {
-      dispatch(fetchbookmakerOdds({ eventType: sportId, competitionId, eventId: urlEventId }));
-    }
+    // Real-time Bookmaker and Fancy odds are streamed live via Socket.IO subscriptions below
     if (isCricket || hasFancyQuery) {
-      dispatch(fetchfancyOdds({ eventType: sportId, competitionId, eventId: urlEventId }));
+      if (competitionId && urlEventId) {
+        dispatch(fetchfancyOdds({ eventType: sportId, competitionId, eventId: urlEventId }));
+      }
     }
   }, [sportId, competitionId, urlEventId, marketId, isCricket, hasBmQuery, hasFancyQuery, dispatch]);
 

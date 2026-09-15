@@ -8,6 +8,11 @@ import {
   setMarketName,
   setMarketOddsData,
 } from "../../redux/slices/fullmarketSlice";
+import BetSlip from "./BetSlip";
+import {
+  handleOpenPlaceBet,
+  handleCancelPlaceBet,
+} from "../../redux/slices/placeBetSlice";
 
 // ==========================================
 // SVG ICONS (EXACT PIXEL-PERFECT VECTORS)
@@ -159,17 +164,19 @@ const parseTeams = (eventName, runners = [], matchRunners = []) => {
     eventName ||
     "Team 1";
   const t2 =
-    runners?.[1]?.runnerName ||
-    runners?.[1]?.selectionName ||
-    "Team 2";
+    runners?.[1]?.runnerName || runners?.[1]?.selectionName || "Team 2";
   return { team1: t1, team2: t2 };
 };
 
-const extractOdds = (rawMatch) => {
+const extractOdds = (
+  rawMatch,
+  team1Fallback = "Team 1",
+  team2Fallback = "Team 2",
+) => {
   const market =
     rawMatch?.matchOdds?.find(
       (m) =>
-        m?.marketId === rawMatch?.marketId || m?.marketName === "Match Odds"
+        m?.marketId === rawMatch?.marketId || m?.marketName === "Match Odds",
     ) || rawMatch?.matchOdds?.[0];
 
   const rawRunners = market?.runners || [];
@@ -213,39 +220,80 @@ const extractOdds = (rawMatch) => {
     rDraw = null;
   }
 
-  const getPriceAndSize = (runner, type) => {
-    if (!runner?.ex) return { price: "-", size: "", disabled: true };
-    const list =
-      type === "back"
-        ? runner.ex.availableToBack
-        : runner.ex.availableToLay;
+  const getPriceAndSize = (runner, type, defaultName, defaultSelectionId) => {
+    const rName =
+      runner?.runnerName || runner?.selectionName || defaultName || "";
+    const selId = runner?.selectionId || defaultSelectionId;
+    const isBack = String(type).toLowerCase() === "back";
+
+    if (!runner?.ex) {
+      return {
+        price: "-",
+        size: "",
+        disabled: true,
+        runnerName: rName,
+        selectionId: selId,
+        type: isBack ? "Back" : "Lay",
+      };
+    }
+
+    const list = isBack ? runner.ex.availableToBack : runner.ex.availableToLay;
     const best = list?.[0];
     if (!best || !best.price || best.price === 0 || best.price === "-") {
-      return { price: "-", size: "", disabled: true };
+      return {
+        price: "-",
+        size: "",
+        disabled: true,
+        runnerName: rName,
+        selectionId: selId,
+        type: isBack ? "Back" : "Lay",
+      };
     }
+
+    const rawSize = best.size;
+    let formattedSize = "";
+    if (rawSize !== undefined && rawSize !== null && rawSize !== "") {
+      formattedSize =
+        typeof rawSize === "number"
+          ? rawSize.toLocaleString(undefined, { maximumFractionDigits: 2 })
+          : String(rawSize);
+    }
+
     return {
       price: best.price,
-      size:
-        best.size !== undefined && best.size !== null
-          ? typeof best.size === "number"
-            ? best.size.toLocaleString()
-            : best.size
-          : "",
+      size: formattedSize,
       disabled: false,
+      runnerName: rName,
+      selectionId: selId,
+      type: isBack ? "Back" : "Lay",
     };
   };
 
-  const back1 = getPriceAndSize(r1, "back");
+  const back1 = getPriceAndSize(r1, "Back", team1Fallback, 101);
   const backDraw = rDraw
-    ? getPriceAndSize(rDraw, "back")
-    : { price: "-", size: "", disabled: true };
-  const back2 = getPriceAndSize(r2, "back");
+    ? getPriceAndSize(rDraw, "Back", "The Draw", 103)
+    : {
+        price: "-",
+        size: "",
+        disabled: true,
+        runnerName: "The Draw",
+        selectionId: 103,
+        type: "Back",
+      };
+  const back2 = getPriceAndSize(r2, "Back", team2Fallback, 102);
 
-  const lay1 = getPriceAndSize(r1, "lay");
+  const lay1 = getPriceAndSize(r1, "Lay", team1Fallback, 101);
   const layDraw = rDraw
-    ? getPriceAndSize(rDraw, "lay")
-    : { price: "-", size: "", disabled: true };
-  const lay2 = getPriceAndSize(r2, "lay");
+    ? getPriceAndSize(rDraw, "Lay", "The Draw", 103)
+    : {
+        price: "-",
+        size: "",
+        disabled: true,
+        runnerName: "The Draw",
+        selectionId: 103,
+        type: "Lay",
+      };
+  const lay2 = getPriceAndSize(r2, "Lay", team2Fallback, 102);
 
   return {
     back: [back1, backDraw, back2],
@@ -256,7 +304,7 @@ const extractOdds = (rawMatch) => {
 // ==========================================
 // ODDS BUTTON COMPONENT (WITH 0.2s YELLOW FLASH ON UPDATE)
 // ==========================================
-const OddsButton = ({ price, size, disabled, isLay }) => {
+const OddsButton = ({ price, size, disabled, isLay, onClick }) => {
   const [flashing, setFlashing] = useState(false);
   const prevPriceRef = useRef(price);
   const prevSizeRef = useRef(size);
@@ -300,12 +348,13 @@ const OddsButton = ({ price, size, disabled, isLay }) => {
       ? "bg-[#fed7e2] border border-[#fbb6ce]"
       : "bg-bg_LayBtnBg border border-layBtn"
     : disabled
-    ? "bg-[#bfdbfe] border border-[#93c5fd]"
-    : "bg-bg_BackBtnBg border border-backBtn";
+      ? "bg-[#bfdbfe] border border-[#93c5fd]"
+      : "bg-bg_BackBtnBg border border-backBtn";
 
   // Flash yellow with !important rule from kuber.css for 0.2s then fade back
   const bgClass = flashing ? "odds-flash-yellow shadow-md" : defaultBg;
-  const stateClass = disabled
+  const isClickable = !disabled && price && price !== "-";
+  const stateClass = !isClickable
     ? "cursor-default opacity-85"
     : "cursor-pointer active:scale-95 opacity-100";
 
@@ -313,7 +362,11 @@ const OddsButton = ({ price, size, disabled, isLay }) => {
     <span className="col-span-4">
       <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
         <div
-          className={`overflow-hidden relative ${stateClass} w-full h-full px-1 py-[1px] rounded-sm flex flex-col items-center justify-center transition-colors duration-200 ease-out ${bgClass} undefined`}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (isClickable && onClick) onClick();
+          }}
+          className={`overflow-hidden relative ${stateClass} w-full h-full px-1 py-[1px] rounded-sm flex flex-col items-center justify-center transition-colors duration-200 ease-out ${bgClass}`}
         >
           <span
             id="oddBtnPrice"
@@ -338,7 +391,17 @@ const OddsButton = ({ price, size, disabled, isLay }) => {
 // ==========================================
 // MATCH ROW COMPONENT
 // ==========================================
-const MatchRow = ({ match, onOpen }) => {
+const MatchRow = ({
+  match,
+  onOpen,
+  activeBet,
+  onOddsClick,
+  onCloseBet,
+  onBetChange,
+}) => {
+  const isBetOpen =
+    activeBet && String(activeBet.eventId) === String(match.eventId);
+
   return (
     <div className="col-span-12 grid grid-cols-12">
       {/* 1) First Box: Green Dot & LIVE text + Second Box: Team Names (Clickable) */}
@@ -352,10 +415,7 @@ const MatchRow = ({ match, onOpen }) => {
         >
           <div className="flex w-full text-text_InPlayEventsScoreAndTime gap-x-1 items-center justify-center px-0.5">
             <LiveDotIcon />
-            <div
-              id="inPlay"
-              className="font-semibold text-[#29ab2b] text-x"
-            >
+            <div id="inPlay" className="font-semibold text-[#29ab2b] text-x">
               LIVE
             </div>
           </div>
@@ -402,6 +462,9 @@ const MatchRow = ({ match, onOpen }) => {
                 size={item.size}
                 disabled={item.disabled}
                 isLay={false}
+                onClick={() =>
+                  onOddsClick && onOddsClick(match, item, "Back", idx)
+                }
               />
             ))}
           </span>
@@ -415,11 +478,34 @@ const MatchRow = ({ match, onOpen }) => {
                 size={item.size}
                 disabled={item.disabled}
                 isLay={true}
+                onClick={() =>
+                  onOddsClick && onOddsClick(match, item, "Lay", idx)
+                }
               />
             ))}
           </span>
         </div>
       </span>
+
+      {/* Inline BetSlip when open */}
+      {isBetOpen && (
+        <div className="col-span-12 w-full p-2 border-t border-b border-borderColorOfMarket bg-bg_Quaternary-new">
+          <BetSlip
+            activeBet={activeBet}
+            onClose={onCloseBet}
+            onBetChange={onBetChange}
+            min={100}
+            max={100000}
+            sportId={String(match.sportId || "4")}
+            competitionId={
+              match.raw?.competitionId || match.competitionId || "comp-1"
+            }
+            eventId={String(match.eventId)}
+            eventName={match.eventName || `${match.team1} v ${match.team2}`}
+            currentSport={match.sportName || "Cricket"}
+          />
+        </div>
+      )}
     </div>
   );
 };
@@ -427,7 +513,14 @@ const MatchRow = ({ match, onOpen }) => {
 // ==========================================
 // SPORT BLOCK COMPONENT
 // ==========================================
-const SportBlock = ({ sportData, onOpen, isLast }) => {
+const SportBlock = ({
+  sportData,
+  onOpen,
+  activeBet,
+  onOddsClick,
+  onCloseBet,
+  onBetChange,
+}) => {
   if (!sportData?.matches || sportData.matches.length === 0) return null;
 
   const renderSportIcon = () => {
@@ -469,7 +562,15 @@ const SportBlock = ({ sportData, onOpen, isLast }) => {
 
         {/* Match Rows */}
         {sportData.matches.map((match, idx) => (
-          <MatchRow key={match.eventId || idx} match={match} onOpen={onOpen} />
+          <MatchRow
+            key={match.eventId || idx}
+            match={match}
+            onOpen={onOpen}
+            activeBet={activeBet}
+            onOddsClick={onOddsClick}
+            onCloseBet={onCloseBet}
+            onBetChange={onBetChange}
+          />
         ))}
       </div>
     </div>
@@ -484,7 +585,9 @@ export default function InPlaySportsWidget() {
   const dispatch = useDispatch();
 
   // Read real-time matches from Redux store
-  const { matches: cricketState } = useSelector((state) => state.matches.cricket);
+  const { matches: cricketState } = useSelector(
+    (state) => state.matches.cricket,
+  );
   const { matches: soccerState } = useSelector((state) => state.matches.soccer);
   const { matches: tennisState } = useSelector((state) => state.matches.tennis);
 
@@ -500,7 +603,11 @@ export default function InPlaySportsWidget() {
     const handleMatchUpdate = (data) => {
       if (!data?.matches || !data?.sport) return;
       const sportKey = data.sport.toLowerCase();
-      if (sportKey === "cricket" || sportKey === "soccer" || sportKey === "tennis") {
+      if (
+        sportKey === "cricket" ||
+        sportKey === "soccer" ||
+        sportKey === "tennis"
+      ) {
         setLiveSocketMatches((prev) => ({
           ...prev,
           [sportKey]: data.matches,
@@ -552,8 +659,12 @@ export default function InPlaySportsWidget() {
 
     const mapMatches = (list, sportName, fallbackSportIndex) => {
       // 1) Filter ONLY in-play matches: "agar in play hai to"
-      const inPlayList = (list || []).filter(
-        (m) => Boolean(m?.inplay || m?.inPlay || m?.matchOdds?.some((o) => o?.inplay || o?.inPlay))
+      const inPlayList = (list || []).filter((m) =>
+        Boolean(
+          m?.inplay ||
+          m?.inPlay ||
+          m?.matchOdds?.some((o) => o?.inplay || o?.inPlay),
+        ),
       );
 
       if (inPlayList.length > 0) {
@@ -562,20 +673,29 @@ export default function InPlaySportsWidget() {
             rawMatch?.matchOdds?.find(
               (m) =>
                 m?.marketId === rawMatch?.marketId ||
-                m?.marketName === "Match Odds"
-            )?.runners || rawMatch?.matchOdds?.[0]?.runners || [];
+                m?.marketName === "Match Odds",
+            )?.runners ||
+            rawMatch?.matchOdds?.[0]?.runners ||
+            [];
 
           const { team1, team2 } = parseTeams(
             rawMatch?.eventName,
             runners,
-            rawMatch?.matchRunners
+            rawMatch?.matchRunners,
           );
           const { back, lay } = extractOdds(rawMatch);
 
-          const sportIdVal = fallbackSportIndex === 0 ? "4" : fallbackSportIndex === 1 ? "1" : "2";
+          const sportIdVal =
+            fallbackSportIndex === 0
+              ? "4"
+              : fallbackSportIndex === 1
+                ? "1"
+                : "2";
 
           return {
-            eventId: rawMatch?.eventId || `3605086${fallbackSportIndex * 10 + mIdx + 1}`,
+            eventId:
+              rawMatch?.eventId ||
+              `3605086${fallbackSportIndex * 10 + mIdx + 1}`,
             team1,
             team2,
             inplay: true,
@@ -585,16 +705,18 @@ export default function InPlaySportsWidget() {
             raw: rawMatch,
             sportId: sportIdVal,
             sportName,
-            bm: rawMatch?.bm ?? (sportIdVal === "4"),
-            fancy: rawMatch?.fancy ?? (sportIdVal === "4"),
+            bm: rawMatch?.bm ?? sportIdVal === "4",
+            fancy: rawMatch?.fancy ?? sportIdVal === "4",
             eventName: rawMatch?.eventName || `${team1} v ${team2}`,
           };
         });
       }
 
       // If server has 0 in-play for this sport right now, map fallback with valid eventId and raw data
-      const fallbackList = IN_PLAY_SPORTS_DATA[fallbackSportIndex]?.matches || [];
-      const sportIdVal = fallbackSportIndex === 0 ? "4" : fallbackSportIndex === 1 ? "1" : "2";
+      const fallbackList =
+        IN_PLAY_SPORTS_DATA[fallbackSportIndex]?.matches || [];
+      const sportIdVal =
+        fallbackSportIndex === 0 ? "4" : fallbackSportIndex === 1 ? "1" : "2";
 
       return fallbackList.map((fbMatch, mIdx) => {
         const evId = `3605086${fallbackSportIndex * 10 + mIdx + 1}`;
@@ -604,7 +726,9 @@ export default function InPlaySportsWidget() {
         const runnersList = [
           { runnerName: fbMatch.team1, selectionId: 101 },
           { runnerName: fbMatch.team2, selectionId: 102 },
-          ...(sportIdVal === "1" ? [{ runnerName: "The Draw", selectionId: 103 }] : []),
+          ...(sportIdVal === "1"
+            ? [{ runnerName: "The Draw", selectionId: 103 }]
+            : []),
         ];
 
         return {
@@ -633,8 +757,24 @@ export default function InPlaySportsWidget() {
                 runners: runnersList.map((r, rIdx) => ({
                   ...r,
                   ex: {
-                    availableToBack: fbMatch.back?.[rIdx]?.price !== "-" ? [{ price: fbMatch.back?.[rIdx]?.price, size: fbMatch.back?.[rIdx]?.size }] : [],
-                    availableToLay: fbMatch.lay?.[rIdx]?.price !== "-" ? [{ price: fbMatch.lay?.[rIdx]?.price, size: fbMatch.lay?.[rIdx]?.size }] : [],
+                    availableToBack:
+                      fbMatch.back?.[rIdx]?.price !== "-"
+                        ? [
+                            {
+                              price: fbMatch.back?.[rIdx]?.price,
+                              size: fbMatch.back?.[rIdx]?.size,
+                            },
+                          ]
+                        : [],
+                    availableToLay:
+                      fbMatch.lay?.[rIdx]?.price !== "-"
+                        ? [
+                            {
+                              price: fbMatch.lay?.[rIdx]?.price,
+                              size: fbMatch.lay?.[rIdx]?.size,
+                            },
+                          ]
+                        : [],
                   },
                 })),
               },
@@ -662,20 +802,29 @@ export default function InPlaySportsWidget() {
 
   // Console log in-play matches and expose testing utility in DevTools
   useEffect(() => {
-    console.group("%c🔥 [IN-PLAY MATCHES RENDERED] 🔥", "color: #40af52; font-size: 14px; font-weight: bold;");
+    console.group(
+      "%c🔥 [IN-PLAY MATCHES RENDERED] 🔥",
+      "color: #40af52; font-size: 14px; font-weight: bold;",
+    );
     console.log("Sports Data:", sportsData);
     console.groupEnd();
 
     if (typeof window !== "undefined") {
       window.inPlaySportsData = sportsData;
       // Expose testOddsFlash utility in browser console so developer can test 0.2s yellow flash anytime
-      window.testOddsFlash = (sport = "Cricket", teamIndex = 0, newPrice = "2.14", newSize = "1,500") => {
+      window.testOddsFlash = (
+        sport = "Cricket",
+        teamIndex = 0,
+        newPrice = "2.14",
+        newSize = "1,500",
+      ) => {
         const sportKey = sport.toLowerCase();
         setLiveSocketMatches((prev) => {
           const current = prev[sportKey] || [];
           if (current.length > 0) {
             const cloned = JSON.parse(JSON.stringify(current));
-            const targetRunner = cloned[teamIndex]?.matchOdds?.[0]?.runners?.[0];
+            const targetRunner =
+              cloned[teamIndex]?.matchOdds?.[0]?.runners?.[0];
             if (targetRunner?.ex?.availableToBack?.[0]) {
               targetRunner.ex.availableToBack[0].price = newPrice;
               targetRunner.ex.availableToBack[0].size = newSize;
@@ -684,7 +833,9 @@ export default function InPlaySportsWidget() {
           }
           return prev;
         });
-        console.log(`⚡ [testOddsFlash] Flashed odds on ${sport} match #${teamIndex} with price ${newPrice}`);
+        console.log(
+          `⚡ [testOddsFlash] Flashed odds on ${sport} match #${teamIndex} with price ${newPrice}`,
+        );
       };
     }
   }, [sportsData]);
@@ -700,40 +851,127 @@ export default function InPlaySportsWidget() {
       (match.sportName === "Football" || match.sportName === "soccer"
         ? "1"
         : match.sportName === "Tennis" || match.sportName === "tennis"
-        ? "2"
-        : "4");
+          ? "2"
+          : "4");
     const eventName =
       raw.eventName ||
       match.eventName ||
       `${match.team1 || "Team 1"} v ${match.team2 || "Team 2"}`;
     const marketId = raw.marketId || match.marketId || `m-${eventId}`;
     const competitionId = raw.competitionId || match.competitionId || "comp-1";
-    const bm = raw.bm !== undefined ? raw.bm : match.bm !== undefined ? match.bm : (sportId === "4");
-    const fancy = raw.fancy !== undefined ? raw.fancy : match.fancy !== undefined ? match.fancy : (sportId === "4");
+    const bm =
+      raw.bm !== undefined
+        ? raw.bm
+        : match.bm !== undefined
+          ? match.bm
+          : sportId === "4";
+    const fancy =
+      raw.fancy !== undefined
+        ? raw.fancy
+        : match.fancy !== undefined
+          ? match.fancy
+          : sportId === "4";
 
     const runners = raw.matchRunners || [
       { runnerName: match.team1 || "Team 1", selectionId: 101 },
       { runnerName: match.team2 || "Team 2", selectionId: 102 },
-      ...(sportId === "1" ? [{ runnerName: "The Draw", selectionId: 103 }] : []),
+      ...(sportId === "1"
+        ? [{ runnerName: "The Draw", selectionId: 103 }]
+        : []),
     ];
 
     dispatch(setRunningData(runners));
-    dispatch(setMarketName(raw.markets || [{ marketName: "Match Odds", marketId }]));
+    dispatch(
+      setMarketName(raw.markets || [{ marketName: "Match Odds", marketId }]),
+    );
 
     if (raw.matchOdds) {
       dispatch(
         setMarketOddsData({
           data: { data: raw.matchOdds },
           sport: match.sportName || "cricket",
-        })
+        }),
       );
     }
 
     navigate(
       `/full-market?eventType=${sportId}&eventId=${eventId}&marketId=${marketId}&joinedMarketIds=${marketId}&competitionId=${competitionId}&bm=${bm}&fancy=${fancy}&pc=false&eventName=${encodeURIComponent(
-        eventName
-      )}&openDate=${raw.openDate || ""}&tv=${raw.tv || match.tv || "true"}`
+        eventName,
+      )}&openDate=${raw.openDate || ""}&tv=${raw.tv || match.tv || "true"}`,
     );
+  };
+
+  const [activeBet, setActiveBet] = useState(null);
+
+  const handleOddsClick = (match, oddsItem, betType, idx = 0) => {
+    if (!oddsItem || !oddsItem.price || oddsItem.price === "-") return;
+
+    const runnerName =
+      oddsItem.runnerName ||
+      (idx === 0 ? match.team1 : idx === 1 ? "The Draw" : match.team2);
+    const selectionId =
+      oddsItem.selectionId || (idx === 0 ? 101 : idx === 1 ? 103 : 102);
+    const resolvedBetKey = `${match.eventId}_${selectionId}_${betType}`;
+
+    // If clicking the same runner and type, toggle off
+    if (
+      activeBet &&
+      activeBet.betKey === resolvedBetKey &&
+      activeBet.betType === betType
+    ) {
+      setActiveBet(null);
+      dispatch(handleCancelPlaceBet());
+      return;
+    }
+
+    const betInfo = {
+      betKey: resolvedBetKey,
+      runnerName: runnerName,
+      selectionId: selectionId,
+      betType: betType,
+      odds: String(oddsItem.price),
+      marketType: "Match Odds",
+      size: oddsItem.size || "",
+      min: 100,
+      max: 100000,
+      marketId: match.marketId || `m-${match.eventId}`,
+      sportId: String(match.sportId || "4"),
+      competitionId:
+        match.raw?.competitionId || match.competitionId || "comp-1",
+      eventId: String(match.eventId),
+      eventName: match.eventName || `${match.team1} v ${match.team2}`,
+      currentSport: match.sportName || "Cricket",
+      betBoxBgColor: betType === "Back" ? "#72bbef" : "#faa9ba",
+    };
+
+    setActiveBet(betInfo);
+
+    dispatch(
+      handleOpenPlaceBet({
+        sportName: match.sportName || "Cricket",
+        sportId: String(match.sportId || "4"),
+        competitionId:
+          match.raw?.competitionId || match.competitionId || "comp-1",
+        eventId: String(match.eventId),
+        market: "Match Odds",
+        markettype: "Match Odds",
+        marketId: match.marketId || `m-${match.eventId}`,
+        selectionId: selectionId,
+        teamName: runnerName,
+        odds: oddsItem.price,
+        betType: betType,
+        betBoxBgColor: betType === "Back" ? "#72bbef" : "#faa9ba",
+      }),
+    );
+  };
+
+  const handleCloseBet = () => {
+    setActiveBet(null);
+    dispatch(handleCancelPlaceBet());
+  };
+
+  const handleBetChange = (changes) => {
+    setActiveBet((prev) => (prev ? { ...prev, ...changes } : null));
   };
 
   return (
@@ -753,7 +991,10 @@ export default function InPlaySportsWidget() {
             <InPlayHeaderIcon />
             <span>In Play</span>
           </div>
-          <div className=" w-max text-nowrap" onClick={() => navigate("/sports")}>
+          <div
+            className=" w-max text-nowrap"
+            onClick={() => navigate("/sports")}
+          >
             <span className=" text-xs tracking-wide text-text_Quaternary-new  text-nowrap whitespace-nowrap font-normal cursor-pointer">
               Open Bets
             </span>
@@ -774,6 +1015,10 @@ export default function InPlaySportsWidget() {
             key={sportItem.sport}
             sportData={sportItem}
             onOpen={handleOpen}
+            activeBet={activeBet}
+            onOddsClick={handleOddsClick}
+            onCloseBet={handleCloseBet}
+            onBetChange={handleBetChange}
           />
         ))}
       </div>

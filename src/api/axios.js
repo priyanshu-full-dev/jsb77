@@ -126,7 +126,9 @@ API.interceptors.request.use(
         const encrypted = await encryptPayload(
           JSON.stringify(config.data)
         );
-        config.data = { _data: encrypted };
+        if (encrypted) {
+          config.data = { _data: encrypted };
+        }
       } catch (err) {
         console.error("Encryption Error:", err);
       }
@@ -166,7 +168,9 @@ API.interceptors.response.use(
         const decrypted = await decryptPayload(
           response.data._data
         );
-        response.data = JSON.parse(decrypted);
+        if (decrypted) {
+          response.data = JSON.parse(decrypted);
+        }
       }
     } catch (err) {
       console.error("Decryption Error:", err);

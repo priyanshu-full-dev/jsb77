@@ -1,9 +1,11 @@
 const SECRET_KEY = import.meta.env.VITE_CRYPTO_SECRET;
 
 async function getKey() {
+  if (!SECRET_KEY) {
+    return null;
+  }
   const encoder = new TextEncoder();
   const keyData = encoder.encode(SECRET_KEY);
-
 
   const hash = await crypto.subtle.digest("SHA-256", keyData);
 
@@ -18,6 +20,7 @@ async function getKey() {
 
 export async function encryptPayload(text) {
   const key = await getKey();
+  if (!key) return null;
 
   const iv = crypto.getRandomValues(new Uint8Array(12));
 
@@ -31,10 +34,8 @@ export async function encryptPayload(text) {
 
   const encryptedArray = new Uint8Array(encryptedBuffer);
 
-
   const tag = encryptedArray.slice(encryptedArray.length - 16);
   const encrypted = encryptedArray.slice(0, encryptedArray.length - 16);
-
 
   const combined = new Uint8Array(
     iv.length + tag.length + encrypted.length
@@ -48,30 +49,37 @@ export async function encryptPayload(text) {
 }
 
 export async function decryptPayload(base64Data) {
+  if (!base64Data || typeof base64Data !== "string") return null;
+
   const key = await getKey();
+  if (!key) return null;
 
-  const buffer = Uint8Array.from(
-    atob(base64Data),
-    (c) => c.charCodeAt(0)
-  );
+  try {
+    const buffer = Uint8Array.from(
+      atob(base64Data),
+      (c) => c.charCodeAt(0)
+    );
 
-  const iv = buffer.slice(0, 12);
-  const tag = buffer.slice(12, 28);
-  const encrypted = buffer.slice(28);
+    const iv = buffer.slice(0, 12);
+    const tag = buffer.slice(12, 28);
+    const encrypted = buffer.slice(28);
 
-  // WebCrypto expects encrypted + tag
-  const encryptedWithTag = new Uint8Array(
-    encrypted.length + tag.length
-  );
+    // WebCrypto expects encrypted + tag
+    const encryptedWithTag = new Uint8Array(
+      encrypted.length + tag.length
+    );
 
-  encryptedWithTag.set(encrypted, 0);
-  encryptedWithTag.set(tag, encrypted.length);
+    encryptedWithTag.set(encrypted, 0);
+    encryptedWithTag.set(tag, encrypted.length);
 
-  const decryptedBuffer = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv },
-    key,
-    encryptedWithTag
-  );
+    const decryptedBuffer = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv },
+      key,
+      encryptedWithTag
+    );
 
-  return new TextDecoder().decode(decryptedBuffer);
+    return new TextDecoder().decode(decryptedBuffer);
+  } catch {
+    return null;
+  }
 }

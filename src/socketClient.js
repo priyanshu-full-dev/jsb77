@@ -155,24 +155,25 @@ socket.on("matchUpdate", (data) => {
   }
 
   // 🔥 CASE 2: Match-specific update (WITH eventId)
-  if (data?.eventId) {
+  if (data?.eventId || data?.eventType) {
     const resolvedEventType = data?.eventType || data?.eventId;
     const key = `${data.eventId}-${resolvedEventType}`;
     const sub = activeSubscriptions.matches.get(key) || activeSubscriptions.matches.get(`${data.eventId}`);
 
-    const sport = (
+    const rawSport =
       data.sport ||
       sub?.sport ||
-      (data.eventId == 4
+      (data.eventId == 4 || resolvedEventType == 4
         ? "cricket"
-        : data.eventId == 1
+        : data.eventId == 1 || resolvedEventType == 1
         ? "soccer"
-        : data.eventId == 2
+        : data.eventId == 2 || resolvedEventType == 2
         ? "tennis"
-        : "unknown")
-    ).toLowerCase();
+        : "");
 
-    if (data.matches) {
+    const sport = rawSport ? String(rawSport).toLowerCase() : "";
+
+    if (data.matches && sport && sport !== "unknown") {
       store.dispatch(
         updateMatches({
           sport,
@@ -403,15 +404,28 @@ const resubscribeAll = () => {
 export const subscribeToMatchData = ({
   eventId,
   eventType,
-  sport = "unknown",
+  sport,
 }) => {
   const resolvedEventType = eventType || eventId;
-  const key = `${eventId}-${resolvedEventType}`;
-  activeSubscriptions.matches.set(key, { eventId, eventType: resolvedEventType, sport });
-  activeSubscriptions.matches.set(`${eventId}`, { eventId, eventType: resolvedEventType, sport });
+  const resolvedSport = (
+    sport ||
+    (eventId == 4 || resolvedEventType == 4
+      ? "cricket"
+      : eventId == 1 || resolvedEventType == 1
+      ? "soccer"
+      : eventId == 2 || resolvedEventType == 2
+      ? "tennis"
+      : "")
+  ).toLowerCase();
 
-  console.log(`📤 [SOCKET EMIT: subscribeToMatches] eventId: ${eventId}, eventType: ${resolvedEventType}, sport: ${sport}`);
-  store.dispatch(setMatchesLoading({ sport }));
+  const key = `${eventId}-${resolvedEventType}`;
+  activeSubscriptions.matches.set(key, { eventId, eventType: resolvedEventType, sport: resolvedSport });
+  activeSubscriptions.matches.set(`${eventId}`, { eventId, eventType: resolvedEventType, sport: resolvedSport });
+
+  console.log(`📤 [SOCKET EMIT: subscribeToMatches] eventId: ${eventId}, eventType: ${resolvedEventType}, sport: ${resolvedSport}`);
+  if (resolvedSport && resolvedSport !== "unknown") {
+    store.dispatch(setMatchesLoading({ sport: resolvedSport }));
+  }
   socket.emit("subscribeToMatches", { eventId, eventType: resolvedEventType });
 
   return () => {
