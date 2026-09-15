@@ -79,6 +79,7 @@ const CasinoPage = loadable(() => import("./pages/Casino/CasinoPage"));
 const LiveCasinoPage = loadable(() => import("./pages/LiveCasino/LiveCasinoPage"));
 const InPlayPage = loadable(() => import("./pages/InPlay/InPlayPage"));
 const ProfilePage = loadable(() => import("./pages/Account/ProfilePage"));
+const MarketPage = loadable(() => import("./pages/Market/MarketPage"));
 
 // ==========================================================================
 // ROUTE CONFIGURATION
@@ -104,6 +105,14 @@ export const Kuberbook666Router = createBrowserRouter([
       {
         path: "sports",
         element: <SportsPage.Element />,
+      },
+      {
+        path: "full-market",
+        element: <MarketPage.Element />,
+      },
+      {
+        path: "market/:eventId",
+        element: <MarketPage.Element />,
       },
       {
         path: "aura",

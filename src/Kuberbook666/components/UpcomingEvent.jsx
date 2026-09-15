@@ -117,8 +117,11 @@ const OddsButton = ({ price, size, disabled, isLay }) => {
 const MatchRow = ({ match, onOpen }) => {
   return (
     <div className="col-span-12 grid grid-cols-12">
-      {/* Left: Timing + Teams */}
-      <div className="col-span-6 h-12 lg:col-span-5 grid grid-cols-7 border-t border-borderColorOfMarket">
+      {/* Left: Timing + Teams (Clickable) */}
+      <div
+        onClick={() => onOpen && onOpen(match)}
+        className="col-span-6 h-12 lg:col-span-5 grid grid-cols-7 border-t border-borderColorOfMarket cursor-pointer hover:bg-white/[0.03] transition-colors"
+      >
         <span
           id="inPlayTime"
           className="flex items-center justify-center flex-col col-span-2 pl-[1px] pr-[1px] active:scale-[94%] transition-all ease-in-out duration-100"
@@ -130,7 +133,6 @@ const MatchRow = ({ match, onOpen }) => {
 
         <span
           id="inPlayTeamName"
-          onClick={onOpen}
           className="text-selection-none flex items-center justify-start col-span-5 px-1 relative border-l border-r border-borderColorOfMarket active:scale-[94%] transition-all ease-in-out duration-100"
         >
           <span className="flex flex-col items-center justify-start w-[87%] cursor-pointer">
@@ -230,7 +232,11 @@ const SportBlock = ({ sportData, onOpen }) => {
 
         {/* Match Rows */}
         {sportData.matches.map((match, idx) => (
-          <MatchRow key={idx} match={match} onOpen={onOpen} />
+          <MatchRow
+            key={idx}
+            match={{ ...match, sportName: sportData.sport, eventId: `upcoming-${sportData.sport.toLowerCase()}-${idx + 1}` }}
+            onOpen={onOpen}
+          />
         ))}
       </div>
     </div>
@@ -243,8 +249,20 @@ const SportBlock = ({ sportData, onOpen }) => {
 export default function UpcomingEvent() {
   const navigate = useNavigate();
 
-  const handleOpen = () => {
-    navigate("/sports");
+  const handleOpen = (match) => {
+    if (!match) return;
+    const sportName = match.sportName || "Cricket";
+    const sportId = sportName === "Football" ? "1" : sportName === "Tennis" ? "2" : "4";
+    const eventId = match.eventId || `upcoming-${Date.now()}`;
+    const eventName = `${match.team1} v ${match.team2}`;
+    const bm = sportId === "4";
+    const fancy = sportId === "4";
+
+    navigate(
+      `/full-market?eventType=${sportId}&eventId=${eventId}&marketId=m-${eventId}&competitionId=comp-1&bm=${bm}&fancy=${fancy}&pc=false&eventName=${encodeURIComponent(
+        eventName
+      )}&openDate=${encodeURIComponent(match.time || "")}&tv=true`
+    );
   };
 
   return (

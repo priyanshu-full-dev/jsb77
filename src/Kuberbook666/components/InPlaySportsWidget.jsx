@@ -341,8 +341,11 @@ const OddsButton = ({ price, size, disabled, isLay }) => {
 const MatchRow = ({ match, onOpen }) => {
   return (
     <div className="col-span-12 grid grid-cols-12">
-      {/* 1) First Box: Green Dot & LIVE text */}
-      <div className="col-span-6 h-12 lg:col-span-5 grid grid-cols-7 border-t border-borderColorOfMarket ">
+      {/* 1) First Box: Green Dot & LIVE text + Second Box: Team Names (Clickable) */}
+      <div
+        onClick={() => onOpen(match)}
+        className="col-span-6 h-12 lg:col-span-5 grid grid-cols-7 border-t border-borderColorOfMarket cursor-pointer hover:bg-white/[0.03] transition-colors"
+      >
         <span
           id="inPlayTime"
           className="flex  items-center justify-center flex-col col-span-2 pl-[1px] pr-[1px] active:scale-[94%] transition-all ease-in-out duration-100"
@@ -361,7 +364,6 @@ const MatchRow = ({ match, onOpen }) => {
         {/* 2) Second Box: Event Name (Team 1, Team 2) & TV Svg */}
         <span
           id="inPlayTeamName"
-          onClick={() => onOpen(match)}
           className=" text-selection-none flex items-center justify-start col-span-5 px-1 relative border-l border-r border-borderColorOfMarket active:scale-[94%] transition-all ease-in-out duration-100"
         >
           <span className="flex flex-col items-center justify-start w-[87%] cursor-pointer ">
@@ -555,7 +557,7 @@ export default function InPlaySportsWidget() {
       );
 
       if (inPlayList.length > 0) {
-        return inPlayList.map((rawMatch) => {
+        return inPlayList.map((rawMatch, mIdx) => {
           const runners =
             rawMatch?.matchOdds?.find(
               (m) =>
@@ -570,8 +572,10 @@ export default function InPlaySportsWidget() {
           );
           const { back, lay } = extractOdds(rawMatch);
 
+          const sportIdVal = fallbackSportIndex === 0 ? "4" : fallbackSportIndex === 1 ? "1" : "2";
+
           return {
-            eventId: rawMatch?.eventId,
+            eventId: rawMatch?.eventId || `3605086${fallbackSportIndex * 10 + mIdx + 1}`,
             team1,
             team2,
             inplay: true,
@@ -579,13 +583,65 @@ export default function InPlaySportsWidget() {
             back,
             lay,
             raw: rawMatch,
+            sportId: sportIdVal,
             sportName,
+            bm: rawMatch?.bm ?? (sportIdVal === "4"),
+            fancy: rawMatch?.fancy ?? (sportIdVal === "4"),
+            eventName: rawMatch?.eventName || `${team1} v ${team2}`,
           };
         });
       }
 
-      // If server has 0 in-play for this sport right now, use fallback so widget displays properly
-      return IN_PLAY_SPORTS_DATA[fallbackSportIndex]?.matches || [];
+      // If server has 0 in-play for this sport right now, map fallback with valid eventId and raw data
+      const fallbackList = IN_PLAY_SPORTS_DATA[fallbackSportIndex]?.matches || [];
+      const sportIdVal = fallbackSportIndex === 0 ? "4" : fallbackSportIndex === 1 ? "1" : "2";
+
+      return fallbackList.map((fbMatch, mIdx) => {
+        const evId = `3605086${fallbackSportIndex * 10 + mIdx + 1}`;
+        const evName = `${fbMatch.team1} v ${fbMatch.team2}`;
+        const isCricket = sportIdVal === "4";
+
+        const runnersList = [
+          { runnerName: fbMatch.team1, selectionId: 101 },
+          { runnerName: fbMatch.team2, selectionId: 102 },
+          ...(sportIdVal === "1" ? [{ runnerName: "The Draw", selectionId: 103 }] : []),
+        ];
+
+        return {
+          ...fbMatch,
+          eventId: evId,
+          sportId: sportIdVal,
+          sportName,
+          inplay: true,
+          tv: true,
+          bm: isCricket,
+          fancy: isCricket,
+          eventName: evName,
+          raw: {
+            eventId: evId,
+            sportId: sportIdVal,
+            eventName: evName,
+            inplay: true,
+            tv: true,
+            bm: isCricket,
+            fancy: isCricket,
+            matchRunners: runnersList,
+            matchOdds: [
+              {
+                marketName: "Match Odds",
+                marketId: `m-${evId}`,
+                runners: runnersList.map((r, rIdx) => ({
+                  ...r,
+                  ex: {
+                    availableToBack: fbMatch.back?.[rIdx]?.price !== "-" ? [{ price: fbMatch.back?.[rIdx]?.price, size: fbMatch.back?.[rIdx]?.size }] : [],
+                    availableToLay: fbMatch.lay?.[rIdx]?.price !== "-" ? [{ price: fbMatch.lay?.[rIdx]?.price, size: fbMatch.lay?.[rIdx]?.size }] : [],
+                  },
+                })),
+              },
+            ],
+          },
+        };
+      });
     };
 
     return [
@@ -634,29 +690,50 @@ export default function InPlaySportsWidget() {
   }, [sportsData]);
 
   const handleOpen = (match) => {
-    if (match?.raw) {
-      dispatch(setRunningData(match.raw.matchRunners));
-      dispatch(setMarketName(match.raw.markets));
+    if (!match) return;
+
+    const raw = match.raw || match;
+    const eventId = raw.eventId || match.eventId || "36050867";
+    const sportId =
+      raw.sportId ||
+      match.sportId ||
+      (match.sportName === "Football" || match.sportName === "soccer"
+        ? "1"
+        : match.sportName === "Tennis" || match.sportName === "tennis"
+        ? "2"
+        : "4");
+    const eventName =
+      raw.eventName ||
+      match.eventName ||
+      `${match.team1 || "Team 1"} v ${match.team2 || "Team 2"}`;
+    const marketId = raw.marketId || match.marketId || `m-${eventId}`;
+    const competitionId = raw.competitionId || match.competitionId || "comp-1";
+    const bm = raw.bm !== undefined ? raw.bm : match.bm !== undefined ? match.bm : (sportId === "4");
+    const fancy = raw.fancy !== undefined ? raw.fancy : match.fancy !== undefined ? match.fancy : (sportId === "4");
+
+    const runners = raw.matchRunners || [
+      { runnerName: match.team1 || "Team 1", selectionId: 101 },
+      { runnerName: match.team2 || "Team 2", selectionId: 102 },
+      ...(sportId === "1" ? [{ runnerName: "The Draw", selectionId: 103 }] : []),
+    ];
+
+    dispatch(setRunningData(runners));
+    dispatch(setMarketName(raw.markets || [{ marketName: "Match Odds", marketId }]));
+
+    if (raw.matchOdds) {
       dispatch(
         setMarketOddsData({
-          data: { data: match.raw.matchOdds },
-          sport: match.sportName,
+          data: { data: raw.matchOdds },
+          sport: match.sportName || "cricket",
         })
       );
-      navigate(
-        `/full-market?eventType=${match.raw.sportId || ""}&eventId=${
-          match.raw.eventId || ""
-        }&marketId=${match.raw.marketId || ""}&joinedMarketIds=${
-          match.raw.joinedMarketIds || ""
-        }&competitionId=${match.raw.competitionId || ""}&bm=${
-          match.raw.bm || ""
-        }&fancy=${match.raw.fancy || ""}&pc=${match.raw.pc || ""}&eventName=${encodeURIComponent(
-          match.raw.eventName || ""
-        )}&openDate=${match.raw.openDate || ""}&tv=${match.raw.tv || ""}`
-      );
-    } else {
-      navigate("/sports");
     }
+
+    navigate(
+      `/full-market?eventType=${sportId}&eventId=${eventId}&marketId=${marketId}&joinedMarketIds=${marketId}&competitionId=${competitionId}&bm=${bm}&fancy=${fancy}&pc=false&eventName=${encodeURIComponent(
+        eventName
+      )}&openDate=${raw.openDate || ""}&tv=${raw.tv || match.tv || "true"}`
+    );
   };
 
   return (

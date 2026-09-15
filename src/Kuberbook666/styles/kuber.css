@@ -263,7 +263,9 @@ div::-webkit-scrollbar {
   background-color: #fef08a !important;
   border-color: #eab308 !important;
   color: #713f12 !important;
-  transition: background-color 0.2s ease-out, border-color 0.2s ease-out !important;
+  transition:
+    background-color 0.2s ease-out,
+    border-color 0.2s ease-out !important;
 }
 
 .text-text_OddValue {
@@ -343,6 +345,75 @@ div::-webkit-scrollbar {
   color: #111827;
 }
 
+/* Kuber Market Page Tokens */
+:root {
+  --bg-titleGrd-new: linear-gradient(90deg, #ffffff 0%, #cbd5e1 100%);
+  --bg-titleGrd-new-light: linear-gradient(90deg, #c10831 0%, #6a061c 100%);
+  --cashout-btn-gradient: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  --color-primary2: rgba(193, 8, 49, 0.15);
+  --color-brand-primary1: #10b981;
+  --text-odd-value: #111827;
+  --text-max-market: #7c7c7c;
+}
+
+[data-theme="light"] {
+  --bg-titleGrd-new: linear-gradient(90deg, #c10831 0%, #6a061c 100%);
+  --color-primary2: #f1f5f9;
+}
+
+[data-theme="dark"] {
+  --bg-titleGrd-new: linear-gradient(90deg, #ffffff 0%, #cbd5e1 100%);
+  --color-primary2: #242838;
+}
+
+.bg-titleGrd-new {
+  background-image: var(--bg-titleGrd-new) !important;
+}
+
+.bg-cashout-btn-gradient {
+  background-image: var(--cashout-btn-gradient) !important;
+}
+
+.bg-bg_Primary2 {
+  background-color: var(--color-primary2, #242838) !important;
+}
+
+.bg-bg_Primary {
+  background-color: var(--color-primary, #c10831) !important;
+}
+
+.bg-bg_color_brand_primary1 {
+  background-color: var(--color-brand-primary1, #10b981) !important;
+}
+
+.text-text_Primary {
+  color: var(--kb-text-primary, #ffffff) !important;
+}
+
+[data-theme="light"] .text-text_Primary {
+  color: #111827 !important;
+}
+
+.text-text_Quinary {
+  color: #9ca3af !important;
+}
+
+.text-text_Quaternary {
+  color: #6b7280 !important;
+}
+
+.text-text_MaxMarketTextColor {
+  color: #7c7c7c !important;
+}
+
+.bg-bg_text_brand_primary {
+  background-color: var(--color-primary, #c10831) !important;
+}
+
+.border-borderOfFancyPremiumTab {
+  border-color: var(--color-primary, #c10831) !important;
+}
+
 /* ==========================================================================
    FOOTER STYLES & TOKENS
    ========================================================================== */
@@ -401,7 +472,10 @@ div::-webkit-scrollbar {
 }
 
 .bg-bg_scoreAndAndroidAppBtn {
-  background-image: var(--footer-down-bg-color, linear-gradient(180deg, #444550 0%, #2f303a 100%)) !important;
+  background-image: var(
+    --footer-down-bg-color,
+    linear-gradient(180deg, #444550 0%, #2f303a 100%)
+  ) !important;
   background-color: #353640;
 }
 
@@ -422,7 +496,13 @@ div::-webkit-scrollbar {
 }
 
 .font-lato {
-  font-family: "Lato", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family:
+    "Lato",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
 }
 
 .tw-text-nowrap {
@@ -513,7 +593,10 @@ div::-webkit-scrollbar {
 }
 
 .divide-divide_color_primary6 > :not([hidden]) ~ :not([hidden]) {
-  border-color: var(--divide-color-primary6, rgba(255, 255, 255, 0.08)) !important;
+  border-color: var(
+    --divide-color-primary6,
+    rgba(255, 255, 255, 0.08)
+  ) !important;
 }
 
 .text-text_Primary-new {
@@ -640,7 +723,8 @@ div::-webkit-scrollbar {
 }
 
 .openDrawerFromRight {
-  animation: openDrawerFromRightAnim 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: openDrawerFromRightAnim 0.28s cubic-bezier(0.16, 1, 0.3, 1)
+    forwards;
   will-change: transform;
 }
 
@@ -669,3 +753,167 @@ div::-webkit-scrollbar {
     transform: translateX(100%);
   }
 }
+
+/* ==========================================================================
+   KUBERBOOK666 BET SLIP TOKENS & ANIMATIONS
+   ========================================================================== */
+
+@keyframes scaleVerticalOpen {
+  0% {
+    opacity: 0;
+    transform: scaleY(0.7);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+.scaleVerticalOpen {
+  animation: scaleVerticalOpen 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: top center;
+}
+
+:root {
+  --color-bg-betSlip: #1c1f2b;
+  --color-betSlipStopWatchIconColor: #b0b0b0;
+}
+
+[data-theme="light"] {
+  --color-bg-betSlip: #ffffff;
+}
+
+[data-theme="dark"] {
+  --color-bg-betSlip: #1c1f2b;
+}
+
+.bg-bg_BetSlipBgColor {
+  background-color: var(--color-bg-betSlip, #1c1f2b) !important;
+}
+
+.border-oddInputBorder {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+[data-theme="light"] .border-oddInputBorder {
+  border-color: #d1d5db !important;
+}
+
+.border-oddInputBorderActive,
+.focus\\:border-oddinputborderactive:focus,
+.active\\:border-oddinputborderactive:active {
+  border-color: #c10931 !important;
+}
+
+.bg-bg_InActivePlaceBtnColor {
+  background-color: rgba(0, 0, 0, 0.25) !important;
+}
+
+[data-theme="light"] .bg-bg_InActivePlaceBtnColor {
+  background-color: #f3f4f6 !important;
+}
+
+.bg-bg_text_brand_primary-new {
+  background: linear-gradient(95deg, #c10931 -8.6%, #6e081d 110.45%) !important;
+
+  transition: all 0.15s ease-in-out;
+}
+
+.bg-bg_text_brand_primary-new:hover {
+  background-color: #a00727 !important;
+  transform: translateY(-1px);
+}
+
+.bg-bg_text_brand_primary-new:active {
+  transform: scale(0.96);
+}
+
+.border-primary1 {
+  border-color: #c10931 !important;
+}
+
+.bg-minBtnGrd {
+  background: linear-gradient(90deg, #44b5d9, #2c8ba9) !important;
+}
+
+.bg-maxBtnGrd {
+  background: linear-gradient(90deg, #2e924b, #40af52) !important;
+}
+
+.bg-editStakesGrd {
+  background: linear-gradient(90deg, #b0b0b0, #747474) !important;
+}
+
+.bg-clearBtnGrd {
+  background: linear-gradient(90deg, #8d1d35, #cd3c5b) !important;
+}
+
+.bg-placeBetBtnGrd {
+  background: linear-gradient(90deg, #c10931, #6e081d) !important;
+}
+
+.border-cancelBetBtn {
+  border: 1.5px solid #e90038 !important;
+}
+
+.text-cancelBetGray {
+  color: #737373 !important;
+}
+
+.border-danger {
+  border-color: #e90038 !important;
+}
+
+.text-text_BetSlipCancelBtnColor {
+  color: #737373 !important;
+}
+
+.bg-bg_InActivePlaceBtnColors {
+  background: linear-gradient(90deg, #c10931, #6e081d) !important;
+}
+
+.border-inActivePlaceBtnColor {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.border-betSlipCancelBtnColor {
+  border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+[data-theme="light"] .border-betSlipCancelBtnColor {
+  border-color: #cbd5e1 !important;
+}
+
+.bg-bg_SwitchCheckedBg {
+  background-color: #40af52 !important;
+}
+
+.bg-bg_text_brand_primary-mar {
+  background: linear-gradient(90deg, #c10931, #6e081d) !important;
+}
+
+.bg-bg_InActivePlaceBtnColor {
+  background-color: #dedede !important;
+}
+
+[data-theme="dark"] .bg-bg_InActivePlaceBtnColor {
+  background-color: #252836 !important;
+}
+
+.bg-bg_color_input_bg {
+  background-color: #dedede !important;
+}
+
+[data-theme="dark"] .bg-bg_color_input_bg {
+  background-color: #252836 !important;
+}
+
+.text-text_Ternary-new {
+  color: #4b5563;
+}
+
+[data-theme="dark"] .text-text_Ternary-new {
+  color: #9ca3af;
+}
+
+
