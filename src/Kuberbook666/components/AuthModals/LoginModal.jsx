@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
+import { toast } from "react-toastify";
 import { loginSuccess } from "../../../redux/slices/userSlice";
-import { login, Demo } from "../../../api";
+import { setAccountType } from "../../../redux/slices/accountSlice";
+import { login, Demo, createLoginRecord } from "../../../api";
+import { subscribeToLogin } from "../../../socketClient";
 
 const LoginModal = ({ isOpen, onClose, onSwitchToSignup }) => {
   const [activeTab, setActiveTab] = useState("mobile"); // 'mobile' | 'userid'
@@ -10,70 +13,170 @@ const LoginModal = ({ isOpen, onClose, onSwitchToSignup }) => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
   const [error, setError] = useState("");
   const dispatch = useDispatch();
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    const username = activeTab === "mobile" ? phone : userId;
-    if (!username || !password) {
-      setError("Please fill in all fields");
+    e?.preventDefault();
+    const username = (activeTab === "mobile" ? phone : userId).trim();
+    if (!username) {
+      setError(activeTab === "mobile" ? "Phone number is mandatory" : "User Id is mandatory");
+      return;
+    }
+    if (!password.trim()) {
+      setError("Password is mandatory");
       return;
     }
     setError("");
     setLoading(true);
+
     try {
-      const response = await login({ username, password });
-      if (response?.data?.token) {
+      // 1. First try real-time socket login like Mahadev
+      const socketPayload = {
+        userName: username,
+        username: username,
+        password: password,
+        x_panel_type: "user",
+      };
+
+      let response = null;
+      try {
+        response = await subscribeToLogin(socketPayload);
+      } catch (err) {
+        console.warn("Socket login failed, trying REST API fallback...", err);
+      }
+
+      if (response && response.success) {
+        const { token, userdata } = response;
+        if (token) localStorage.setItem("token", token);
+        if (userdata?._id) localStorage.setItem("userId", userdata._id);
+
         dispatch(
           loginSuccess({
-            token: response.data.token,
-            userData: response.data.user || { username },
-            loggedInType: "user",
+            userData: userdata,
+            loggedInType: "real",
+            token: token,
           })
         );
+        dispatch(
+          setAccountType({
+            userData: userdata,
+            type: "real",
+          })
+        );
+
+        toast.success(response.message || "Login successful!");
         onClose();
+        createLoginRecord({ userName: username }).catch(() => {});
+        return;
       }
+
+      // 2. Fallback to REST login API
+      const restRes = await login({
+        userName: username,
+        username: username,
+        password: password,
+        x_panel_type: "user",
+      });
+      const resData = restRes?.data || restRes;
+      if (resData?.token || (resData?.success && resData?.userdata?.token)) {
+        const token = resData.token || resData.userdata?.token;
+        const userdata = resData.user || resData.userdata || { username };
+        if (token) localStorage.setItem("token", token);
+        if (userdata?._id) localStorage.setItem("userId", userdata._id);
+
+        dispatch(
+          loginSuccess({
+            token: token,
+            userData: userdata,
+            loggedInType: "real",
+          })
+        );
+        dispatch(
+          setAccountType({
+            userData: userdata,
+            type: "real",
+          })
+        );
+
+        toast.success(resData?.message || "Login successful!");
+        onClose();
+        createLoginRecord({ userName: username }).catch(() => {});
+        return;
+      }
+
+      const errMsg = response?.message || resData?.message || "Invalid username or password";
+      setError(errMsg);
+      toast.error(errMsg);
     } catch (err) {
-      setError(err?.response?.data?.message || err?.message || "Invalid credentials");
+      console.error("Login error:", err);
+      setError(err?.response?.data?.message || err?.message || "Failed to login. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleDemoLogin = async () => {
-    setLoading(true);
+    setDemoLoading(true);
     setError("");
     try {
-      if (typeof Demo === "function") {
-        const response = await Demo();
-        if (response?.data?.token) {
-          dispatch(
-            loginSuccess({
-              token: response.data.token,
-              userData: response.data.user || { username: "DemoUser" },
-              loggedInType: "user",
-            })
-          );
-          onClose();
-          return;
-        }
+      const res = await Demo();
+      const demoData = res?.data || res;
+
+      if (demoData && demoData.token) {
+        const { token, userdata } = demoData;
+        localStorage.setItem("token", token);
+        if (userdata?._id) localStorage.setItem("userId", userdata._id);
+
+        dispatch(
+          loginSuccess({
+            userData: userdata,
+            loggedInType: "demo",
+            token: token,
+          })
+        );
+        dispatch(
+          setAccountType({
+            userData: userdata,
+            type: "demo",
+          })
+        );
+
+        toast.success("Demo account created successfully!");
+        onClose();
+        return;
       }
-      // Demo fallback
+
+      // Safe fallback if Demo API is offline
+      const fallbackToken = "demo-token-" + Date.now();
+      const fallbackUser = { _id: "demo_guest", username: "demo_guest", balance: 10000 };
+      localStorage.setItem("token", fallbackToken);
+      localStorage.setItem("userId", fallbackUser._id);
+
       dispatch(
         loginSuccess({
-          token: "demo-token-" + Date.now(),
-          userData: { username: "demo_guest", balance: 10000 },
+          token: fallbackToken,
+          userData: fallbackUser,
           loggedInType: "demo",
         })
       );
+      dispatch(
+        setAccountType({
+          userData: fallbackUser,
+          type: "demo",
+        })
+      );
+
+      toast.success("Demo account created successfully!");
       onClose();
     } catch (err) {
-      setError("Demo login failed, please try again.");
+      console.error("Error creating demo account:", err);
+      toast.error("Failed to create demo account. Please try again.");
     } finally {
-      setLoading(false);
+      setDemoLoading(false);
     }
   };
 
@@ -262,10 +365,11 @@ const LoginModal = ({ isOpen, onClose, onSwitchToSignup }) => {
 
             <button
               type="button"
+              disabled={demoLoading}
               onClick={handleDemoLogin}
-              className="w-full py-3 rounded-xl bg-[#680a1e] hover:bg-[#580718] text-white font-bold text-sm tracking-wide shadow-md active:scale-98 transition cursor-pointer"
+              className="w-full py-3 rounded-xl bg-[#680a1e] hover:bg-[#580718] text-white font-bold text-sm tracking-wide shadow-md active:scale-98 transition cursor-pointer disabled:opacity-50"
             >
-              Login With Demo Id
+              {demoLoading ? "Creating Demo..." : "Login With Demo Id"}
             </button>
           </div>
 

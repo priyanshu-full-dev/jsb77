@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useSearchParams, useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { socket } from "../../../socketClient";
+import { toast } from "react-toastify";
+import { socket, placeBet } from "../../../socketClient";
 import {
   subscribeToMatchData,
   subscribeToMarketOddsData,
@@ -12,6 +13,7 @@ import { handleOpenPlaceBet, handleCancelPlaceBet } from "../../../redux/slices/
 import { fetchMarketOdds } from "../../../redux/slices/fullmarketSlice";
 import { fetchbookmakerOdds } from "../../../redux/slices/bookmakerSlice";
 import { fetchfancyOdds } from "../../../redux/slices/fancySlice";
+import { fetchBets } from "../../../redux/slices/betsSlice";
 import BetSlip from "../../components/BetSlip";
 
 const sportsMapping = {
@@ -106,6 +108,20 @@ const MarketPage = () => {
   // Active mobile tab state: 'live' or 'openBets'
   const [mobileTab, setMobileTab] = useState("live");
   const [fancyActiveTab, setFancyActiveTab] = useState("All");
+  const [showLiveStream, setShowLiveStream] = useState(false);
+  const [activeInfoTooltip, setActiveInfoTooltip] = useState(null);
+  const [cashoutModal, setCashoutModal] = useState({ show: false, market: "", amount: 0, loading: false });
+
+  // Close tooltip when clicking outside
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (!e.target.closest(".info-tooltip-btn") && !e.target.closest(".info-tooltip-box")) {
+        setActiveInfoTooltip(null);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
 
   // Query Params Extraction
   const urlEventId = routeParams.eventId || searchParams.get("eventId") || "";
@@ -386,6 +402,75 @@ const MarketPage = () => {
     return { team1Name: t1, team2Name: t2 };
   }, [eventName]);
 
+  // Open Bets for this match from Redux store (used for badge count & cashout)
+  const accountBets = useSelector((state) => state?.account?.bets || state?.bets?.bets || []);
+  const openBetsInMatch = useMemo(() => {
+    if (!Array.isArray(accountBets)) return [];
+    return accountBets.filter((b) => {
+      const bMatchId = b?.matchId || b?.eventId;
+      return String(bMatchId) === String(urlEventId);
+    });
+  }, [accountBets, urlEventId]);
+
+  const openBetsCount = openBetsInMatch.length;
+
+  // Cashout computation and trigger logic
+  const handleCashoutClick = useCallback(
+    (marketTitle) => {
+      const marketBets = openBetsInMatch.filter((b) => {
+        const mType = (b?.marketName || b?.market || b?.marketType || "").toLowerCase();
+        return mType.includes(marketTitle.toLowerCase());
+      });
+
+      if (marketBets.length === 0) {
+        toast.info(`No active open bets found in ${marketTitle} to cash out.`);
+        return;
+      }
+
+      // Calculate cashout amount based on exposure & current runner odds
+      let totalExposure = 0;
+      marketBets.forEach((b) => {
+        totalExposure += Number(b?.stake || b?.amount || 0);
+      });
+      const estimatedCashout = Math.max(1, Math.round(totalExposure * 0.95));
+
+      setCashoutModal({
+        show: true,
+        market: marketTitle,
+        amount: estimatedCashout,
+        loading: false,
+      });
+    },
+    [openBetsInMatch]
+  );
+
+  const confirmCashout = useCallback(() => {
+    if (!cashoutModal.market) return;
+    setCashoutModal((prev) => ({ ...prev, loading: true }));
+
+    const cashoutPayload = {
+      isCashout: true,
+      sportName: currentSport,
+      sportId,
+      competitionId,
+      eventId: urlEventId,
+      market: cashoutModal.market,
+      markettype: cashoutModal.market,
+      cashoutAmount: cashoutModal.amount,
+      betKey: `cashout_${cashoutModal.market}_${Date.now()}`,
+    };
+
+    // Emit placeBet socket event with isCashout flag
+    placeBet(cashoutPayload);
+
+    setTimeout(() => {
+      setCashoutModal({ show: false, market: "", amount: 0, loading: false });
+      toast.success(`Cashout of ₹${cashoutModal.amount.toLocaleString()} requested successfully!`);
+      // Refresh user open bets
+      dispatch(fetchBets());
+    }, 800);
+  }, [cashoutModal, currentSport, sportId, competitionId, urlEventId, dispatch]);
+
   // Live Bet Preview Calculator (Profit & Loss preview)
   const getBetPreview = useCallback(
     (runnerBetKey, marketType) => {
@@ -453,15 +538,15 @@ const MarketPage = () => {
       });
     }
 
-    // Default match runners if socket hasn't pushed yet
+    // Default match runners if socket hasn't pushed yet (matches user prompt exact figures)
     const fallbackRunners = [
       {
         selectionId: 101,
         name: team1Name,
         runnerName: team1Name,
         ex: {
-          availableToBack: [{ price: "2.38", size: "623" }, { price: "2.36", size: "1,078" }, { price: "2.34", size: "45" }],
-          availableToLay: [{ price: "2.42", size: "2,112" }, { price: "2.44", size: "301" }, { price: "2.46", size: "46" }],
+          availableToBack: [{ price: "30", size: "1,222" }, { price: "29", size: "551" }, { price: "28", size: "939" }],
+          availableToLay: [{ price: "32", size: "314" }, { price: "34", size: "308" }, { price: "36", size: "8,997" }],
         },
       },
       {
@@ -469,8 +554,8 @@ const MarketPage = () => {
         name: team2Name,
         runnerName: team2Name,
         ex: {
-          availableToBack: [{ price: "1.71", size: "100" }, { price: "1.70", size: "48,706" }, { price: "1.69", size: "53,591" }],
-          availableToLay: [{ price: "1.72", size: "861" }, { price: "1.74", size: "17,902" }, { price: "1.76", size: "8,587" }],
+          availableToBack: [{ price: "1.03", size: "3,22,412" }, { price: "1.02", size: "2,60,600" }, { price: "1.01", size: "2,99,856" }],
+          availableToLay: [{ price: "1.04", size: "4,13,990" }, { price: "1.05", size: "1,07,702" }, { price: "1.06", size: "1,24,622" }],
         },
       },
       ...(isFootball
@@ -518,7 +603,7 @@ const MarketPage = () => {
       }));
     }
 
-    // Default bookmaker runners for cricket
+    // Default bookmaker runners for cricket (matches user prompt exact figures)
     if (isCricket || hasBmQuery || rawMatch?.bm) {
       return [
         {
@@ -526,8 +611,8 @@ const MarketPage = () => {
           name: team1Name,
           runnerName: team1Name,
           ex: {
-            availableToBack: [{ price: "909", size: "10,000" }],
-            availableToLay: [{ price: "1,111", size: "10,000" }],
+            availableToBack: [{ price: "2,222", size: "1,25,000" }],
+            availableToLay: [{ price: "2,857", size: "1,25,000" }],
           },
         },
         {
@@ -535,8 +620,8 @@ const MarketPage = () => {
           name: team2Name,
           runnerName: team2Name,
           ex: {
-            availableToBack: [{ price: "9", size: "50,000" }],
-            availableToLay: [{ price: "11", size: "50,000" }],
+            availableToBack: [{ price: "3.5", size: "500.000+" }],
+            availableToLay: [{ price: "4.5", size: "500.000+" }],
           },
         },
       ];
@@ -577,20 +662,26 @@ const MarketPage = () => {
     const validItems = (list || []).filter((item) => item && (item.RunnerName || item.runnerName || item.name));
     if (validItems.length > 0) return validItems;
 
-    // Default cricket session markets as shown in user's prompt HTML
+    // Default cricket session markets exactly as shown in user's prompt HTML & screenshots
     if (isCricket || hasFancyQuery || rawMatch?.fancy) {
       return [
-        { RunnerName: `10 over run ${team1Name} adv`, LayPrice1: 42, LaySize1: 100, BackPrice1: 44, BackSize1: 100, min: 100, max: 100000, category: "NORMAL" },
-        { RunnerName: `10 over run ${team2Name} adv`, LayPrice1: 62, LaySize1: 100, BackPrice1: 64, BackSize1: 100, min: 100, max: 100000, category: "NORMAL" },
-        { RunnerName: `Match 1st over run ${team1Name} adv`, LayPrice1: 3, LaySize1: 100, BackPrice1: 4, BackSize1: 100, min: 100, max: 100000, category: "NORMAL" },
-        { RunnerName: `Match 1st over run ${team2Name} adv`, LayPrice1: 5, LaySize1: 110, BackPrice1: 5, BackSize1: 90, min: 100, max: 100000, category: "NORMAL" },
-        { RunnerName: `50 over run ${team1Name} adv`, LayPrice1: 225, LaySize1: 100, BackPrice1: 229, BackSize1: 100, min: 100, max: 100000, category: "NORMAL" },
-        { RunnerName: `50 over run ${team2Name} adv`, LayPrice1: 310, LaySize1: 100, BackPrice1: 314, BackSize1: 100, min: 100, max: 100000, category: "NORMAL" },
-        { RunnerName: `1st wkt ${team1Name}`, LayPrice1: 22, LaySize1: 120, BackPrice1: 22, BackSize1: 90, min: 100, max: 100000, category: "NORMAL" },
-        { RunnerName: `1st wkt ${team2Name}`, LayPrice1: 36, LaySize1: 110, BackPrice1: 36, BackSize1: 90, min: 100, max: 100000, category: "NORMAL" },
-        { RunnerName: "Match 4-Hitters", LayPrice1: 10, LaySize1: 100, BackPrice1: 12, BackSize1: 100, min: 100, max: 100000, category: "NORMAL" },
-        { RunnerName: "Match 6-Hitters", LayPrice1: 5, LaySize1: 125, BackPrice1: 5, BackSize1: 75, min: 100, max: 100000, category: "NORMAL" },
-        { RunnerName: "Match Wicket Takers", LayPrice1: 8, LaySize1: 100, BackPrice1: 10, BackSize1: 100, min: 100, max: 100000, category: "NORMAL" },
+        { RunnerName: `15 over run ${team1Name}`, LayPrice1: 67, LaySize1: 100, BackPrice1: 68, BackSize1: 100, min: 1, max: 100000, category: "NORMAL" },
+        { RunnerName: `15 over run bhav ${team1Name}`, LayPrice1: 66, LaySize1: 70, BackPrice1: 66, BackSize1: 40, min: 1, max: 100000, category: "NORMAL" },
+        { RunnerName: `20 over run ${team1Name}`, LayPrice1: "-", LaySize1: "-", BackPrice1: "-", BackSize1: "-", min: 1, max: 100000, GameStatus: "BALL RUNNING", category: "NORMAL" },
+        { RunnerName: `14 over run ${team1Name}`, LayPrice1: 63, LaySize1: 100, BackPrice1: 64, BackSize1: 100, min: 1, max: 100000, category: "NORMAL" },
+        { RunnerName: `13.3 over run ${team1Name}`, LayPrice1: "-", LaySize1: "-", BackPrice1: "-", BackSize1: "-", min: 1, max: 100000, GameStatus: "SUSPENDED", category: "Ball by Ball" },
+        { RunnerName: `14.3 over run ${team1Name}`, LayPrice1: 65, LaySize1: 100, BackPrice1: 66, BackSize1: 100, min: 1, max: 100000, category: "Ball by Ball" },
+        { RunnerName: `50 over run bhav ${team1Name}.`, LayPrice1: "-", LaySize1: "-", BackPrice1: "-", BackSize1: "-", min: 1, max: 100000, GameStatus: "BALL RUNNING", category: "NORMAL" },
+        { RunnerName: `50 over run ${team1Name}`, LayPrice1: 190, LaySize1: 100, BackPrice1: 193, BackSize1: 100, min: 1, max: 100000, GameStatus: "BALL RUNNING", category: "NORMAL" },
+        { RunnerName: `5th wkt ${team1Name}`, LayPrice1: "-", LaySize1: "-", BackPrice1: "-", BackSize1: "-", min: 1, max: 100000, GameStatus: "BALL RUNNING", category: "NORMAL" },
+        { RunnerName: `6th wkt ${team1Name}`, LayPrice1: "-", LaySize1: "-", BackPrice1: "-", BackSize1: "-", min: 1, max: 100000, GameStatus: "BALL RUNNING", category: "NORMAL" },
+        { RunnerName: `C Ervine run bhav`, LayPrice1: 38, LaySize1: 120, BackPrice1: 38, BackSize1: 95, min: 1, max: 100000, category: "NORMAL" },
+        { RunnerName: `C Ervine run`, LayPrice1: 36, LaySize1: 110, BackPrice1: 36, BackSize1: 90, min: 1, max: 100000, category: "NORMAL" },
+        { RunnerName: `C Ervine boundaries`, LayPrice1: 4, LaySize1: 100, BackPrice1: 5, BackSize1: 100, min: 1, max: 100000, category: "NORMAL" },
+        { RunnerName: `C Ervine balls`, LayPrice1: 49, LaySize1: 110, BackPrice1: 49, BackSize1: 90, min: 1, max: 100000, category: "NORMAL" },
+        { RunnerName: `13.4 ball run ${team1Name}`, LayPrice1: 63, LaySize1: 250, BackPrice1: 63, BackSize1: 175, min: 1, max: 50000, category: "Ball by Ball" },
+        { RunnerName: `13.5 ball run ${team1Name}`, LayPrice1: "-", LaySize1: "-", BackPrice1: "-", BackSize1: "-", min: 1, max: 50000, GameStatus: "BALL RUNNING", category: "Ball by Ball" },
+        { RunnerName: `13.6 ball run ${team1Name}`, LayPrice1: "-", LaySize1: "-", BackPrice1: "-", BackSize1: "-", min: 1, max: 50000, GameStatus: "SUSPENDED", category: "Ball by Ball" },
       ];
     }
 
@@ -599,12 +690,24 @@ const MarketPage = () => {
 
   const hasFancy = fancyList.length > 0;
 
-  // Filter Fancy List based on Tab ("All" vs other categories)
+  // Filter Fancy List based on Tab ("All", "Ball by Ball", "NORMAL")
   const filteredFancyList = useMemo(() => {
     if (fancyActiveTab === "All") return fancyList;
     return fancyList.filter((item) => {
-      const cat = item.category || "NORMAL";
-      return cat.toLowerCase() === fancyActiveTab.toLowerCase();
+      const title = (item?.RunnerName || item?.runnerName || item?.name || "").toLowerCase();
+      const isBall =
+        item?.category === "Ball by Ball" ||
+        title.includes("ball run") ||
+        title.includes("ball by ball") ||
+        /\.\d\s+(over|ball)/.test(title);
+
+      if (fancyActiveTab === "Ball by Ball") {
+        return isBall;
+      }
+      if (fancyActiveTab === "NORMAL") {
+        return !isBall;
+      }
+      return true;
     });
   }, [fancyList, fancyActiveTab]);
 
@@ -631,30 +734,22 @@ const MarketPage = () => {
                   </svg>
                 </div>
 
-                {/* Clock / Live SVG with Red Brand Gradient */}
+                {/* Play SVG Icon from user snippet */}
                 <span className="max-w-[10%] min-w-[6%] mt-0.5">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="21" height="20" viewBox="0 0 21 20" fill="none">
-                    <g clipPath="url(#clip0_1717_31137)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <g clipPath="url(#clip0_1875_77994)">
                       <path
-                        d="M10.5 19.8571C8.55041 19.8571 6.64463 19.279 5.02363 18.1959C3.40264 17.1128 2.13922 15.5733 1.39316 13.7721C0.647093 11.971 0.451889 9.98903 0.832229 8.07694C1.21257 6.16484 2.15137 4.40846 3.52992 3.02992C4.90846 1.65137 6.66484 0.712569 8.57694 0.332229C10.489 -0.0481111 12.471 0.147093 14.2721 0.893157C16.0733 1.63922 17.6128 2.90264 18.6959 4.52363C19.779 6.14463 20.3571 8.05041 20.3571 9.99997C20.3541 12.6133 19.3146 15.1188 17.4667 16.9667C15.6188 18.8146 13.1133 19.8541 10.5 19.8571ZM10.5 1.5714C8.83296 1.5714 7.20338 2.06572 5.81731 2.99187C4.43123 3.91801 3.35092 5.23437 2.71298 6.77449C2.07505 8.31461 1.90813 10.0093 2.23335 11.6443C2.55857 13.2793 3.36131 14.7811 4.54007 15.9599C5.71883 17.1386 7.22065 17.9414 8.85564 18.2666C10.4906 18.5918 12.1853 18.4249 13.7254 17.787C15.2656 17.149 16.5819 16.0687 17.5081 14.6826C18.4342 13.2966 18.9285 11.667 18.9285 9.99997C18.926 7.76536 18.0371 5.62302 16.457 4.04291C14.8769 2.4628 12.7346 1.57397 10.5 1.5714Z"
-                        fill="url(#paint0_linear_1717_31137)"
+                        d="M13.2984 9.60764L9.14541 6.58877C8.993 6.4783 8.79068 6.46166 8.62363 6.54751C8.45525 6.6327 8.3501 6.80574 8.3501 6.99275V13.0285C8.3501 13.2175 8.45525 13.3899 8.62363 13.4751C8.69485 13.511 8.77271 13.529 8.85125 13.529C8.95374 13.529 9.05756 13.4964 9.14541 13.4318L13.2984 10.4156C13.4295 10.3191 13.506 10.17 13.506 10.0116C13.5067 9.85056 13.4281 9.70215 13.2984 9.60764Z"
+                        fill="var(--color-primary)"
                       />
                       <path
-                        d="M15.6915 11.5172H10.5629C10.3735 11.5172 10.1918 11.4419 10.0578 11.308C9.92389 11.174 9.84863 10.9923 9.84863 10.8029V5.67376C9.84863 5.48432 9.92389 5.30264 10.0578 5.16868C10.1918 5.03473 10.3735 4.95947 10.5629 4.95947C10.7524 4.95947 10.934 5.03473 11.068 5.16868C11.2019 5.30264 11.2772 5.48432 11.2772 5.67376V10.0886H15.6915C15.8809 10.0886 16.0626 10.1639 16.1966 10.2978C16.3305 10.4318 16.4058 10.6135 16.4058 10.8029C16.4058 10.9923 16.3305 11.174 16.1966 11.308C16.0626 11.4419 15.8809 11.5172 15.6915 11.5172Z"
-                        fill="url(#paint1_linear_1717_31137)"
+                        d="M10.0003 0C4.47639 0 0 4.47639 0 10.0003C0 15.5223 4.47639 19.9973 10.0003 19.9973C15.5229 19.9973 20 15.5216 20 10.0003C20.0007 4.47639 15.5229 0 10.0003 0ZM10.0003 18.3288C5.40015 18.3288 1.67049 14.6012 1.67049 10.0003C1.67049 5.40148 5.40015 1.66916 10.0003 1.66916C14.5998 1.66916 18.3288 5.40082 18.3288 10.0003C18.3295 14.6012 14.5998 18.3288 10.0003 18.3288Z"
+                        fill="var(--color-primary)"
                       />
                     </g>
                     <defs>
-                      <linearGradient id="paint0_linear_1717_31137" x1="0.642822" y1="21.0893" x2="22.3721" y2="18.475" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="var(--color-primary)" />
-                        <stop offset="1" stopColor="#6A061C" />
-                      </linearGradient>
-                      <linearGradient id="paint1_linear_1717_31137" x1="9.84863" y1="11.927" x2="17.076" y2="11.0576" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="var(--color-primary)" />
-                        <stop offset="1" stopColor="#6A061C" />
-                      </linearGradient>
-                      <clipPath id="clip0_1717_31137">
-                        <rect width="20" height="20" fill="white" transform="translate(0.5)" />
+                      <clipPath id="clip0_1875_77994">
+                        <rect width="20" height="20" fill="white" />
                       </clipPath>
                     </defs>
                   </svg>
@@ -665,11 +760,7 @@ const MarketPage = () => {
                   <span className="w-full bg-titleGrd-new text-transparent text-start bg-clip-text font-lato text-base font-bold">
                     <span className="capitalize break-words">{eventName}</span>
                   </span>
-                  <span className="w-full">
-                    <span className="w-max break-words bg-titleGrd-new inline-block text-transparent bg-clip-text font-lato text-xs font-bold">
-                      {isInPlay ? "LIVE" : openDate ? `Opens in ${openDate}` : "LIVE NOW"}
-                    </span>
-                  </span>
+                  <span className="w-full" />
                 </div>
               </div>
 
@@ -723,7 +814,7 @@ const MarketPage = () => {
                 }`}
                 style={{ zIndex: 10 }}
               >
-                open bets (0)
+                open bets ({openBetsCount})
               </button>
               <div
                 className="w-[48%] absolute z-10 transition-all ease-in-out bg-bg_Primary rounded-lg h-[2px]"
@@ -736,6 +827,22 @@ const MarketPage = () => {
               />
             </div>
           </div>
+        </div>
+
+        {/* Watch and Enjoy Live Action Button */}
+        <div className="w-full px-2">
+          <button
+            onClick={() => setShowLiveStream((prev) => !prev)}
+            className="inline-block leading-normal relative overflow-hidden transition duration-150 ease-in-out w-full py-2 text-sm my-2 font-semibold text-center text-text_Quaternary bg-bg_text_brand_primary-new rounded-md cursor-pointer"
+            type="button"
+          >
+            Watch And Enjoy Live Action...
+          </button>
+          {showLiveStream && (
+            <div className="w-full mb-3 rounded overflow-hidden bg-black flex items-center justify-center min-h-[220px]">
+              <div className="text-white text-sm">Live stream broadcast stream active for {eventName}</div>
+            </div>
+          )}
         </div>
 
         {/* ================================================================= */}
@@ -755,6 +862,7 @@ const MarketPage = () => {
                         <p className="text-[#7c7c7c] text-[10px]">Min:1 | max: 50,000</p>
                       </span>
                       <button
+                        onClick={() => handleCashoutClick("Match Odds")}
                         className="leading-normal relative overflow-hidden transition duration-150 ease-in-out bg-cashout-btn-gradient rounded-md px-2.5 py-1.5 text-center shadow-[inset_-12px_-8px_40px_#46464620] flex items-center justify-center flex-row h-max max-w-[74%] mr-1 cursor-pointer"
                         type="button"
                       >
@@ -827,7 +935,7 @@ const MarketPage = () => {
                                   price={b2?.price}
                                   size={b2?.size}
                                   isBack={true}
-                                  onClick={() => handleBetClick(runnerName, runnerId, "Back", b2?.price, "Match Odds", b2?.size, 100, 100000, runnerBetKey)}
+                                  onClick={() => handleBetClick(runnerName, runnerId, "Back", b2?.price, "Match Odds", b2?.size, 1, 50000, runnerBetKey)}
                                 />
                               </span>
                             </span>
@@ -839,7 +947,7 @@ const MarketPage = () => {
                                   price={b1?.price}
                                   size={b1?.size}
                                   isBack={true}
-                                  onClick={() => handleBetClick(runnerName, runnerId, "Back", b1?.price, "Match Odds", b1?.size, 100, 100000, runnerBetKey)}
+                                  onClick={() => handleBetClick(runnerName, runnerId, "Back", b1?.price, "Match Odds", b1?.size, 1, 50000, runnerBetKey)}
                                 />
                               </span>
                             </span>
@@ -851,7 +959,7 @@ const MarketPage = () => {
                                   price={b0?.price}
                                   size={b0?.size}
                                   isBack={true}
-                                  onClick={() => handleBetClick(runnerName, runnerId, "Back", b0?.price, "Match Odds", b0?.size, 100, 100000, runnerBetKey)}
+                                  onClick={() => handleBetClick(runnerName, runnerId, "Back", b0?.price, "Match Odds", b0?.size, 1, 50000, runnerBetKey)}
                                 />
                               </span>
                             </span>
@@ -863,7 +971,7 @@ const MarketPage = () => {
                                   price={l0?.price}
                                   size={l0?.size}
                                   isBack={false}
-                                  onClick={() => handleBetClick(runnerName, runnerId, "Lay", l0?.price, "Match Odds", l0?.size, 100, 100000, runnerBetKey)}
+                                  onClick={() => handleBetClick(runnerName, runnerId, "Lay", l0?.price, "Match Odds", l0?.size, 1, 50000, runnerBetKey)}
                                 />
                               </span>
                             </span>
@@ -875,7 +983,7 @@ const MarketPage = () => {
                                   price={l1?.price}
                                   size={l1?.size}
                                   isBack={false}
-                                  onClick={() => handleBetClick(runnerName, runnerId, "Lay", l1?.price, "Match Odds", l1?.size, 100, 100000, runnerBetKey)}
+                                  onClick={() => handleBetClick(runnerName, runnerId, "Lay", l1?.price, "Match Odds", l1?.size, 1, 50000, runnerBetKey)}
                                 />
                               </span>
                             </span>
@@ -887,7 +995,7 @@ const MarketPage = () => {
                                   price={l2?.price}
                                   size={l2?.size}
                                   isBack={false}
-                                  onClick={() => handleBetClick(runnerName, runnerId, "Lay", l2?.price, "Match Odds", l2?.size, 100, 100000, runnerBetKey)}
+                                  onClick={() => handleBetClick(runnerName, runnerId, "Lay", l2?.price, "Match Odds", l2?.size, 1, 50000, runnerBetKey)}
                                 />
                               </span>
                             </span>
@@ -899,8 +1007,8 @@ const MarketPage = () => {
                               onBetChange={(changes) => {
                                 setActiveBet((prev) => (prev ? { ...prev, ...changes } : null));
                               }}
-                              min={100}
-                              max={100000}
+                              min={1}
+                              max={50000}
                               sportId={sportId}
                               competitionId={competitionId}
                               eventId={urlEventId}
@@ -925,9 +1033,10 @@ const MarketPage = () => {
                       <span className="cursor-pointer transition-all ease-in-out duration-300 hover:scale-105" />
                       <span className="capitalize text-text_HeaderDeskNavMenu font-bold text-xs sm:text-sm md:text-[15px]">
                         Bookmaker
-                        <p className="text-[#7c7c7c] text-[10px]">Min:100 | max: 50,000</p>
+                        <p className="text-[#7c7c7c] text-[10px]">Min:100 | max: 2,00,000</p>
                       </span>
                       <button
+                        onClick={() => handleCashoutClick("Bookmaker")}
                         className="leading-normal relative overflow-hidden transition duration-150 ease-in-out bg-cashout-btn-gradient rounded-md px-2.5 py-1.5 text-center shadow-[inset_-12px_-8px_40px_#46464620] flex items-center justify-center flex-row h-max max-w-[74%] mr-1 cursor-pointer"
                         type="button"
                       >
@@ -1006,7 +1115,7 @@ const MarketPage = () => {
                                   price={b0?.price}
                                   size={b0?.size}
                                   isBack={true}
-                                  onClick={() => handleBetClick(runnerName, runnerId, "Back", b0?.price, "Bookmaker", b0?.size, 100, 50000, runnerBetKey)}
+                                  onClick={() => handleBetClick(runnerName, runnerId, "Back", b0?.price, "Bookmaker", b0?.size, 100, 200000, runnerBetKey)}
                                 />
                               </span>
                             </span>
@@ -1017,7 +1126,7 @@ const MarketPage = () => {
                                   price={l0?.price}
                                   size={l0?.size}
                                   isBack={false}
-                                  onClick={() => handleBetClick(runnerName, runnerId, "Lay", l0?.price, "Bookmaker", l0?.size, 100, 50000, runnerBetKey)}
+                                  onClick={() => handleBetClick(runnerName, runnerId, "Lay", l0?.price, "Bookmaker", l0?.size, 100, 200000, runnerBetKey)}
                                 />
                               </span>
                             </span>
@@ -1042,7 +1151,7 @@ const MarketPage = () => {
                                 setActiveBet((prev) => (prev ? { ...prev, ...changes } : null));
                               }}
                               min={100}
-                              max={50000}
+                              max={200000}
                               sportId={sportId}
                               competitionId={competitionId}
                               eventId={urlEventId}
@@ -1201,6 +1310,17 @@ const MarketPage = () => {
                           <span className="inline-block font-bold text-xs sm:text-sm md:text-base leading-4">All</span>
                         </li>
                         <li
+                          onClick={() => setFancyActiveTab("Ball by Ball")}
+                          className={`px-[15px] py-1 rounded-[100px] flex items-center justify-center cursor-pointer active:scale-95 transition-all ease-in-out duration-100 ${
+                            fancyActiveTab === "Ball by Ball"
+                              ? "bg-bg_text_brand_primary border-borderOfFancyPremiumTab text-[#fff]"
+                              : "bg-bg_color_primary text-text_Ternary"
+                          }`}
+                          style={{ whiteSpace: "nowrap" }}
+                        >
+                          <span className="inline-block font-bold text-xs sm:text-sm md:text-base leading-4">Ball by Ball</span>
+                        </li>
+                        <li
                           onClick={() => setFancyActiveTab("NORMAL")}
                           className={`px-[15px] py-1 rounded-[100px] flex items-center justify-center cursor-pointer active:scale-95 transition-all ease-in-out duration-100 ${
                             fancyActiveTab === "NORMAL"
@@ -1230,6 +1350,24 @@ const MarketPage = () => {
                   const backPrice = item?.BackPrice1 ?? item?.backPrice ?? item?.availableToBack?.[0]?.price ?? "-";
                   const backSize = item?.BackSize1 ?? item?.backSize ?? item?.availableToBack?.[0]?.size ?? "-";
 
+                  // Check if Market is Suspended, Ball Running or Inactive
+                  const statusRaw = String(item?.GameStatus || item?.status || "").toLowerCase().trim();
+                  const isBallRunning = statusRaw === "ball running" || Boolean(item?.isBallRunning);
+
+                  // When data doesn't come or is suspended
+                  const isMissingData =
+                    (!layPrice || layPrice === "-" || layPrice === 0) &&
+                    (!backPrice || backPrice === "-" || backPrice === 0);
+
+                  const isSuspended =
+                    statusRaw === "suspended" ||
+                    statusRaw === "closed" ||
+                    statusRaw === "inactive" ||
+                    (!isBallRunning && isMissingData);
+
+                  const minBetVal = item?.min || 1;
+                  const maxBetVal = item?.max || 100000;
+
                   return (
                     <div key={fancyBetKey} className="py-1.5">
                       <div className="bg-bg_Quaternary rounded-[3px] shadow-[0_8px_30px_rgb(0,0,0,0.12)] py-[1px] cursor-pointer">
@@ -1249,13 +1387,32 @@ const MarketPage = () => {
                                 <span className="text-[12px] font-bold text-text_Success" />
                               )}
                             </div>
-                            <span className="col-span-2 md:col-span-1 flex flex-row items-center justify-center">
-                              <div className="relative md:hidden">
-                                <span className="w-4 h-4 bg-headerBg text-white rounded-full text-xs flex items-center justify-center cursor-pointer">
+                            <span className="col-span-2 md:col-span-1 flex flex-row items-center justify-center relative">
+                              {/* Red Circular 'i' icon with clickable Popover */}
+                              <div className="relative">
+                                <span
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveInfoTooltip((prev) => (prev === fancyBetKey ? null : fancyBetKey));
+                                  }}
+                                  className="info-tooltip-btn w-4 h-4 bg-headerBg text-white rounded-full text-xs flex items-center justify-center cursor-pointer active:scale-95"
+                                >
                                   i
                                 </span>
+
+                                {activeInfoTooltip === fancyBetKey && (
+                                  <div
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="info-tooltip-box absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 bg-white text-black p-2 rounded shadow-lg border text-xs font-semibold whitespace-nowrap"
+                                  >
+                                    <div>Min: {minBetVal.toLocaleString()}</div>
+                                    <div>Max: {maxBetVal.toLocaleString()}</div>
+                                    <div className="w-2 h-2 bg-white rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2 border-r border-b" />
+                                  </div>
+                                )}
                               </div>
-                              <div className="opacity-50 cursor-not-allowed">
+
+                              <div className="opacity-50 cursor-not-allowed ml-1.5">
                                 <svg height="18" width="18" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                                   <g id="63d691358b4e4026f6539708_stairs 1">
                                     <path id="Vector" d="M5.21875 3.13672V13.1367" stroke="var(--color-ternary4)" />
@@ -1268,29 +1425,48 @@ const MarketPage = () => {
                               </div>
                             </span>
                           </div>
+
+                          {/* Right Odds or BALL RUNNING / SUSPENDED State */}
                           <div className="col-span-5 md:col-span-6 h-12 grid grid-cols-2 md:grid-cols-6 relative">
-                            {/* Lay (No) */}
-                            <span className="text-center min-h-12 cols-span-1 md:col-span-2">
-                              <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
-                                <OddsButton
-                                  price={layPrice}
-                                  size={laySize}
-                                  isBack={false}
-                                  onClick={() => handleBetClick(title, fancyId, "Lay", layPrice, "Fancy", laySize, item?.min || 100, item?.max || 100000, fancyBetKey)}
-                                />
+                            {isBallRunning ? (
+                              <span className="col-span-2 md:col-span-4 text-center min-h-12 py-[1px] px-[1px]">
+                                <span className="text-center bg-bg_ballRunning cursor-not-allowed w-full h-full rounded-sm flex text-xs flex-col items-center justify-center font-bold tracking-wider">
+                                  BALL RUNNING
+                                </span>
                               </span>
-                            </span>
-                            {/* Back (Yes) */}
-                            <span className="text-center min-h-12 cols-span-1 md:col-span-2">
-                              <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
-                                <OddsButton
-                                  price={backPrice}
-                                  size={backSize}
-                                  isBack={true}
-                                  onClick={() => handleBetClick(title, fancyId, "Back", backPrice, "Fancy", backSize, item?.min || 100, item?.max || 100000, fancyBetKey)}
-                                />
+                            ) : isSuspended ? (
+                              <span className="col-span-2 md:col-span-4 text-center min-h-12 py-[1px] px-[1px]">
+                                <span className="text-center bg-bg_ballRunning cursor-not-allowed w-full h-full rounded-sm flex text-xs flex-col items-center justify-center font-bold tracking-wider">
+                                  SUSPENDED
+                                </span>
                               </span>
-                            </span>
+                            ) : (
+                              <>
+                                {/* Lay (No) */}
+                                <span className="text-center min-h-12 cols-span-1 md:col-span-2">
+                                  <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
+                                    <OddsButton
+                                      price={layPrice}
+                                      size={laySize}
+                                      isBack={false}
+                                      onClick={() => handleBetClick(title, fancyId, "Lay", layPrice, "Fancy", laySize, minBetVal, maxBetVal, fancyBetKey)}
+                                    />
+                                  </span>
+                                </span>
+                                {/* Back (Yes) */}
+                                <span className="text-center min-h-12 cols-span-1 md:col-span-2">
+                                  <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
+                                    <OddsButton
+                                      price={backPrice}
+                                      size={backSize}
+                                      isBack={true}
+                                      onClick={() => handleBetClick(title, fancyId, "Back", backPrice, "Fancy", backSize, minBetVal, maxBetVal, fancyBetKey)}
+                                    />
+                                  </span>
+                                </span>
+                              </>
+                            )}
+
                             {/* Min/Max Information on Desktop */}
                             <span className="hidden md:block col-span-2 text-center min-h-12">
                               <div className="flex flex-col gap-y-1 items-center h-full w-full justify-center px-1">
@@ -1298,19 +1474,20 @@ const MarketPage = () => {
                                   <span className="text-[10px] text-center text-text_MaxMarketTextColor">Min Bet :</span>
                                   <span className="text-[10px] text-center text-text_MaxMarketTextColor">
                                     {" "}
-                                    {item?.min || 100}
+                                    {minBetVal}
                                   </span>
                                 </div>
                                 <div className="flex items-center justify-start">
                                   <span className="text-[10px] text-center text-text_MaxMarketTextColor ">Max Bet :</span>
                                   <span className="text-[10px] text-center text-text_MaxMarketTextColor">
                                     {" "}
-                                    {formatSize(item?.max || 100000)}
+                                    {formatSize(maxBetVal)}
                                   </span>
                                 </div>
                               </div>
                             </span>
                           </div>
+
                           {isBetOpen && (
                             <BetSlip
                               activeBet={activeBet}
@@ -1318,8 +1495,8 @@ const MarketPage = () => {
                               onBetChange={(changes) => {
                                 setActiveBet((prev) => (prev ? { ...prev, ...changes } : null));
                               }}
-                              min={item?.min || 100}
-                              max={item?.max || 100000}
+                              min={minBetVal}
+                              max={maxBetVal}
                               sportId={sportId}
                               competitionId={competitionId}
                               eventId={urlEventId}
@@ -1337,6 +1514,37 @@ const MarketPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Cashout Confirmation Modal */}
+      {cashoutModal.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+          <div className="bg-white rounded-lg p-5 max-w-sm w-full shadow-2xl border flex flex-col items-center">
+            <h3 className="text-base font-bold text-gray-800 mb-2">Confirm Cashout</h3>
+            <p className="text-xs text-gray-600 text-center mb-4">
+              Do you want to cash out your bets in <span className="font-semibold text-black">{cashoutModal.market}</span> for:
+            </p>
+            <div className="text-2xl font-bold text-green-600 mb-5">₹{cashoutModal.amount.toLocaleString()}</div>
+            <div className="flex items-center justify-center gap-3 w-full">
+              <button
+                type="button"
+                disabled={cashoutModal.loading}
+                onClick={() => setCashoutModal({ show: false, market: "", amount: 0, loading: false })}
+                className="w-1/2 py-2 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={cashoutModal.loading}
+                onClick={confirmCashout}
+                className="w-1/2 py-2 text-xs font-semibold text-white bg-green-600 hover:bg-green-700 rounded transition flex items-center justify-center"
+              >
+                {cashoutModal.loading ? "Processing..." : "Cashout Now"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

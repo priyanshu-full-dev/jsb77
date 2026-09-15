@@ -64,12 +64,12 @@ const Header = ({
       d > 3 && d < 21
         ? "th"
         : d % 10 === 1
-        ? "st"
-        : d % 10 === 2
-        ? "nd"
-        : d % 10 === 3
-        ? "rd"
-        : "th";
+          ? "st"
+          : d % 10 === 2
+            ? "nd"
+            : d % 10 === 3
+              ? "rd"
+              : "th";
     const year = date.getFullYear();
     return `${month} ${d}${nth}, ${year} ( GMT +5.5:30 )`;
   };
@@ -77,7 +77,7 @@ const Header = ({
   const formatTimeString = (date) => {
     const pad = (n) => String(n).padStart(2, "0");
     return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(
-      date.getSeconds()
+      date.getSeconds(),
     )}`;
   };
 
@@ -86,12 +86,12 @@ const Header = ({
     typeof userData?.availableBalance === "number"
       ? userData.availableBalance
       : typeof userData?.balance === "number"
-      ? userData.balance
-      : 0;
+        ? userData.balance
+        : 0;
   const lastLoggedIn =
     userData?.lastLoggedIn ||
     `${String(currentDateTime.getDate()).padStart(2, "0")}/${String(
-      currentDateTime.getMonth() + 1
+      currentDateTime.getMonth() + 1,
     ).padStart(2, "0")}/${currentDateTime.getFullYear()} 15:28:17`;
 
   return (
@@ -159,7 +159,10 @@ const Header = ({
         id="searchBox"
         className="text-text_Quaternary relative hidden max-w-96 font-lato lg:block flex-grow mx-2"
       >
-        <form onSubmit={handleSearchSubmit} className="relative w-full max-w-[450px]">
+        <form
+          onSubmit={handleSearchSubmit}
+          className="relative w-full max-w-[450px]"
+        >
           <input
             className="peer w-full appearance-none text-xs pl-9 py-2.5 rounded-full md:text-[14px] bg-[#1a1c24] text-white border border-red-900/40 focus:outline-none focus:border-red-500 placeholder-gray-400"
             placeholder="Search Events(At least 3 letters)..."
@@ -384,7 +387,7 @@ const Header = ({
             {/* Account Button -> Opens Profile Drawer */}
             <button
               onClick={onOpenProfileDrawer}
-              className="relative flex rounded-full gap-1 border border-white/30 hover:opacity-100 w-max font-extrabold items-center justify-center pr-4 pl-3 py-2 bg-bg_Secondary-new2 shadow active:scale-95 transition-transform cursor-pointer"
+              className="relative flex rounded-full gap-1 border border-white/30 hover:opacity-100 w-max font-extrabold items-center justify-center pr-4 pl-3 py-2 bg-[#6e081d] shadow active:scale-95 transition-transform cursor-pointer"
             >
               <span className="w-max text-text_LoginTextColor hidden md:block">
                 <svg
@@ -507,7 +510,7 @@ const Header = ({
               <button
                 onClick={onOpenDeposit}
                 type="button"
-                className="leading-normal transition duration-150 ease-in-out overflow-hidden relative active:scale-95 flex items-center h-fit justify-center rounded-full px-2.5 py-1 sm:px-4 sm:py-1.5 text-white text-sm text-center cursor-pointer bg-[#c10931] border border-red-400 shadow-md"
+                className="leading-normal transition duration-150 ease-in-out overflow-hidden relative active:scale-95 flex items-center h-fit justify-center rounded-full px-2.5 py-1 sm:px-4 sm:py-1.5 text-white text-sm text-center cursor-pointer"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -552,7 +555,7 @@ const Header = ({
               <button
                 onClick={onOpenProfileDrawer}
                 title="Balance & Profile"
-                className="leading-normal relative overflow-hidden transition duration-150 ease-in-out rounded-full text-text_Quaternary px-2.5 sm:px-3 bg-bg_Secondary-new2 flex items-center justify-center py-1 sm:py-1.5 gap-1 shadow-[0_8px_30px_rgb(0,0,0,0.12)] cursor-pointer active:scale-95 border border-white/20"
+                className="leading-normal relative overflow-hidden transition duration-150 ease-in-out rounded-full text-text_Quaternary px-2.5 sm:px-3 bg-[#6e081d] flex items-center justify-center py-1 sm:py-1.5 gap-1 shadow-[0_8px_30px_rgb(0,0,0,0.12)] cursor-pointer active:scale-95 border border-white/20"
                 type="button"
               >
                 <span className="text-xs sm:text-sm text-white font-semibold bg-transparent">

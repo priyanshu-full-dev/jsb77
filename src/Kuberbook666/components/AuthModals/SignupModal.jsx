@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FaLock, FaTag, FaCommentDots } from "react-icons/fa";
+import { toast } from "react-toastify";
+import { SendOtp, signUp } from "../../../api";
 
 const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
   const [username, setUsername] = useState("");
@@ -11,25 +13,72 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpTimer, setOtpTimer] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const timerRef = useRef(null);
+
+  // Countdown timer for OTP (60s / 1 min cooldown)
+  useEffect(() => {
+    if (otpTimer > 0) {
+      timerRef.current = setTimeout(() => {
+        setOtpTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [otpTimer]);
 
   if (!isOpen) return null;
 
-  const handleSendOtp = () => {
-    if (!phone || phone.length < 10) {
+  const handleSendOtp = async () => {
+    if (otpTimer > 0) {
+      toast.info(`Please wait ${otpTimer} seconds before requesting a new OTP.`);
+      return;
+    }
+    const cleanPhone = phone.replace(/\D/g, "");
+    if (!cleanPhone || cleanPhone.length < 10) {
       setError("Please enter a valid 10-digit mobile number");
       return;
     }
+
     setError("");
-    setOtpSent(true);
-    // simulated OTP
-    setOtp("1234");
+    setOtpLoading(true);
+
+    try {
+      // Send OTP via real API
+      const otpRes = await SendOtp({
+        phone: cleanPhone,
+        mobile: cleanPhone,
+        userName: cleanPhone,
+        country: "+91",
+      });
+
+      if (otpRes?.data?.success === false && otpRes?.data?.message) {
+        setError(otpRes.data.message);
+        toast.error(otpRes.data.message);
+        return;
+      }
+
+      setOtpSent(true);
+      setOtpTimer(60); // 1 minute cooldown
+      setOtp(""); // Do NOT auto-fill fake OTP. User will enter the real SMS OTP.
+      toast.success(otpRes?.data?.message || `OTP sent successfully to +91 ${cleanPhone}`);
+    } catch (err) {
+      console.error("SendOtp Error:", err);
+      const errMsg = err?.response?.data?.message || err?.message || "Failed to send OTP. Please try again.";
+      setError(errMsg);
+      toast.error(errMsg);
+    } finally {
+      setOtpLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!username || !phone || !password || !confirmPassword) {
+    if (!username.trim() || !phone.trim() || !password.trim() || !confirmPassword.trim()) {
       setError("Please fill in all required fields");
       return;
     }
@@ -37,16 +86,42 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
       setError("Passwords do not match");
       return;
     }
+    if (!otp.trim()) {
+      setError("Please enter the OTP sent to your phone");
+      return;
+    }
+
     setError("");
     setLoading(true);
+
     try {
-      setTimeout(() => {
-        setLoading(false);
+      const payload = {
+        username: username.trim(),
+        userName: username.trim(),
+        phone: phone.trim(),
+        mobile: phone.trim(),
+        password: password.trim(),
+        otp: otp.trim(),
+        promocode: promoCode.trim(),
+      };
+
+      const res = await signUp(payload);
+
+      if (res?.success || res?.data?.message === "User created successfully" || res?.data?.success) {
+        toast.success(res?.data?.message || "Registration successful! Please login.");
         onClose();
         onSwitchToLogin();
-      }, 700);
+      } else {
+        const errorMsg = res?.data?.message || "Registration failed. Please check your details.";
+        setError(errorMsg);
+        toast.error(errorMsg);
+      }
     } catch (err) {
-      setError(err?.message || "Registration failed");
+      console.error("signUp API error:", err);
+      const errMsg = err?.response?.data?.message || err?.message || "Registration failed";
+      setError(errMsg);
+      toast.error(errMsg);
+    } finally {
       setLoading(false);
     }
   };
@@ -130,11 +205,24 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
           {/* 3. OTP Action Button */}
           <button
             type="button"
+            disabled={otpTimer > 0 || otpLoading}
             onClick={handleSendOtp}
-            className="w-full py-2.5 rounded-xl bg-[#9c6a74] hover:bg-[#8b5c65] text-white font-bold text-sm flex items-center justify-center gap-2 transition active:scale-98 shadow-xs cursor-pointer"
+            className={`w-full py-2.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 transition active:scale-98 shadow-xs cursor-pointer ${
+              otpTimer > 0 || otpLoading
+                ? "bg-gray-400 cursor-not-allowed opacity-75"
+                : "bg-[#9c6a74] hover:bg-[#8b5c65]"
+            }`}
           >
             <FaCommentDots className="text-base" />
-            <span>{otpSent ? "OTP SENT ✓" : "OTP"}</span>
+            <span>
+              {otpLoading
+                ? "Sending OTP..."
+                : otpTimer > 0
+                ? `Resend OTP in ${otpTimer}s`
+                : otpSent
+                ? "Resend OTP"
+                : "Send OTP"}
+            </span>
           </button>
 
           {/* 4. OTP Input Field */}

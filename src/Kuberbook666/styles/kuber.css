@@ -410,8 +410,20 @@ div::-webkit-scrollbar {
   background-color: var(--color-primary, #c10831) !important;
 }
 
+.bg-bg_text_brand_primary-new {
+  background-color: var(--color-primary, #c10831) !important;
+  color: #ffffff !important;
+}
+
 .border-borderOfFancyPremiumTab {
   border-color: var(--color-primary, #c10831) !important;
+}
+
+.bg-bg_ballRunning {
+  background: linear-gradient(90deg, #a5d8ff 0%, #ffc2d1 100%) !important;
+  color: #111827 !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px;
 }
 
 /* ==========================================================================
@@ -662,23 +674,23 @@ div::-webkit-scrollbar {
 }
 
 .border-depositBtn {
-  border-color: var(--border-depositBtn, #e11d48) !important;
+  border-color: var(--border-depositBtn, #17c964) !important;
 }
 
 .bg-bg_HomeDepositBtnBgColor {
-  background-color: var(--bg-HomeDepositBtnBgColor, #c10931) !important;
+  background: linear-gradient(90deg, #17c964, #2e924b) !important;
 }
 
 .bg-bg_HomeWithdrawBtnBgColor {
-  background-color: var(--bg-HomeWithdrawBtnBgColor, #374151) !important;
+  background: linear-gradient(90deg, #6e081d, #c10931) !important;
 }
 
 .bg-bg_Secondary-new2 {
-  background-color: var(--bg-Secondary-new2, rgba(0, 0, 0, 0.35)) !important;
+  background-color: var(--bg-Secondary-new2, #6e081d) !important;
 }
 
 .bg-bg_Ternary11 {
-  background-color: var(--bg-Ternary11, #1f2330) !important;
+  background-color: #f2f2f2 !important;
 }
 
 .text-text_Ternary-new {
@@ -702,11 +714,19 @@ div::-webkit-scrollbar {
 }
 
 .text-text_Success {
-  color: #10b981 !important;
+  color: #29ab2b !important;
 }
 
 .text-text_Danger {
-  color: #ef4444 !important;
+  color: #e90038 !important;
+}
+
+.text-text_color_danger {
+  color: #e90038 !important;
+}
+
+.text-text_color_ternary {
+  color: #111827 !important;
 }
 
 .border-ternary3 {
@@ -726,6 +746,26 @@ div::-webkit-scrollbar {
   animation: openDrawerFromRightAnim 0.28s cubic-bezier(0.16, 1, 0.3, 1)
     forwards;
   will-change: transform;
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  --color-iconsColor: #c10931;
+  --color-ternary1: #71717a;
+  --icon-color-brand-secondary: #c10931;
+  --color-text-ternary-new: #111827;
+  --color-text-primary-new: #111827;
+}
+
+.openDrawerFromRight .divide-y > * {
+  border-color: #d1d1d1 !important;
+}
+
+.openDrawerFromRight .text-text_Ternary-new {
+  color: #111827 !important;
+}
+
+.openDrawerFromRight .bg-bg_Ternary11 {
+  background-color: #f2f2f2 !important;
+  border-color: #e5e7eb !important;
 }
 
 /* Shimmer animation for mobile deposit button */
@@ -915,5 +955,3 @@ div::-webkit-scrollbar {
 [data-theme="dark"] .text-text_Ternary-new {
   color: #9ca3af;
 }
-
-
