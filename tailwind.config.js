@@ -3,6 +3,9 @@ export default {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Lato', 'Avenir', 'Verdana', 'Nunito', 'sans-serif'],
+      },
       animation: {
         iconPulse: "iconPulse 2s ease-in-out infinite",
       },

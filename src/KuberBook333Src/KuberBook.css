@@ -1,0 +1,294 @@
+/* Font Family for KuberBook333 */
+:root,
+body,
+button,
+input,
+select,
+textarea,
+span,
+div,
+p,
+a,
+label,
+li,
+ul {
+  font-family: Lato, Avenir, Verdana, Nunito, sans-serif !important;
+}
+
+/* Custom Animations and Utilities for KuberBook333 */
+
+@keyframes marquee {
+  0% {
+    transform: translateX(100%);
+  }
+
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee 22s linear infinite;
+}
+
+@keyframes tickerLoop {
+  0% {
+    transform: translateX(0%);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-ticker-loop {
+  display: flex;
+  width: max-content;
+  white-space: nowrap;
+  animation: tickerLoop 16s linear infinite;
+}
+
+.animate-ticker-loop:hover {
+  animation-play-state: paused;
+}
+
+/* Custom scrollbar hiding */
+.scrollbar-none,
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Visible Custom Scrollbars across all scroll sections */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  height: 7px;
+  width: 7px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  min-width: 30px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* Dark Theme Custom Scrollbar */
+.custom-scrollbar-dark {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar {
+  height: 2px;
+  width: 1px;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  min-width: 30px;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Ticker Marquee Scrollbar */
+.custom-scrollbar-ticker {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+}
+
+.custom-scrollbar-ticker::-webkit-scrollbar {
+  height: 1.5px;
+  width: 1px;
+}
+
+.custom-scrollbar-ticker::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar-ticker::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  min-width: 30px;
+}
+
+.custom-scrollbar-ticker::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* 1-second text blinking animation */
+@keyframes textBlink1s {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.15;
+  }
+}
+
+.animate-blink-1s {
+  animation: textBlink1s 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* 3-second toast progress bar animation */
+@keyframes toastProgress {
+  0% {
+    width: 100%;
+  }
+
+  100% {
+    width: 0%;
+  }
+}
+
+.animate-toast-progress {
+  animation: toastProgress 3s linear forwards;
+}
+
+/* Live match green dot blinking animation (dark green <-> light green) */
+@keyframes liveDotBlink {
+
+  0%,
+  100% {
+    background-color: #008000;
+  }
+
+  50% {
+    background-color: #72ec76;
+  }
+}
+
+.animate-live-dot {
+  animation: liveDotBlink 1s ease-in-out infinite;
+}
+
+/* WhatsApp Support Floating Button animation */
+@keyframes wpSupportAnim {
+  0% {
+    transform: scale(0.92);
+  }
+
+  100% {
+    transform: scale(1.08);
+  }
+}
+
+.animate-wp-support {
+  width: 70px;
+  height: 70px;
+  animation: wpSupportAnim 1s linear 1s infinite alternate;
+}
+
+/* Telegram background blowing / pop-up bubble effect */
+@keyframes bgBlowingBubble1 {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.75;
+  }
+
+  50% {
+    opacity: 0.45;
+  }
+
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+@keyframes bgBlowingBubble2 {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.75;
+  }
+
+  50% {
+    opacity: 0.45;
+  }
+
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+@keyframes bgBlowingBase {
+
+  0%,
+  100% {
+    transform: scale(1.12);
+    opacity: 0.45;
+  }
+
+  50% {
+    transform: scale(1.3);
+    opacity: 0.65;
+  }
+}
+
+.animate-bg-blow-wave1 {
+  animation: bgBlowingBubble1 2s cubic-bezier(0.1, 0.5, 0.4, 1) infinite;
+}
+
+.animate-bg-blow-wave2 {
+  animation: bgBlowingBubble2 2s cubic-bezier(0.1, 0.5, 0.4, 1) infinite 1s;
+}
+
+.animate-bg-blow-base {
+  animation: bgBlowingBase 2s ease-in-out infinite;
+}
+
+/* Gold Gradient Utility */
+.bg-gradient-gold {
+  background: linear-gradient(94deg, #b6842d, #ebda8d 55%, #b7862f);
+}
+
+/* Affiliate Glowing Keyframe Animation */
+@keyframes affiliateGlow {
+  0% {
+    color: red;
+    text-shadow: 0 0 6px rgba(255, 0, 0, 0.8);
+  }
+
+  50% {
+    color: #0f0;
+    text-shadow: 0 0 10px rgba(0, 255, 0, 1);
+  }
+
+  100% {
+    color: red;
+    text-shadow: 0 0 6px rgba(255, 0, 0, 0.8);
+  }
+}
+
+.animate-affiliate {
+  animation: affiliateGlow 0.5s infinite;
+}

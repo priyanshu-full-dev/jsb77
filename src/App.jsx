@@ -15,6 +15,7 @@ import "./App.css";
 import { getUserId } from "./utils/helper/commonSelectors";
 
 import { MahadevExchRouter } from "./MahadevExchSrc/MahadevExchRoutes";
+import { KuberBook333Router } from "./KuberBook333Src/KuberBook333Routes";
 import Loader from "./MahadevExchSrc/components/Loader/Loader";
 
 const App = () => {
@@ -148,7 +149,7 @@ const App = () => {
   return (
     <>
       <Suspense fallback={<Loader/>}>
-        <RouterProvider router={MahadevExchRouter} />
+        <RouterProvider router={KuberBook333Router} />
       </Suspense>
     </>
   );
