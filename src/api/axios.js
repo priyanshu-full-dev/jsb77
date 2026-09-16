@@ -179,10 +179,24 @@ API.interceptors.response.use(
     return response;
   },
   async (error) => {
+    const url = error.config?.url || "";
+    const isAuthRoute =
+      url.includes("/api/v1/users/getuserdata") ||
+      url.includes("/api/v1/users/change-password");
+
+    const isExcludedRoute =
+      shouldSkipEncryption(url) ||
+      url.includes("qtlauncher") ||
+      url.includes("launcher") ||
+      url.includes("asianexchange") ||
+      url.includes("getIntCasinos") ||
+      url.includes("casino");
+
     if (
+      !isExcludedRoute &&
+      isAuthRoute &&
       error.response &&
-      (error.response.status === 401 ||
-        error.response.status === 403)
+      (error.response.status === 401 || error.response.status === 403)
     ) {
       await handleLogout();
     }

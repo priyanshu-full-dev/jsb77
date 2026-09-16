@@ -8,8 +8,9 @@ export const openSignupModal = () => {
 
 export const isUserLoggedIn = () => {
   return Boolean(
-    localStorage.getItem("kuber_user") ||
     localStorage.getItem("token") ||
+    localStorage.getItem("userId") ||
+    localStorage.getItem("kuber_user") ||
     localStorage.getItem("kuber_token")
   );
 };

@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
+import { useSelector } from "react-redux";
 import { openLoginModal, isUserLoggedIn } from "../utils/authModalEvents";
 
 const GameSectionCarousel = ({
@@ -8,6 +9,7 @@ const GameSectionCarousel = ({
   onGameClick,
   defaultTab = "Originals",
 }) => {
+  const isReduxLoggedIn = useSelector((state) => state.user?.isLoggedIn);
   const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]);
   const [promptedGameId, setPromptedGameId] = useState(null);
 
@@ -111,8 +113,10 @@ const GameSectionCarousel = ({
     e.stopPropagation();
     if (cardsDraggedDist.current > 6) return;
 
-    // If not logged in, prompt Login button as per Image 2
-    if (!isUserLoggedIn()) {
+    const loggedIn = isReduxLoggedIn || isUserLoggedIn();
+
+    // If not logged in at all, prompt Login button
+    if (!loggedIn) {
       setPromptedGameId(game.id);
       return;
     }
@@ -122,14 +126,22 @@ const GameSectionCarousel = ({
     }
   };
 
-  // Filter games based on selected tab
-  const filteredGames = games.filter(
-    (g) =>
-      !g.category ||
-      g.category.toLowerCase() === activeTab?.toLowerCase() ||
-      tabs.length <= 1,
-  );
-  const displayGames = filteredGames.length > 0 ? filteredGames : games;
+  // Filter games based on selected tab or gamesByTab object
+  const displayGames = useMemo(() => {
+    if (games && !Array.isArray(games) && typeof games === "object") {
+      return games[activeTab] || games[defaultTab] || Object.values(games)[0] || [];
+    }
+    if (Array.isArray(games)) {
+      const filtered = games.filter(
+        (g) =>
+          !g.category ||
+          g.category.toLowerCase().includes(activeTab?.toLowerCase()) ||
+          tabs.length <= 1,
+      );
+      return filtered.length > 0 ? filtered : games;
+    }
+    return [];
+  }, [games, activeTab, defaultTab, tabs]);
 
   return (
     <div title={title} className="py-1 px-[6px] w-full select-none">
@@ -256,19 +268,22 @@ const GameSectionCarousel = ({
                   <div className="min-w-[117px] w-[117px] sm:min-w-[140px] sm:w-[140px] md:min-w-[160px] md:w-[160px] flex flex-col bg-bg_Quaternary1 items-start justify-center shadow-GameShadow rounded-[6px]">
                     <div className="relative rounded-[8px] w-full max-h-[192px] aspect-[0.75] overflow-hidden cursor-pointer shadow-sm md:hover:shadow-md">
                       <img
-                        src={game.image || "/assets/ballByBall.png"}
+                        src={game.image || game.img || "/placeholder.svg"}
                         width="auto"
                         height="auto"
-                        className={`w-full h-full transform transition-transform duration-500 ease-in-out pointer-events-none ${
+                        className={`w-full h-full object-cover transform transition-transform duration-500 ease-in-out pointer-events-none ${
                           isPrompted
                             ? "blur-[3px] scale-105"
                             : "hover:scale-105"
                         }`}
-                        alt={game.name || "Ball By Ball"}
+                        alt={game.name || "Game"}
                         loading="lazy"
-                        title={game.image || "/assets/ballByBall.png"}
+                        title={game.name || ""}
                         onError={(e) => {
-                          e.currentTarget.src = "/assets/ballByBall.png";
+                          if (!e.currentTarget.dataset.failed) {
+                            e.currentTarget.dataset.failed = "true";
+                            e.currentTarget.src = "/placeholder.svg";
+                          }
                         }}
                       />
 

@@ -1,0 +1,1 @@
+import{j as o}from"./index.DrYkcnFZ.js";import t from"./CasinoPage.4pdKxeJz.js";import"./react.Dvwkxfce.js";import"./App.C472NmyE.js";import"./index.BTlAp-4F.js";import"./lib.D4d-9vzj.js";function s(){return o.jsx(t,{tab:"live"})}export{s as default};

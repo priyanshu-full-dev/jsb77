@@ -1,4 +1,5 @@
-import React, { lazy, Suspense, Component } from "react";
+import { lazy, Suspense, Component } from "react";
+import PropTypes from "prop-types";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import AppLayout from "./components/AppLayout";
 import PageSkeleton from "./components/Loader/PageSkeleton";
@@ -50,6 +51,10 @@ class RouteErrorBoundary extends Component {
   }
 }
 
+RouteErrorBoundary.propTypes = {
+  children: PropTypes.node,
+};
+
 /**
  * Higher-order loadable component with Lazy Loading, Suspense Fallback & Preload capability
  */
@@ -80,6 +85,7 @@ const LiveCasinoPage = loadable(() => import("./pages/LiveCasino/LiveCasinoPage"
 const InPlayPage = loadable(() => import("./pages/InPlay/InPlayPage"));
 const ProfilePage = loadable(() => import("./pages/Account/ProfilePage"));
 const MarketPage = loadable(() => import("./pages/Market/MarketPage"));
+const GameLobby = loadable(() => import("./pages/GameLobby/GameLobby"));
 
 // ==========================================================================
 // ROUTE CONFIGURATION
@@ -147,6 +153,18 @@ export const Kuberbook666Router = createBrowserRouter([
         element: <CasinoPage.Element />,
       },
       {
+        path: "multiplayer",
+        element: <CasinoPage.Element />,
+      },
+      {
+        path: "color-game",
+        element: <CasinoPage.Element />,
+      },
+      {
+        path: "aviator",
+        element: <CasinoPage.Element />,
+      },
+      {
         path: "inplay",
         element: <InPlayPage.Element />,
       },
@@ -159,6 +177,10 @@ export const Kuberbook666Router = createBrowserRouter([
         element: <Navigate to="/" replace />,
       },
     ],
+  },
+  {
+    path: "/game-lobby",
+    element: <GameLobby.Element />,
   },
 ]);
 
