@@ -1,4 +1,8 @@
+<<<<<<<< HEAD:dist/assets/BankTransfer.Dz16YFTs.js
 import{D as R,r as v,ac as se,ad as ie,j as s}from"./index.BxPElGVb.js";import{w as S,s as oe,v as ce,L as de}from"./App.CLXoEyOz.js";import"./react.Dvwkxfce.js";import"./index.5jixlA-e.js";/**
+========
+import{D as R,r as v,ac as se,ad as ie,j as s}from"./index.C1xRurtf.js";import{s as oe,w as ce,L as de}from"./App.CSBVUDjj.js";import{c as S}from"./createLucideIcon.CUpK3gXG.js";import"./react.Dvwkxfce.js";import"./index.CZmRVAJs.js";/**
+>>>>>>>> 259c650fd718015837f82ba346e3b03974e6fb71:dist/assets/BankTransfer.BR8JZWgj.js
  * @license lucide-react v0.439.0 - ISC
  *
  * This source code is licensed under the ISC license.

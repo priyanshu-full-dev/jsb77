@@ -16,6 +16,16 @@ export const fetchMatchesByEventId = createAsyncThunk(
   }
 );
 
+const ensureSportState = (state, sport) => {
+  if (!sport || typeof sport !== "string") return null;
+  const key = sport.trim().toLowerCase();
+  if (!key) return null;
+  if (!state[key]) {
+    state[key] = { matches: [], status: "idle", error: null };
+  }
+  return state[key];
+};
+
 const matchesSlice = createSlice({
   name: "matches",
   initialState: {
@@ -25,40 +35,79 @@ const matchesSlice = createSlice({
   },
   reducers: {
     setMatchesLoading: (state, action) => {
-      const { sport } = action.payload;
-      state[sport].status = "loading";
+      const { sport } = action.payload || {};
+      if (sport === "all") {
+        Object.keys(state).forEach((key) => {
+          if (state[key]) state[key].status = "loading";
+        });
+        return;
+      }
+      const sportState = ensureSportState(state, sport);
+      if (sportState) {
+        sportState.status = "loading";
+      }
     },
     updateMatches: (state, action) => {
-      const { sport, data } = action.payload;
-      state[sport].matches = data;
-      state[sport].status = "succeeded";
+      const { sport, data } = action.payload || {};
+      const sportState = ensureSportState(state, sport);
+      if (sportState) {
+        sportState.matches = data;
+        sportState.status = "succeeded";
+        sportState.error = null;
+      }
     },
     updateMarketOdds: (state, action) => {
-      const { sport, data } = action.payload;
-      state[sport].marketOdds = data;
-      state[sport].status = "succeeded";
+      const { sport, data } = action.payload || {};
+      const sportState = ensureSportState(state, sport);
+      if (sportState) {
+        sportState.marketOdds = data;
+        sportState.status = "succeeded";
+        sportState.error = null;
+      }
     },
     setMatchesError: (state, action) => {
-      const { sport, error } = action.payload;
-      state.matches[sport].status = "failed";
-      state.matches[sport].error = error;
+      const { sport, error } = action.payload || {};
+      if (sport === "all") {
+        Object.keys(state).forEach((key) => {
+          if (state[key]) {
+            state[key].status = "failed";
+            state[key].error = error;
+          }
+        });
+        return;
+      }
+      const sportState = ensureSportState(state, sport);
+      if (sportState) {
+        sportState.status = "failed";
+        sportState.error = error;
+      }
     },
   },
   extraReducers: (builder) => {
     builder
       .addCase(fetchMatchesByEventId.pending, (state, action) => {
-        const { sport } = action.meta.arg;
-        state[sport].status = "loading";
+        const sport = action.meta?.arg?.sport;
+        const sportState = ensureSportState(state, sport);
+        if (sportState) {
+          sportState.status = "loading";
+        }
       })
       .addCase(fetchMatchesByEventId.fulfilled, (state, action) => {
-        const { sport, data } = action.payload;
-        state[sport].status = "succeeded";
-        state[sport].matches = data;
+        const { sport, data } = action.payload || {};
+        const sportState = ensureSportState(state, sport);
+        if (sportState) {
+          sportState.status = "succeeded";
+          sportState.matches = data;
+          sportState.error = null;
+        }
       })
       .addCase(fetchMatchesByEventId.rejected, (state, action) => {
-        const { sport } = action.meta.arg;
-        state[sport].status = "failed";
-        state[sport].error = action.payload;
+        const sport = action.meta?.arg?.sport;
+        const sportState = ensureSportState(state, sport);
+        if (sportState) {
+          sportState.status = "failed";
+          sportState.error = action.payload;
+        }
       });
   },
 });

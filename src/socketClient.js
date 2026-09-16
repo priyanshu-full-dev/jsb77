@@ -78,10 +78,21 @@ export const socket = io(baseUrl, {
   transports: ["websocket"],
 });
 
+// Expose socket and logger globally for browser DevTools inspect
+if (typeof window !== "undefined") {
+  window.socket = socket;
+}
+
+if (typeof socket.onAny === "function") {
+  socket.onAny((event, ...args) => {
+    console.log(`📡 [SOCKET INCOMING: ${event}]`, ...args);
+  });
+}
+
 // ==================== GLOBAL LISTENERS (only one time) ====================
 
 socket.on("connect", () => {
-  console.log("Socket connected");
+  console.log("🟢 [SOCKET CONNECTED] Socket ID:", socket.id, "Server URL:", baseUrl);
   resubscribeAll();
 });
 
@@ -115,22 +126,28 @@ document.addEventListener("visibilitychange", () => {
 });
 
 socket.on("disconnect", (reason) => {
-  console.log("Socket disconnected:", reason);
+  console.log("🔴 [SOCKET DISCONNECTED]:", reason);
 });
 
 socket.on("connect_error", (error) => {
-  console.error("Connection error:", error.message);
+  console.error("⚠️ [SOCKET CONNECT ERROR]:", error.message);
   store.dispatch(setMatchesError({ sport: "all", error: error.message }));
   store.dispatch(setMarketOddsError(error.message));
 });
 
 // Match Updates
 socket.on("matchUpdate", (data) => {
+  console.log("🔥 [SOCKET: matchUpdate received]", data);
+  if (typeof window !== "undefined") {
+    window.lastMatchUpdate = data;
+  }
+
   // 🔥 CASE 1: Sports list (NO eventId)
-  if (data.matches && data.sport) {
+  if (data?.matches && data?.sport) {
+    const sportKey = data.sport.toLowerCase();
     store.dispatch(
       updateMatches({
-        sport: data.sport,
+        sport: sportKey,
         data: { data: data.matches },
       })
     );
@@ -138,13 +155,25 @@ socket.on("matchUpdate", (data) => {
   }
 
   // 🔥 CASE 2: Match-specific update (WITH eventId)
-  if (data?.eventId && data?.eventType) {
-    const key = `${data.eventId}-${data.eventType}`;
-    const sub = activeSubscriptions.matches.get(key);
-    if (!sub) return;
+  if (data?.eventId || data?.eventType) {
+    const resolvedEventType = data?.eventType || data?.eventId;
+    const key = `${data.eventId}-${resolvedEventType}`;
+    const sub = activeSubscriptions.matches.get(key) || activeSubscriptions.matches.get(`${data.eventId}`);
 
-    const sport = data.sport || sub.sport || "unknown";
-    if (data.matches) {
+    const rawSport =
+      data.sport ||
+      sub?.sport ||
+      (data.eventId == 4 || resolvedEventType == 4
+        ? "cricket"
+        : data.eventId == 1 || resolvedEventType == 1
+        ? "soccer"
+        : data.eventId == 2 || resolvedEventType == 2
+        ? "tennis"
+        : "");
+
+    const sport = rawSport ? String(rawSport).toLowerCase() : "";
+
+    if (data.matches && sport && sport !== "unknown") {
       store.dispatch(
         updateMatches({
           sport,
@@ -157,6 +186,7 @@ socket.on("matchUpdate", (data) => {
 
 // Market Odds
 socket.on("marketOddsUpdate", (data) => {
+  console.log("📈 [SOCKET: marketOddsUpdate]", data);
   if (data.marketOdds) {
     const sport = data.sport || "unknown";
     store.dispatch(
@@ -166,6 +196,7 @@ socket.on("marketOddsUpdate", (data) => {
 });
 
 socket.on("auramarketOddsUpdate", (data) => {
+  console.log("📈 [SOCKET: auramarketOddsUpdate]", data);
   if (data.auraMarketOdds) {
     const sport = data.sport || "unknown";
     store.dispatch(
@@ -176,6 +207,7 @@ socket.on("auramarketOddsUpdate", (data) => {
 
 // Bookmaker
 socket.on("bookmakerUpdate", (data) => {
+  console.log("📖 [SOCKET: bookmakerUpdate]", data);
   if (data.bookmakerOdds) {
     const sport = data.sport || "unknown";
     store.dispatch(
@@ -189,6 +221,7 @@ socket.on("bookmakerUpdate", (data) => {
 });
 
 socket.on("auraBookmakerUpdate", (data) => {
+  console.log("📖 [SOCKET: auraBookmakerUpdate]", data);
   if (data.auraBookmakerOdds) {
     const sport = data.sport || "unknown";
     store.dispatch(
@@ -203,6 +236,7 @@ socket.on("auraBookmakerUpdate", (data) => {
 
 // Fancy Odds
 socket.on("fancyOddsUpdate", (data) => {
+  console.log("🎯 [SOCKET: fancyOddsUpdate]", data);
   if (data.fancyOdds) {
     const sport = data.sport || "unknown";
     store.dispatch(
@@ -217,12 +251,14 @@ socket.on("fancyOddsUpdate", (data) => {
 
 // Horse
 socket.on("horseMatchesUpdate", (data) => {
+  console.log("🏇 [SOCKET: horseMatchesUpdate]", data);
   if (activeSubscriptions.horseMatches && data.status && data.data) {
     store.dispatch(updateHorseSlice({ horseRaceList: data?.data?.t1 }));
   }
 });
 
 socket.on("horseOddsUpdate", (data) => {
+  console.log("🏇 [SOCKET: horseOddsUpdate]", data);
   if (data.horseOdds?.data?.length > 0) {
     const gmid = data.horseOdds.data[0].gmid;
     if (activeSubscriptions.horseOdds.has(gmid.toString())) {
@@ -233,12 +269,14 @@ socket.on("horseOddsUpdate", (data) => {
 
 // Greyhound
 socket.on("greyhoundMatchesUpdate", (data) => {
+  console.log("🐕 [SOCKET: greyhoundMatchesUpdate]", data);
   if (activeSubscriptions.greyhoundMatches && data.status && data.data) {
     store.dispatch(updateGreyhoundSlice({ greyhoundRaceList: data?.data?.t1 }));
   }
 });
 
 socket.on("greyhoundOddsUpdate", (data) => {
+  console.log("🐕 [SOCKET: greyhoundOddsUpdate]", data);
   if (data.greyhoundOdds?.data?.length > 0) {
     const gmid = data.greyhoundOdds.data[0].gmid;
     if (activeSubscriptions.greyhoundOdds.has(gmid.toString())) {
@@ -251,12 +289,14 @@ socket.on("greyhoundOddsUpdate", (data) => {
 
 // Kabaddi
 socket.on("kabaddiMatchesUpdate", (data) => {
+  console.log("🤼 [SOCKET: kabaddiMatchesUpdate]", data);
   if (activeSubscriptions.kabaddiMatches && data?.kabaddiMatches) {
     store.dispatch(updatekabaddiSlice({ kabaddiList: data.kabaddiMatches }));
   }
 });
 
 socket.on("kabaddiOddsUpdate", (data) => {
+  console.log("🤼 [SOCKET: kabaddiOddsUpdate]", data);
   if (data?.kabaddiOdds?.length > 0) {
     const gmid = data.kabaddiOdds[0].gmid;
     if (activeSubscriptions.kabaddiOdds.has(gmid.toString())) {
@@ -267,6 +307,7 @@ socket.on("kabaddiOddsUpdate", (data) => {
 
 // Diamond Casino
 socket.on("diamondCasinoOddsUpdate", (data) => {
+  console.log("💎 [SOCKET: diamondCasinoOddsUpdate]", data);
   if (data.diamondCasinoOdds) {
     store.dispatch(setDiamondCasinoOddsData({ data: data.diamondCasinoOdds }));
   } else if (data.message) {
@@ -363,16 +404,33 @@ const resubscribeAll = () => {
 export const subscribeToMatchData = ({
   eventId,
   eventType,
-  sport = "unknown",
+  sport,
 }) => {
-  const key = `${eventId}-${eventType}`;
-  activeSubscriptions.matches.set(key, { eventId, eventType, sport });
+  const resolvedEventType = eventType || eventId;
+  const resolvedSport = (
+    sport ||
+    (eventId == 4 || resolvedEventType == 4
+      ? "cricket"
+      : eventId == 1 || resolvedEventType == 1
+      ? "soccer"
+      : eventId == 2 || resolvedEventType == 2
+      ? "tennis"
+      : "")
+  ).toLowerCase();
 
-  store.dispatch(setMatchesLoading({ sport }));
-  socket.emit("subscribeToMatches", { eventId, eventType });
+  const key = `${eventId}-${resolvedEventType}`;
+  activeSubscriptions.matches.set(key, { eventId, eventType: resolvedEventType, sport: resolvedSport });
+  activeSubscriptions.matches.set(`${eventId}`, { eventId, eventType: resolvedEventType, sport: resolvedSport });
+
+  console.log(`📤 [SOCKET EMIT: subscribeToMatches] eventId: ${eventId}, eventType: ${resolvedEventType}, sport: ${resolvedSport}`);
+  if (resolvedSport && resolvedSport !== "unknown") {
+    store.dispatch(setMatchesLoading({ sport: resolvedSport }));
+  }
+  socket.emit("subscribeToMatches", { eventId, eventType: resolvedEventType });
 
   return () => {
     activeSubscriptions.matches.delete(key);
+    activeSubscriptions.matches.delete(`${eventId}`);
     socket.emit("unsubscribeFromMatches", { eventId });
   };
 };

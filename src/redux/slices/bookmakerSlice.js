@@ -3,15 +3,18 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 export const fetchbookmakerOdds = createAsyncThunk(
   "bookmakerOdds/fetchbookmakerOdds",
   async ({ eventType, competitionId, eventId }, thunkAPI) => {
+    if (!eventType || !competitionId || !eventId) {
+      return thunkAPI.rejectWithValue("Missing required params");
+    }
     try {
       const response = await fetch(
         `https://api.professor.monster/api/v1/fetch-bookmaker-odds/${eventType}/${competitionId}/${eventId}`
       );
       if (!response.ok) {
-        throw new Error("Failed to fetch data");
+        return thunkAPI.rejectWithValue(`HTTP ${response.status}`);
       }
       const data = await response.json();
-      return { eventId, data }; // ✅ wrap eventId with the response
+      return { eventId, data };
     } catch (error) {
       return thunkAPI.rejectWithValue(error.message);
     }

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 100" width="300" height="100" fill="none">
+  <g fill="#111111" transform="translate(10, 6)">
+    <!-- Classical Bank Temple Icon -->
+    <path d="M44 8L86 32H2L44 8Z" />
+    <rect x="0" y="32" width="88" height="6" rx="1" />
+    <rect x="10" y="41" width="14" height="30" rx="1.5" />
+    <rect x="37" y="41" width="14" height="30" rx="1.5" />
+    <rect x="64" y="41" width="14" height="30" rx="1.5" />
+    <rect x="2" y="73" width="84" height="6" rx="1" />
+    <rect x="0" y="80" width="88" height="7" rx="1.5" />
+    <!-- Bank Transfer text -->
+    <text x="102" y="44" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="800" letter-spacing="-0.5">Bank</text>
+    <text x="102" y="78" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="800" letter-spacing="-0.5">Transfer</text>
+  </g>
+</svg>
