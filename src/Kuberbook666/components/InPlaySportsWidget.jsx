@@ -580,7 +580,7 @@ const SportBlock = ({
 // ==========================================
 // MAIN IN-PLAY SPORTS WIDGET COMPONENT
 // ==========================================
-export default function InPlaySportsWidget() {
+export default function InPlaySportsWidget({ headerBg }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -979,11 +979,14 @@ export default function InPlaySportsWidget() {
       <div className=" w-full font-helvetica-neue">
         {/* Main In-Play Header */}
         <div
-          className=" w-full flex items-center justify-between rounded-t-[3px] py-1.5 px-[7px]  bg-inPlayBlockBg"
+          className={`w-full flex items-center justify-between rounded-t-[3px] py-1.5 px-[7px] ${
+            headerBg ? "" : "bg-inPlayBlockBg"
+          }`}
           style={{
             borderTopLeftRadius: "10px",
             borderTopRightRadius: "10px",
             background:
+              headerBg ||
               "var(--color-bg-inPlayBlockBg, linear-gradient(89deg, #40af52, #2e924b 89.28%))",
           }}
         >

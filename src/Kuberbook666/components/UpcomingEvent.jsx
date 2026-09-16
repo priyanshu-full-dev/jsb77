@@ -246,13 +246,18 @@ const SportBlock = ({ sportData, onOpen }) => {
 // ==========================================
 // MAIN UPCOMING EVENT COMPONENT
 // ==========================================
-export default function UpcomingEvent() {
+export default function UpcomingEvent({
+  headerBg,
+  customData,
+  title = "Upcoming Events",
+}) {
   const navigate = useNavigate();
 
   const handleOpen = (match) => {
     if (!match) return;
     const sportName = match.sportName || "Cricket";
-    const sportId = sportName === "Football" ? "1" : sportName === "Tennis" ? "2" : "4";
+    const sportId =
+      sportName === "Football" ? "1" : sportName === "Tennis" ? "2" : "4";
     const eventId = match.eventId || `upcoming-${Date.now()}`;
     const eventName = `${match.team1} v ${match.team2}`;
     const bm = sportId === "4";
@@ -260,31 +265,37 @@ export default function UpcomingEvent() {
 
     navigate(
       `/full-market?eventType=${sportId}&eventId=${eventId}&marketId=m-${eventId}&competitionId=comp-1&bm=${bm}&fancy=${fancy}&pc=false&eventName=${encodeURIComponent(
-        eventName
-      )}&openDate=${encodeURIComponent(match.time || "")}&tv=true`
+        eventName,
+      )}&openDate=${encodeURIComponent(match.time || "")}&tv=true`,
     );
   };
+
+  const dataToRender = customData || UPCOMING_EVENTS_DATA;
 
   return (
     <div className="py-1 px-[6px] w-full">
       <div className="w-full font-helvetica-neue">
         {/* Upcoming Events Header Bar */}
         <div
-          className="w-full flex items-center justify-between rounded-t-[3px] py-1.5 px-[7px] bg-UpcomingBg"
+          className={`w-full flex items-center justify-between rounded-t-[3px] py-1.5 px-[7px] ${
+            headerBg ? "" : "bg-UpcomingBg"
+          }`}
           style={{
             borderTopLeftRadius: "10px",
             borderTopRightRadius: "10px",
-            background: "var(--color-bg-competetionInPlayUpComingBg, linear-gradient(90deg, #c10931, #6e081d))",
+            background:
+              headerBg ||
+              "var(--color-bg-competetionInPlayUpComingBg, linear-gradient(90deg, rgb(193, 9, 49), rgb(110, 8, 29)))",
           }}
         >
           <div className="flex items-center text-text_Quaternary-new font-semibold text-[18px] tracking-wide justify-start w-full gap-[5px]">
             <UpcomingHeaderIcon />
-            <span>Upcoming Events</span>
+            <span>{title}</span>
           </div>
         </div>
 
         {/* Sports Sections */}
-        {UPCOMING_EVENTS_DATA.map((sportItem) => (
+        {dataToRender.map((sportItem) => (
           <SportBlock
             key={sportItem.sport}
             sportData={sportItem}
