@@ -1,32 +1,30 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useSelector } from "react-redux";
-import { FaLock, FaTag, FaCommentDots, FaEye, FaEyeSlash } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { FaLock, FaTag, FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast } from "react-toastify";
-import { SendOtp, getSitesByDomain, signUp } from "../../../api";
+import { getSitesByDomain, signUp, login, createLoginRecord } from "../../../api";
 import { selectSite } from "../../../utils/helper/commonSelectors";
+import { loginSuccess } from "../../../redux/slices/userSlice";
+import { setAccountType } from "../../../redux/slices/accountSlice";
+import { subscribeToLogin } from "../../../socketClient";
 
 const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
+  const dispatch = useDispatch();
   const siteDetails = useSelector(selectSite());
 
   const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [promoCode, setPromoCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpLoading, setOtpLoading] = useState(false);
-  const [otpTimer, setOtpTimer] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [referral, setReferral] = useState("");
   const [apiSiteData, setApiSiteData] = useState(null);
-
-  const timerRef = useRef(null);
 
   // 1. Referral query & cookie tracking
   useEffect(() => {
@@ -63,19 +61,7 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
     fetchSiteDetails();
   }, []);
 
-  // 3. Countdown timer for OTP resend (60s)
-  useEffect(() => {
-    if (otpTimer > 0) {
-      timerRef.current = setTimeout(() => {
-        setOtpTimer((prev) => prev - 1);
-      }, 1000);
-    }
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [otpTimer]);
-
-  // Reset states when modal closes
+  // Reset states when modal opens/closes
   useEffect(() => {
     if (!isOpen) {
       setError("");
@@ -98,60 +84,17 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
     }
   };
 
-  // Live OTP Sender
-  const handleSendOtp = async () => {
-    if (otpTimer > 0) {
-      toast.info(`Please wait ${otpTimer} seconds before requesting a new OTP.`);
-      return;
-    }
-    const cleanPhone = phone.replace(/\D/g, "");
-    if (!cleanPhone || cleanPhone.length < 10) {
-      setError("Please enter a valid 10-digit mobile number");
-      return;
-    }
-
-    setError("");
-    setOtpLoading(true);
-
-    try {
-      const otpRes = await SendOtp({
-        phone: cleanPhone,
-        mobile: cleanPhone,
-        userName: username.trim() || cleanPhone,
-        country: "+91",
-      });
-
-      if (otpRes?.data?.success === false && otpRes?.data?.message) {
-        setError(otpRes.data.message);
-        toast.error(otpRes.data.message);
-        return;
-      }
-
-      setOtpSent(true);
-      setOtpTimer(60);
-      setOtp("");
-      toast.success(otpRes?.data?.message || `OTP sent successfully to +91 ${cleanPhone}`);
-    } catch (err) {
-      console.warn("SendOtp note:", err);
-      setOtpSent(true);
-      setOtpTimer(60);
-      toast.info("If you received SMS OTP, enter it below or click 'Create Real Account' to submit.");
-    } finally {
-      setOtpLoading(false);
-    }
-  };
-
-  // Submit Registration To Real Database
+  // Submit Registration To Real Database (No OTP - Exact Mahadev Real Flow)
   const handleSubmit = async (e) => {
     e.preventDefault();
     const cleanPhone = phone.replace(/\D/g, "");
 
-    if (!username.trim()) {
-      setError("Username is mandatory");
+    if (!cleanPhone || cleanPhone.length < 10) {
+      setError("Phone No is mandatory (10 digits)");
       return;
     }
-    if (!cleanPhone || cleanPhone.length < 10) {
-      setError("Please enter a valid 10-digit mobile number");
+    if (!username.trim()) {
+      setError("User Name is mandatory");
       return;
     }
     if (!password.trim()) {
@@ -175,6 +118,47 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
     setLoading(true);
 
     try {
+      let cachedSite = null;
+      try {
+        cachedSite = JSON.parse(localStorage.getItem("siteDetails") || "{}");
+      } catch {
+        cachedSite = {};
+      }
+
+      const createdById =
+        apiSiteData?.createdBy?._id ||
+        apiSiteData?.siteDetails?.createrId ||
+        siteDetails?.createdBy?._id ||
+        siteDetails?.createrId ||
+        cachedSite?.createdBy?._id ||
+        cachedSite?.createrId ||
+        "";
+
+      const roleId =
+        apiSiteData?.userRoleId ||
+        siteDetails?.userRoleId ||
+        cachedSite?.userRoleId ||
+        "";
+
+      const domainId =
+        apiSiteData?.siteDetails?.domainDetails?._id ||
+        siteDetails?.domainDetails?._id ||
+        cachedSite?.domainDetails?._id ||
+        "";
+
+      const ownerDomainId =
+        apiSiteData?.siteDetails?.admindomainName?._id ||
+        siteDetails?.admindomainName?._id ||
+        cachedSite?.admindomainName?._id ||
+        "";
+
+      const siteId =
+        apiSiteData?.siteDetails?._id ||
+        apiSiteData?._id ||
+        siteDetails?._id ||
+        cachedSite?._id ||
+        "";
+
       // Build full database payload matching Mahadev's exact structure
       const payload = {
         mobile: cleanPhone,
@@ -191,34 +175,16 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
         currency: "INR",
         exposureLimit: 200000,
         exposure: 0,
-        createdBy:
-          apiSiteData?.createdBy?._id ||
-          apiSiteData?.siteDetails?.createrId ||
-          siteDetails?.createdBy?._id ||
-          siteDetails?.createrId ||
-          "",
+        createdBy: createdById,
         referredBy: referral || "",
         deviceIp: "0.0.0",
-        role:
-          apiSiteData?.userRoleId ||
-          siteDetails?.userRoleId ||
-          "",
-        domain:
-          apiSiteData?.siteDetails?.domainDetails?._id ||
-          siteDetails?.domainDetails?._id ||
-          "",
-        ownerDomainId:
-          apiSiteData?.siteDetails?.admindomainName?._id ||
-          siteDetails?.admindomainName?._id ||
-          "",
-        otp: otp.trim(),
+        role: roleId,
+        domain: domainId,
+        ownerDomainId: ownerDomainId,
+        otp: "",
         isSignupUser: true,
         layout: "asianexchange",
-        siteID:
-          apiSiteData?.siteDetails?._id ||
-          apiSiteData?._id ||
-          siteDetails?._id ||
-          "",
+        siteID: siteId,
         promocode: promoCode.trim(),
       };
 
@@ -229,7 +195,53 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
         response?.data?.success ||
         response?.success
       ) {
-        toast.success(response?.data?.message || "Registration Successful! Please login.");
+        toast.success(response?.data?.message || "Registration Successful!");
+
+        // Auto-login or redirect to login
+        try {
+          const loginPayload = {
+            userName: username.trim(),
+            username: username.trim(),
+            password: password.trim(),
+            x_panel_type: "user",
+          };
+
+          let loginRes = null;
+          try {
+            loginRes = await subscribeToLogin(loginPayload);
+          } catch {
+            loginRes = await login(loginPayload);
+          }
+
+          const loginData = loginRes?.data || loginRes;
+          if (loginData?.token || loginData?.userdata?.token) {
+            const token = loginData.token || loginData.userdata?.token;
+            const userdata = loginData.user || loginData.userdata || { username: username.trim() };
+            if (token) localStorage.setItem("token", token);
+            if (userdata?._id) localStorage.setItem("userId", userdata._id);
+
+            dispatch(
+              loginSuccess({
+                token: token,
+                userData: userdata,
+                loggedInType: "real",
+              })
+            );
+            dispatch(
+              setAccountType({
+                userData: userdata,
+                type: "real",
+              })
+            );
+
+            createLoginRecord({ userName: username.trim() }).catch(() => {});
+            onClose();
+            return;
+          }
+        } catch {
+          // If auto-login fails, switch to login modal
+        }
+
         onClose();
         if (onSwitchToLogin) onSwitchToLogin();
       } else {
@@ -291,20 +303,11 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="space-y-3">
-          {/* 1. Username Field */}
-          <div className="bg-[#f2f4f8] border border-gray-200 rounded-xl px-4 py-2.5 focus-within:border-red-600 transition">
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter Username"
-              className="bg-transparent text-sm w-full outline-hidden font-medium text-gray-900 placeholder:text-gray-400"
-              required
-            />
-          </div>
-
-          {/* 2. Phone Number Field + Counter */}
+          {/* 1. Phone Number Field + Counter */}
           <div>
+            <label className="block text-[11px] font-bold text-gray-800 uppercase tracking-wide mb-1">
+              Phone Number
+            </label>
             <div className="flex items-center gap-2 bg-[#f2f4f8] border border-gray-200 rounded-xl px-3 py-2.5 focus-within:border-red-600 transition">
               <span className="text-sm font-bold text-gray-800">+91</span>
               <span className="text-base leading-none">🇮🇳</span>
@@ -319,7 +322,7 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                 maxLength={10}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                placeholder="895XX6XXXX"
+                placeholder="Phone Number (10 digits)"
                 className="bg-transparent text-sm w-full outline-hidden font-medium text-gray-900 placeholder:text-gray-400"
                 required
               />
@@ -329,118 +332,116 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
             </div>
           </div>
 
-          {/* 3. OTP Action Button */}
-          <button
-            type="button"
-            disabled={otpTimer > 0 || otpLoading}
-            onClick={handleSendOtp}
-            className={`w-full py-2.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 transition active:scale-98 shadow-xs cursor-pointer ${
-              otpTimer > 0 || otpLoading
-                ? "bg-gray-400 cursor-not-allowed opacity-75"
-                : "bg-[#9c6a74] hover:bg-[#8b5c65]"
-            }`}
-          >
-            <FaCommentDots className="text-base" />
-            <span>
-              {otpLoading
-                ? "Sending OTP..."
-                : otpTimer > 0
-                ? `Resend OTP in ${otpTimer}s`
-                : otpSent
-                ? "Resend OTP"
-                : "Send OTP"}
-            </span>
-          </button>
-
-          {/* 4. OTP Input Field */}
-          <div className="bg-[#f2f4f8] border border-gray-200 rounded-xl px-4 py-2.5 focus-within:border-red-600 transition">
-            <input
-              type="text"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              placeholder="Enter OTP"
-              className="bg-transparent text-sm w-full outline-hidden font-medium text-gray-900 placeholder:text-gray-400"
-            />
-          </div>
-
-          {/* 5. Password Field */}
-          <div className="flex items-center justify-between bg-[#f2f4f8] border border-gray-200 rounded-xl px-3 py-2.5 focus-within:border-red-600 transition">
-            <div className="flex items-center gap-2.5 w-full">
-              <FaLock className="text-[#c10931] text-xs flex-shrink-0" />
+          {/* 2. Username Field */}
+          <div>
+            <label className="block text-[11px] font-bold text-gray-800 uppercase tracking-wide mb-1">
+              Username
+            </label>
+            <div className="bg-[#f2f4f8] border border-gray-200 rounded-xl px-4 py-2.5 focus-within:border-red-600 transition">
               <input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => handlePasswordChange(e.target.value)}
-                placeholder="Password (Min 6 chars)"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter Username"
                 className="bg-transparent text-sm w-full outline-hidden font-medium text-gray-900 placeholder:text-gray-400"
                 required
               />
             </div>
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="text-[#c10931] hover:opacity-80 p-0.5 focus:outline-hidden cursor-pointer"
-            >
-              {showPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
-            </button>
           </div>
-          {passwordError && (
-            <p className="text-red-600 text-[11px] font-semibold pl-1 -mt-1">
-              {passwordError}
-            </p>
-          )}
 
-          {/* 6. Confirm Password Field */}
-          <div className="flex items-center justify-between bg-[#f2f4f8] border border-gray-200 rounded-xl px-3 py-2.5 focus-within:border-red-600 transition">
-            <div className="flex items-center gap-2.5 w-full">
-              <FaLock className="text-[#c10931] text-xs flex-shrink-0" />
+          {/* 3. Password Field */}
+          <div>
+            <label className="block text-[11px] font-bold text-gray-800 uppercase tracking-wide mb-1">
+              Password
+            </label>
+            <div className="flex items-center justify-between bg-[#f2f4f8] border border-gray-200 rounded-xl px-3 py-2.5 focus-within:border-red-600 transition">
+              <div className="flex items-center gap-2.5 w-full">
+                <FaLock className="text-[#c10931] text-xs flex-shrink-0" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => handlePasswordChange(e.target.value)}
+                  placeholder="Password (Min 6 chars)"
+                  className="bg-transparent text-sm w-full outline-hidden font-medium text-gray-900 placeholder:text-gray-400"
+                  required
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="text-[#c10931] hover:opacity-80 p-0.5 focus:outline-hidden cursor-pointer"
+              >
+                {showPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
+              </button>
+            </div>
+            {passwordError && (
+              <p className="text-red-600 text-[11px] font-semibold pl-1 mt-0.5">
+                {passwordError}
+              </p>
+            )}
+          </div>
+
+          {/* 4. Confirm Password Field */}
+          <div>
+            <label className="block text-[11px] font-bold text-gray-800 uppercase tracking-wide mb-1">
+              Confirm Password
+            </label>
+            <div className="flex items-center justify-between bg-[#f2f4f8] border border-gray-200 rounded-xl px-3 py-2.5 focus-within:border-red-600 transition">
+              <div className="flex items-center gap-2.5 w-full">
+                <FaLock className="text-[#c10931] text-xs flex-shrink-0" />
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm Password"
+                  className="bg-transparent text-sm w-full outline-hidden font-medium text-gray-900 placeholder:text-gray-400"
+                  required
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="text-[#c10931] hover:opacity-80 p-0.5 focus:outline-hidden cursor-pointer"
+              >
+                {showConfirmPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
+              </button>
+            </div>
+          </div>
+
+          {/* 5. Promo Code Field */}
+          <div>
+            <label className="block text-[11px] font-bold text-gray-800 uppercase tracking-wide mb-1">
+              Promocode (Optional)
+            </label>
+            <div className="flex items-center gap-2.5 bg-[#f2f4f8] border border-gray-200 rounded-xl px-3 py-2.5 focus-within:border-red-600 transition">
+              <FaTag className="text-[#c10931] text-xs flex-shrink-0" />
               <input
-                type={showConfirmPassword ? "text" : "password"}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm Password"
+                type="text"
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value)}
+                placeholder="Enter Promocode (Optional)"
                 className="bg-transparent text-sm w-full outline-hidden font-medium text-gray-900 placeholder:text-gray-400"
-                required
               />
             </div>
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="text-[#c10931] hover:opacity-80 p-0.5 focus:outline-hidden cursor-pointer"
-            >
-              {showConfirmPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
-            </button>
           </div>
 
-          {/* 7. Promo Code Field */}
-          <div className="flex items-center gap-2.5 bg-[#f2f4f8] border border-gray-200 rounded-xl px-3 py-2.5 focus-within:border-red-600 transition">
-            <FaTag className="text-[#c10931] text-xs flex-shrink-0" />
-            <input
-              type="text"
-              value={promoCode}
-              onChange={(e) => setPromoCode(e.target.value)}
-              placeholder="Enter Promocode (Optional)"
-              className="bg-transparent text-sm w-full outline-hidden font-medium text-gray-900 placeholder:text-gray-400"
-            />
-          </div>
-
-          {/* 8. Terms Note */}
+          {/* Terms Note */}
           <p className="text-gray-500 text-[10px] leading-tight px-1">
-            By clicking &apos;Submit&apos;, you confirm that you are of legal age (18+) and accept our terms and conditions.
+            By clicking &apos;Sign Up&apos;, you confirm that you are of legal age (18+) and accept our terms and conditions.
           </p>
 
-          {/* 9. Submit Button */}
+          {/* Submit Button */}
           <div className="pt-1">
             <button
               type="submit"
               disabled={loading}
               className="w-full py-3 rounded-xl bg-[#680a1e] hover:bg-[#580718] text-white font-bold text-base tracking-wide shadow-md active:scale-98 transition disabled:opacity-50 cursor-pointer"
             >
-              {loading ? "Creating Account..." : "Create Real Account"}
+              {loading ? "Creating Account..." : "Sign Up"}
             </button>
           </div>
 
-          {/* 10. Footer Link */}
+          {/* Footer Link */}
           <div className="text-center pt-2 text-xs text-gray-800 font-medium">
             Already have an account?{" "}
             <button

@@ -113,12 +113,48 @@ export const Kuberbook666Router = createBrowserRouter([
         element: <SportsPage.Element />,
       },
       {
+        path: "sports/:sport",
+        element: <SportsPage.Element />,
+      },
+      {
+        path: "sports/:sport/:type",
+        element: <SportsPage.Element />,
+      },
+      {
+        path: "sports-page/*",
+        element: <SportsPage.Element />,
+      },
+      {
+        path: "horse-racing",
+        element: <SportsPage.Element />,
+      },
+      {
+        path: "horseRacing",
+        element: <SportsPage.Element />,
+      },
+      {
+        path: "greyhound-racing",
+        element: <SportsPage.Element />,
+      },
+      {
+        path: "greyhoundRacing",
+        element: <SportsPage.Element />,
+      },
+      {
+        path: "election",
+        element: <SportsPage.Element />,
+      },
+      {
         path: "full-market",
         element: <MarketPage.Element />,
       },
       {
         path: "market/:eventId",
         element: <MarketPage.Element />,
+      },
+      {
+        path: "casino",
+        element: <CasinoPage.Element />,
       },
       {
         path: "aura",
@@ -171,6 +207,22 @@ export const Kuberbook666Router = createBrowserRouter([
       {
         path: "account",
         element: <ProfilePage.Element />,
+      },
+      {
+        path: "responsible-gambling",
+        element: <Home.Element />,
+      },
+      {
+        path: "privacy-policy",
+        element: <Home.Element />,
+      },
+      {
+        path: "exclusion-policy",
+        element: <Home.Element />,
+      },
+      {
+        path: "rules-regulations",
+        element: <Home.Element />,
       },
       {
         path: "kuber/*",

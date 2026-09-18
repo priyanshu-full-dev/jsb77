@@ -21,7 +21,7 @@ const SidebarDrawer = ({ isOpen, onClose, onOpenLogin, onOpenSignup }) => {
             <Link
               onClick={onClose}
               className="flex items-center justify-start gap-x-2 w-full pl-6 pr-2 py-[11px] text-base text-text_Ternary-new whitespace-nowrap font-bold hover:bg-white/5 transition-colors"
-              to="/"
+              to="/crash"
             >
               <svg width="20" height="20" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
@@ -44,7 +44,7 @@ const SidebarDrawer = ({ isOpen, onClose, onOpenLogin, onOpenSignup }) => {
             <Link
               onClick={onClose}
               className="flex items-center h-full justify-start gap-x-2 w-full pl-6 pr-2 py-[11px] text-base text-text_Ternary-new whitespace-nowrap font-bold hover:bg-white/5 transition-colors"
-              to="/sports-page/Cricket/4"
+              to="/sports"
             >
               <svg width="19" height="18" viewBox="0 0 19 18" xmlns="http://www.w3.org/2000/svg">
                 <path
@@ -66,7 +66,7 @@ const SidebarDrawer = ({ isOpen, onClose, onOpenLogin, onOpenSignup }) => {
             <Link
               onClick={onClose}
               className="flex items-center h-full justify-start gap-x-2 w-full pl-6 pr-2 py-[11px] text-base text-text_Ternary-new whitespace-nowrap font-bold hover:bg-white/5 transition-colors"
-              to="/sports-page/football/1"
+              to="/sports"
             >
               <svg fill="currentColor" viewBox="0 0 96 96" height="19" width="19">
                 <path d="M95.994 53.946a11.3 11.3 0 0 0-4.743-1.029c-1.718 0-3.349.38-4.814 1.059l.07-.03c.313-1.146.494-2.46.494-3.814 0-5.252-2.702-9.874-6.787-12.551l-.057-.037c6.913-.642 10.53-12.58 10.53-12.58-4.555-8.412-11.233-15.168-19.328-19.69l-.247-.127S59.454 3.54 55.956 7.236C51.615.202 39.275.202 39.275.202c-9.79 1.878-18.28 6.503-24.888 13.03l.006-.005a12.33 12.33 0 0 0 4.637 9.629l.024.018c-6.15 1.447-12.542 10.09-11.496 13.588a6.71 6.71 0 0 0-5.378-2.695q-.089 0-.178.003h.009C.745 37.897.009 42.64 0 47.554v.009c0 5.303.868 10.401 2.47 15.165l-.097-.335a15.8 15.8 0 0 0 4.95-6.925l.033-.109c3.048 2.011 6.79 3.205 10.809 3.205 1.977 0 3.889-.29 5.695-.829l-.142.036c-1.266 2.56-2.008 5.572-2.008 8.759 0 4 1.17 7.727 3.184 10.856l-.048-.078a16.44 16.44 0 0 0-9.838 5.173l-.012.013c8.632 8.23 20.344 13.298 33.242 13.304 4.1-.009 8.077-.537 11.867-1.52l-.329.073c-2.24-5.189-6.32-9.229-11.396-11.363l-.142-.051c5.629-.323 11.176-8.563 12.06-14.191 4.043 1.839 8.77 2.909 13.748 2.909a34 34 0 0 0 3.605-.19l-.147.012c-.863 2.12-1.363 4.58-1.363 7.154 0 2.575.5 5.035 1.41 7.287l-.044-.13c9.876-7.609 16.678-18.794 18.463-31.583l.03-.253zM59.131 62.67c-6.15-8.683-23.757-13.869-33.004-8.722 5.306-13.025 3.458-21.506-3.136-30.511 12.06 1.124 26.372-5.146 32.16-13.184 1.65 8.722 11.255 23.275 20.1 26.208-14.39 6.551-16.039 16.883-16.12 26.209"></path>
@@ -77,7 +77,7 @@ const SidebarDrawer = ({ isOpen, onClose, onOpenLogin, onOpenSignup }) => {
             <Link
               onClick={onClose}
               className="flex items-center h-full justify-start gap-x-2 w-full pl-6 pr-2 py-[11px] text-base text-text_Ternary-new whitespace-nowrap font-bold hover:bg-white/5 transition-colors"
-              to="/sports-page/tennis/2"
+              to="/sports"
             >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="#7FBA42" xmlns="http://www.w3.org/2000/svg">
                 <path
@@ -173,7 +173,7 @@ const SidebarDrawer = ({ isOpen, onClose, onOpenLogin, onOpenSignup }) => {
             <Link
               onClick={onClose}
               className="flex items-center h-full justify-start gap-x-2 w-full pl-6 pr-2 py-[11px] text-base text-text_Ternary-new whitespace-nowrap font-bold hover:bg-white/5 transition-colors"
-              to="/casino"
+              to="/aura"
             >
               <svg width="20" height="20" viewBox="0 0 15 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
@@ -187,7 +187,7 @@ const SidebarDrawer = ({ isOpen, onClose, onOpenLogin, onOpenSignup }) => {
             <Link
               onClick={onClose}
               className="flex items-center h-full justify-start gap-x-2 w-full pl-6 pr-2 py-[11px] text-base text-text_Ternary-new whitespace-nowrap font-bold hover:bg-white/5 transition-colors"
-              to="/casino"
+              to="/live-casino"
             >
               <svg fill="var(--icon-color-brand-secondary)" viewBox="0 0 96 96" height="20" width="20">
                 <path d="M62.8 7.2h-1.2L48 12 34.401 7.2c-2.4-.8-5.199.801-5.6 3.6v10c0 2.798 2.4 4.8 4.8 4.8h1.2l13.2-6 13.598 6c2.8.8 5.2-.802 6-3.6V12c0-2.799-2.4-4.8-4.8-4.8m-21.6 75.6-18-60c-1.2-2.4-3.6-3.6-6.399-2.799l-6 2.001c-2.001.4-3.201 2.4-3.201 4.401l-3.6 57.6c0 2.8 2.001 4.8 4.401 5.2h27.999c2.799 0 4.8-2.002 4.8-4.8.399-.4 0-1.204 0-1.603m47.202-56.4c0-2-1.2-3.6-3.2-4.4l-6-2.4c-2.4-.802-5.2.398-6 2.798l-18 60c-.802 2.4.8 5.2 3.2 6 .4 0 .801.4 1.6.4h27.6c2.798 0 4.8-2.002 4.8-4.8z"></path>
@@ -198,7 +198,7 @@ const SidebarDrawer = ({ isOpen, onClose, onOpenLogin, onOpenSignup }) => {
             <Link
               onClick={onClose}
               className="flex items-center h-full justify-start gap-x-2 w-full pl-6 pr-2 py-[11px] text-base text-text_Ternary-new whitespace-nowrap font-bold hover:bg-white/5 transition-colors"
-              to="/casino"
+              to="/slots"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -223,7 +223,7 @@ const SidebarDrawer = ({ isOpen, onClose, onOpenLogin, onOpenSignup }) => {
             <Link
               onClick={onClose}
               className="flex items-center h-full justify-start gap-x-2 w-full pl-6 pr-2 py-[11px] text-base text-text_Ternary-new whitespace-nowrap font-bold hover:bg-white/5 transition-colors"
-              to="/casino"
+              to="/mac88"
             >
               <svg fill="var(--icon-color-brand-secondary)" viewBox="0 0 96 96" height="20" width="20">
                 <path d="M62.8 7.2h-1.2L48 12 34.401 7.2c-2.4-.8-5.199.801-5.6 3.6v10c0 2.798 2.4 4.8 4.8 4.8h1.2l13.2-6 13.598 6c2.8.8 5.2-.802 6-3.6V12c0-2.799-2.4-4.8-4.8-4.8m-21.6 75.6-18-60c-1.2-2.4-3.6-3.6-6.399-2.799l-6 2.001c-2.001.4-3.201 2.4-3.201 4.401l-3.6 57.6c0 2.8 2.001 4.8 4.401 5.2h27.999c2.799 0 4.8-2.002 4.8-4.8.399-.4 0-1.204 0-1.603m47.202-56.4c0-2-1.2-3.6-3.2-4.4l-6-2.4c-2.4-.802-5.2.398-6 2.798l-18 60c-.802 2.4.8 5.2 3.2 6 .4 0 .801.4 1.6.4h27.6c2.798 0 4.8-2.002 4.8-4.8z"></path>
@@ -237,7 +237,7 @@ const SidebarDrawer = ({ isOpen, onClose, onOpenLogin, onOpenSignup }) => {
             <Link
               onClick={onClose}
               className="flex items-center justify-start gap-x-2 w-full pl-6 pr-2 py-[11px] text-base text-text_Ternary-new whitespace-nowrap font-bold hover:bg-white/5 transition-colors"
-              to="/sports-page/Sportsbook/0"
+              to="/sports"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
