@@ -1,1 +1,0 @@
-import{j as r}from"./index.DrYkcnFZ.js";import{I as t}from"./InPlaySportsWidget.DOvub2U0.js";import"./react.Dvwkxfce.js";import"./App.C472NmyE.js";import"./index.BTlAp-4F.js";import"./BetSlip.MF5YDBpY.js";const e=()=>r.jsx("div",{className:"w-full py-2 space-y-4",children:r.jsx(t,{})});export{e as default};
