@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { IN_PLAY_SPORTS_DATA } from "../data/inPlaySportsData";
 import { socket } from "../../socketClient";
 import {
   setRunningData,
@@ -13,6 +12,7 @@ import {
   handleOpenPlaceBet,
   handleCancelPlaceBet,
 } from "../../redux/slices/placeBetSlice";
+import KuberMatchSkeleton from "./Loader/KuberMatchSkeleton";
 
 // ==========================================
 // SVG ICONS (EXACT PIXEL-PERFECT VECTORS)
@@ -712,76 +712,7 @@ export default function InPlaySportsWidget({ headerBg }) {
         });
       }
 
-      // If server has 0 in-play for this sport right now, map fallback with valid eventId and raw data
-      const fallbackList =
-        IN_PLAY_SPORTS_DATA[fallbackSportIndex]?.matches || [];
-      const sportIdVal =
-        fallbackSportIndex === 0 ? "4" : fallbackSportIndex === 1 ? "1" : "2";
-
-      return fallbackList.map((fbMatch, mIdx) => {
-        const evId = `3605086${fallbackSportIndex * 10 + mIdx + 1}`;
-        const evName = `${fbMatch.team1} v ${fbMatch.team2}`;
-        const isCricket = sportIdVal === "4";
-
-        const runnersList = [
-          { runnerName: fbMatch.team1, selectionId: 101 },
-          { runnerName: fbMatch.team2, selectionId: 102 },
-          ...(sportIdVal === "1"
-            ? [{ runnerName: "The Draw", selectionId: 103 }]
-            : []),
-        ];
-
-        return {
-          ...fbMatch,
-          eventId: evId,
-          sportId: sportIdVal,
-          sportName,
-          inplay: true,
-          tv: true,
-          bm: isCricket,
-          fancy: isCricket,
-          eventName: evName,
-          raw: {
-            eventId: evId,
-            sportId: sportIdVal,
-            eventName: evName,
-            inplay: true,
-            tv: true,
-            bm: isCricket,
-            fancy: isCricket,
-            matchRunners: runnersList,
-            matchOdds: [
-              {
-                marketName: "Match Odds",
-                marketId: `m-${evId}`,
-                runners: runnersList.map((r, rIdx) => ({
-                  ...r,
-                  ex: {
-                    availableToBack:
-                      fbMatch.back?.[rIdx]?.price !== "-"
-                        ? [
-                            {
-                              price: fbMatch.back?.[rIdx]?.price,
-                              size: fbMatch.back?.[rIdx]?.size,
-                            },
-                          ]
-                        : [],
-                    availableToLay:
-                      fbMatch.lay?.[rIdx]?.price !== "-"
-                        ? [
-                            {
-                              price: fbMatch.lay?.[rIdx]?.price,
-                              size: fbMatch.lay?.[rIdx]?.size,
-                            },
-                          ]
-                        : [],
-                  },
-                })),
-              },
-            ],
-          },
-        };
-      });
+      return [];
     };
 
     return [
@@ -797,7 +728,7 @@ export default function InPlaySportsWidget({ headerBg }) {
         sport: "Tennis",
         matches: mapMatches(rawTennis, "tennis", 2),
       },
-    ];
+    ].filter((s) => s.matches && s.matches.length > 0);
   }, [liveSocketMatches, cricketState, soccerState, tennisState]);
 
   // Console log in-play matches and expose testing utility in DevTools
@@ -973,6 +904,20 @@ export default function InPlaySportsWidget({ headerBg }) {
   const handleBetChange = (changes) => {
     setActiveBet((prev) => (prev ? { ...prev, ...changes } : null));
   };
+
+  const cricketLoading = useSelector((state) => state.matches?.cricket?.status === "loading");
+  const soccerLoading = useSelector((state) => state.matches?.soccer?.status === "loading");
+  const tennisLoading = useSelector((state) => state.matches?.tennis?.status === "loading");
+
+  const isInitialLoading = (cricketLoading || soccerLoading || tennisLoading) && (!sportsData || sportsData.length === 0);
+
+  if (isInitialLoading) {
+    return <KuberMatchSkeleton headerTitle="Loading In-Play Events..." rows={3} />;
+  }
+
+  if (!sportsData || sportsData.length === 0) {
+    return null;
+  }
 
   return (
     <div className="py-1 px-[6px] w-full">

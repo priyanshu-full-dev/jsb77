@@ -13,7 +13,7 @@ import SignupModal from "./AuthModals/SignupModal";
 import Footer from "./Footer";
 import "../styles/kuber.css";
 
-import { fetchMatchesByEventId } from "../../redux/slices/matchSlice";
+import { fetchAllMatchesFast, fetchMatchesByEventId } from "../../redux/slices/matchSlice";
 import {
   subscribeToMatchData,
   subscribeToKabaddiMatchesData,
@@ -45,11 +45,9 @@ const AppLayout = () => {
     console.log(`📍 [KUBER ACTIVE ROUTE]: "${location.pathname}"`);
   }, [location.pathname]);
 
-  // Fast REST fetch for instant zero-latency loading
+  // Ultra-fast parallel fetch for instant zero-latency loading
   useEffect(() => {
-    dispatch(fetchMatchesByEventId({ eventId: 4, sport: "cricket" }));
-    dispatch(fetchMatchesByEventId({ eventId: 1, sport: "soccer" }));
-    dispatch(fetchMatchesByEventId({ eventId: 2, sport: "tennis" }));
+    dispatch(fetchAllMatchesFast());
   }, [dispatch]);
 
   // Real-time Socket.IO subscriptions for live in-play odds and events

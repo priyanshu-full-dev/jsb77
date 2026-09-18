@@ -118,9 +118,46 @@ div::-webkit-scrollbar {
 }
 
 .kb-skeleton {
-  background: linear-gradient(90deg, #23242e 25%, #2f313f 50%, #23242e 75%);
+  background: linear-gradient(90deg, #181b24 25%, #2a2e3d 50%, #181b24 75%);
   background-size: 200% 100%;
-  animation: kb-shimmer 1.5s infinite;
+  animation: kb-shimmer 1.4s infinite;
+}
+
+[data-theme="light"] .kb-skeleton {
+  background: linear-gradient(90deg, #e2e8f0 25%, #cbd5e1 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: kb-shimmer 1.4s infinite;
+}
+
+@keyframes kb-glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(193, 9, 49, 0.4), 0 0 30px rgba(245, 179, 0, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(193, 9, 49, 0.8), 0 0 50px rgba(245, 179, 0, 0.4);
+  }
+}
+
+.kb-glow-loader {
+  animation: kb-glow-pulse 2s infinite ease-in-out;
+}
+
+@keyframes kb-spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes kb-spin-reverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+.kb-spin-slow {
+  animation: kb-spin-slow 3s linear infinite;
+}
+
+.kb-spin-reverse {
+  animation: kb-spin-reverse 2s linear infinite;
 }
 
 /* Quick Buttons & Banner helpers */

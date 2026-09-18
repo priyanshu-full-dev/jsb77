@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import InPlaySportsWidget from "../../components/InPlaySportsWidget";
 import UpcomingEvent from "../../components/UpcomingEvent";
+import KuberLoader from "../../components/Loader/KuberLoader";
 import {
   setRunningData,
   setMarketName,
@@ -323,9 +324,7 @@ export default function SportsPage() {
                     </button>
                   ))
                 ) : (
-                  <div className="p-8 text-center text-text_Ternary text-sm font-semibold">
-                    No active competitions found right now.
-                  </div>
+                  <KuberLoader text="Fetching Competitions..." subtext="Syncing leagues & real-time matches" />
                 )}
               </div>
             </div>

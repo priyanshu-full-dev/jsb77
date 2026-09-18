@@ -1,7 +1,8 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { UPCOMING_EVENTS_DATA } from "../data/upcomingEventsData";
+import { socket } from "../../socketClient";
+import KuberMatchSkeleton from "./Loader/KuberMatchSkeleton";
 
 // ==========================================
 // SVG ICONS (EXACT AS PROVIDED)
@@ -99,7 +100,9 @@ const OddsButton = ({ price, size, isLay }) => {
     <span className="col-span-4">
       <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
         <div
-          className={`overflow-hidden relative opacity-50 cursor-not-allowed w-full h-full px-1 py-[1px] rounded-sm flex flex-col items-center justify-center ${bgClass} undefined`}
+          className={`overflow-hidden relative ${
+            isDash ? "opacity-50 cursor-not-allowed" : "opacity-100 cursor-pointer"
+          } w-full h-full px-1 py-[1px] rounded-sm flex flex-col items-center justify-center ${bgClass} undefined`}
         >
           <span
             id="oddBtnPrice"
@@ -263,7 +266,7 @@ export default function UpcomingEvent({
 }) {
   const navigate = useNavigate();
 
-  // Read live matches from Redux store if available
+  // Read matches from Redux store
   const cricketMatches = useSelector(
     (state) =>
       state?.matches?.cricket?.matches?.data ||
@@ -283,15 +286,63 @@ export default function UpcomingEvent({
       [],
   );
 
+  // Direct socket updates state for instant 1-second live reactivity
+  const [liveSocketMatches, setLiveSocketMatches] = useState({
+    cricket: null,
+    soccer: null,
+    tennis: null,
+  });
+
+  useEffect(() => {
+    const handleMatchUpdate = (data) => {
+      if (!data?.matches || !data?.sport) return;
+      const sportKey = data.sport.toLowerCase();
+      if (
+        sportKey === "cricket" ||
+        sportKey === "soccer" ||
+        sportKey === "tennis"
+      ) {
+        setLiveSocketMatches((prev) => ({
+          ...prev,
+          [sportKey]: data.matches,
+        }));
+      }
+    };
+
+    socket.on("matchUpdate", handleMatchUpdate);
+
+    const streamLiveMatches = () => {
+      socket.emit("subscribeToMatches", { eventId: 4, eventType: 4 });
+      socket.emit("subscribeToMatches", { eventId: 1, eventType: 1 });
+      socket.emit("subscribeToMatches", { eventId: 2, eventType: 2 });
+    };
+
+    streamLiveMatches();
+    const interval = setInterval(streamLiveMatches, 2000);
+
+    const handleConnect = () => streamLiveMatches();
+    socket.on("connect", handleConnect);
+
+    return () => {
+      clearInterval(interval);
+      socket.off("matchUpdate", handleMatchUpdate);
+      socket.off("connect", handleConnect);
+    };
+  }, []);
+
   const sportsData = useMemo(() => {
     if (customData) return customData;
 
+    const getMatchList = (liveList, reduxState) => {
+      if (Array.isArray(liveList) && liveList.length > 0) return liveList;
+      if (Array.isArray(reduxState?.data)) return reduxState.data;
+      if (Array.isArray(reduxState)) return reduxState;
+      return [];
+    };
+
     const parseUpcoming = (list, sportName, sportId) => {
-      const arr = Array.isArray(list?.data)
-        ? list.data
-        : Array.isArray(list)
-          ? list
-          : [];
+      const arr = Array.isArray(list) ? list : [];
+      // Filter ONLY upcoming matches (not in-play)
       const upcomingList = arr.filter((m) => m && !m.inplay && !m.inPlay);
 
       if (upcomingList.length === 0) return null;
@@ -352,8 +403,8 @@ export default function UpcomingEvent({
           sportName,
           team1,
           team2,
-          time: formatTime(m.openDate),
-          hasTv: true,
+          time: formatTime(m.openDate || m.eventDate),
+          hasTv: Boolean(m.tv),
           back: [
             { price: b0.price || "-", size: b0.size || "" },
             { price: b2.price || "-", size: b2.size || "" },
@@ -374,15 +425,32 @@ export default function UpcomingEvent({
       };
     };
 
-    const cricket = parseUpcoming(cricketMatches, "Cricket", "4");
-    const soccer = parseUpcoming(soccerMatches, "Football", "1");
-    const tennis = parseUpcoming(tennisMatches, "Tennis", "2");
+    const cricket = parseUpcoming(
+      getMatchList(liveSocketMatches.cricket, cricketMatches),
+      "Cricket",
+      "4",
+    );
+    const soccer = parseUpcoming(
+      getMatchList(liveSocketMatches.soccer, soccerMatches),
+      "Football",
+      "1",
+    );
+    const tennis = parseUpcoming(
+      getMatchList(liveSocketMatches.tennis, tennisMatches),
+      "Tennis",
+      "2",
+    );
 
-    const liveUpcoming = [cricket, soccer, tennis].filter(Boolean);
-    if (liveUpcoming.length > 0) return liveUpcoming;
-
-    return UPCOMING_EVENTS_DATA;
-  }, [customData, cricketMatches, soccerMatches, tennisMatches]);
+    return [cricket, soccer, tennis].filter(
+      (s) => s && s.matches && s.matches.length > 0,
+    );
+  }, [
+    customData,
+    liveSocketMatches,
+    cricketMatches,
+    soccerMatches,
+    tennisMatches,
+  ]);
 
   const handleOpen = (match) => {
     if (!match) return;
@@ -401,6 +469,18 @@ export default function UpcomingEvent({
       )}&openDate=${encodeURIComponent(match.time || "")}&tv=true`,
     );
   };
+
+  const cricketLoading = useSelector((state) => state.matches?.cricket?.status === "loading");
+  const soccerLoading = useSelector((state) => state.matches?.soccer?.status === "loading");
+  const tennisLoading = useSelector((state) => state.matches?.tennis?.status === "loading");
+
+  const isInitialLoading = (cricketLoading || soccerLoading || tennisLoading) && (!sportsData || sportsData.length === 0);
+
+  if (isInitialLoading) {
+    return <KuberMatchSkeleton headerTitle={`Loading ${title}...`} rows={3} />;
+  }
+
+  if (!sportsData || sportsData.length === 0) return null;
 
   return (
     <div className="py-1 px-[6px] w-full">

@@ -1,18 +1,38 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-// Async Thunk to fetch matches
+// Fast axios client with 5s timeout
+const apiClient = axios.create({
+  timeout: 5000,
+});
+
+// Async Thunk to fetch matches for a single eventId
 export const fetchMatchesByEventId = createAsyncThunk(
   "matches/fetchMatchesByEventId",
   async ({ eventId, sport }, { rejectWithValue }) => {
     try {
-      const response = await axios.get(
+      const response = await apiClient.get(
         `https://api.professor.monster/api/v1/get-matches-by-eventid/${eventId}`
       );
       return { data: response?.data, sport };
     } catch (error) {
       return rejectWithValue(error.response?.data || "Something went wrong");
     }
+  }
+);
+
+// High-speed parallel batch fetch for all major sports (Cricket, Soccer, Tennis)
+export const fetchAllMatchesFast = createAsyncThunk(
+  "matches/fetchAllMatchesFast",
+  async (_, { dispatch }) => {
+    const sports = [
+      { eventId: 4, sport: "cricket" },
+      { eventId: 1, sport: "soccer" },
+      { eventId: 2, sport: "tennis" },
+    ];
+    await Promise.allSettled(
+      sports.map((item) => dispatch(fetchMatchesByEventId(item)))
+    );
   }
 );
 
@@ -88,7 +108,7 @@ const matchesSlice = createSlice({
       .addCase(fetchMatchesByEventId.pending, (state, action) => {
         const sport = action.meta?.arg?.sport;
         const sportState = ensureSportState(state, sport);
-        if (sportState) {
+        if (sportState && sportState.status !== "succeeded") {
           sportState.status = "loading";
         }
       })
@@ -111,5 +131,6 @@ const matchesSlice = createSlice({
       });
   },
 });
+
 export const { setMatchesLoading, updateMatches, updateMarketOdds, setMatchesError } = matchesSlice.actions;
 export default matchesSlice.reducer;
