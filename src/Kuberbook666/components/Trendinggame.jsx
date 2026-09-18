@@ -7,7 +7,7 @@ export default function Trendinggame({ games = [], onGameClick }) {
   const navigate = useNavigate();
   const scrollRef = useRef(null);
 
-  const displayGames = Array.isArray(games) && games.length > 0 ? games : TRENDING_GAMES_DATA;
+  const displayGames = Array.isArray(games) && games.length > 0 ? games : [];
 
   const handleCardClick = (game) => {
     if (onGameClick) {
@@ -16,6 +16,10 @@ export default function Trendinggame({ games = [], onGameClick }) {
       navigate("/crash");
     }
   };
+
+  if (!displayGames || displayGames.length === 0) {
+    return null;
+  }
 
   return (
     <div title="Trending Game" className="py-1 px-[6px] w-full">

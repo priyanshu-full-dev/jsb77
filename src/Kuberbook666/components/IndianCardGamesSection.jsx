@@ -7,7 +7,7 @@ export default function IndianCardGamesSection({ games = [], onGameClick }) {
   const navigate = useNavigate();
   const scrollRef = useRef(null);
 
-  const displayGames = Array.isArray(games) && games.length > 0 ? games : INDIAN_CARD_GAMES_DATA;
+  const displayGames = Array.isArray(games) && games.length > 0 ? games : [];
 
   const handleScroll = (direction) => {
     if (scrollRef.current) {
@@ -23,6 +23,10 @@ export default function IndianCardGamesSection({ games = [], onGameClick }) {
       navigate("/aura");
     }
   };
+
+  if (!displayGames || displayGames.length === 0) {
+    return null;
+  }
 
   return (
     <div title="Indian Card Games" className="py-1 px-[6px] w-full">

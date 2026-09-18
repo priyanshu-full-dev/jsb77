@@ -11,7 +11,6 @@ import {
 } from "../../../socketClient";
 import { handleOpenPlaceBet, handleCancelPlaceBet } from "../../../redux/slices/placeBetSlice";
 import { fetchMarketOdds } from "../../../redux/slices/fullmarketSlice";
-import { fetchbookmakerOdds } from "../../../redux/slices/bookmakerSlice";
 import { fetchfancyOdds } from "../../../redux/slices/fancySlice";
 import { fetchBets } from "../../../redux/slices/betsSlice";
 import BetSlip from "../../components/BetSlip";
@@ -134,9 +133,9 @@ const MarketPage = () => {
   const hasFancyQuery = searchParams.get("fancy") === "true";
 
   // Redux Sports Matches Data
-  const cricketMatches = useSelector((state) => state?.match?.matches?.cricket?.data || []);
-  const soccerMatches = useSelector((state) => state?.match?.matches?.soccer?.data || []);
-  const tennisMatches = useSelector((state) => state?.match?.matches?.tennis?.data || []);
+  const cricketMatches = useSelector((state) => state?.matches?.cricket?.matches?.data || state?.matches?.cricket?.matches || []);
+  const soccerMatches = useSelector((state) => state?.matches?.soccer?.matches?.data || state?.matches?.soccer?.matches || []);
+  const tennisMatches = useSelector((state) => state?.matches?.tennis?.matches?.data || state?.matches?.tennis?.matches || []);
 
   // Find match from Redux by eventId
   const matchFromStore = useMemo(() => {
@@ -164,18 +163,17 @@ const MarketPage = () => {
   const isFootball = String(sportId) === "1";
   const isTennis = String(sportId) === "2";
 
-  // Initial REST fetch like in Mahadev CTSfullMarket
+  // Initial REST fetch for market odds & fancy
   useEffect(() => {
     if (sportId && urlEventId) {
       dispatch(fetchMarketOdds({ eventType: sportId, competitionId, eventId: urlEventId, marketId: marketId || urlEventId }));
     }
-    // Real-time Bookmaker and Fancy odds are streamed live via Socket.IO subscriptions below
     if (isCricket || hasFancyQuery) {
       if (competitionId && urlEventId) {
         dispatch(fetchfancyOdds({ eventType: sportId, competitionId, eventId: urlEventId }));
       }
     }
-  }, [sportId, competitionId, urlEventId, marketId, isCricket, hasBmQuery, hasFancyQuery, dispatch]);
+  }, [sportId, competitionId, urlEventId, marketId, isCricket, hasFancyQuery, dispatch]);
 
   // Mahadev Redux Slices Integration
   const reduxMarketOdds = useSelector((state) => state?.marketOdds?.data?.data?.data || state?.marketOdds?.data?.data);
@@ -184,8 +182,19 @@ const MarketPage = () => {
   const { bookMakerData: BmakerData } = useSelector((state) => state?.bookmakerOdds || {});
   const { fancyData: FData } = useSelector((state) => state?.fancyOdds || {});
 
-  const reduxBookmaker = BmakerData?.[urlEventId]?.data || BmakerData?.[Number(urlEventId)]?.data || null;
-  const reduxFancy = FData?.[urlEventId]?.data || FData?.[Number(urlEventId)]?.data || null;
+  const reduxBookmaker =
+    BmakerData?.[urlEventId]?.data ||
+    BmakerData?.[Number(urlEventId)]?.data ||
+    BmakerData?.[urlEventId] ||
+    BmakerData?.data ||
+    null;
+
+  const reduxFancy =
+    FData?.[urlEventId]?.data ||
+    FData?.[Number(urlEventId)]?.data ||
+    FData?.[urlEventId] ||
+    FData?.data ||
+    (Array.isArray(FData) ? FData : null);
 
   // Local live state streams
   const [liveMatchOdds, setLiveMatchOdds] = useState(() => rawMatch?.matchOdds || reduxMarketOdds || null);
@@ -201,10 +210,27 @@ const MarketPage = () => {
     }
   }, [reduxPlaceBetId]);
 
-  // Sync from Redux if available
+  // Real-time synchronization: continuously update when Redux receives new prices
   useEffect(() => {
-    if (reduxMarketOdds && (!liveMatchOdds || liveMatchOdds.length === 0)) {
-      setLiveMatchOdds(reduxMarketOdds);
+    if (rawMatch?.matchOdds) {
+      if (Array.isArray(rawMatch.matchOdds) && rawMatch.matchOdds.length > 0) {
+        setLiveMatchOdds(rawMatch.matchOdds);
+      } else if (typeof rawMatch.matchOdds === "object" && Object.keys(rawMatch.matchOdds).length > 0) {
+        setLiveMatchOdds(rawMatch.matchOdds);
+      }
+    }
+    if (rawMatch?.matchRunners && Array.isArray(rawMatch.matchRunners) && rawMatch.matchRunners.length > 0) {
+      setLiveRunners(rawMatch.matchRunners);
+    }
+  }, [matchFromStore]);
+
+  useEffect(() => {
+    if (reduxMarketOdds) {
+      if (Array.isArray(reduxMarketOdds) && reduxMarketOdds.length > 0) {
+        setLiveMatchOdds(reduxMarketOdds);
+      } else if (typeof reduxMarketOdds === "object" && Object.keys(reduxMarketOdds).length > 0) {
+        setLiveMatchOdds(reduxMarketOdds);
+      }
     }
   }, [reduxMarketOdds]);
 
@@ -261,20 +287,32 @@ const MarketPage = () => {
 
     // 5. Direct Socket Listeners for Instant 0-latency Updates
     const handleMarketOddsUpdate = (data) => {
-      if (data?.marketOdds) {
-        setLiveMatchOdds(data.marketOdds);
+      const odds = data?.marketOdds || data?.auraMarketOdds;
+      if (Array.isArray(odds) && odds.length > 0) {
+        setLiveMatchOdds(odds);
+      } else if (odds && typeof odds === "object" && !Array.isArray(odds) && Object.keys(odds).length > 0) {
+        setLiveMatchOdds(odds);
       }
     };
 
     const handleBookmakerUpdate = (data) => {
-      if (data?.bookmakerOdds) {
-        setLiveBookmaker(data.bookmakerOdds);
+      const bm = data?.bookmakerOdds || data?.auraBookmakerOdds;
+      if (bm) {
+        if (!data?.matchId || String(data.matchId) === String(urlEventId)) {
+          if (Array.isArray(bm) && bm.length > 0) {
+            setLiveBookmaker(bm);
+          } else if (bm && typeof bm === "object" && !Array.isArray(bm) && Object.keys(bm).length > 0) {
+            setLiveBookmaker(bm);
+          }
+        }
       }
     };
 
     const handleFancyOddsUpdate = (data) => {
       if (data?.fancyOdds) {
-        setLiveFancy(data.fancyOdds);
+        if (!data?.matchId || String(data.matchId) === String(urlEventId)) {
+          setLiveFancy(data.fancyOdds);
+        }
       }
     };
 
@@ -284,32 +322,24 @@ const MarketPage = () => {
           (m) => String(m?.eventId) === String(urlEventId) || String(m?.matchId) === String(urlEventId)
         );
         if (found) {
-          if (found.matchRunners) setLiveRunners(found.matchRunners);
-          if (found.matchOdds) setLiveMatchOdds(found.matchOdds);
+          if (found.matchRunners && found.matchRunners.length > 0) setLiveRunners(found.matchRunners);
+          if (found.matchOdds) {
+            if (Array.isArray(found.matchOdds) && found.matchOdds.length > 0) {
+              setLiveMatchOdds(found.matchOdds);
+            } else if (found.matchOdds && typeof found.matchOdds === "object" && Object.keys(found.matchOdds).length > 0) {
+              setLiveMatchOdds(found.matchOdds);
+            }
+          }
         }
       }
     };
 
     socket.on("marketOddsUpdate", handleMarketOddsUpdate);
+    socket.on("auramarketOddsUpdate", handleMarketOddsUpdate);
     socket.on("bookmakerUpdate", handleBookmakerUpdate);
+    socket.on("auraBookmakerUpdate", handleBookmakerUpdate);
     socket.on("fancyOddsUpdate", handleFancyOddsUpdate);
     socket.on("matchUpdate", handleMatchUpdate);
-
-    // 6. Active 1.5s Streaming Heartbeat
-    const heartbeatTimer = setInterval(() => {
-      if (socket.connected) {
-        socket.emit("subscribeToMatches", { eventId: urlEventId, eventType: sportId });
-        socket.emit("subscribeToMarketOdds", {
-          eventId: urlEventId,
-          eventType: sportId,
-          competitionId,
-          matchId: urlEventId,
-          marketId: marketId || urlEventId,
-        });
-        socket.emit("subscribeToBookmaker", { eventId: urlEventId, eventType: sportId, competitionId });
-        socket.emit("subscribeToFancyOdds", { eventId: urlEventId, eventType: sportId, competitionId });
-      }
-    }, 1500);
 
     return () => {
       unsubMatch && unsubMatch();
@@ -317,10 +347,11 @@ const MarketPage = () => {
       unsubBookmaker && unsubBookmaker();
       unsubFancy && unsubFancy();
       socket.off("marketOddsUpdate", handleMarketOddsUpdate);
+      socket.off("auramarketOddsUpdate", handleMarketOddsUpdate);
       socket.off("bookmakerUpdate", handleBookmakerUpdate);
+      socket.off("auraBookmakerUpdate", handleBookmakerUpdate);
       socket.off("fancyOddsUpdate", handleFancyOddsUpdate);
       socket.off("matchUpdate", handleMatchUpdate);
-      clearInterval(heartbeatTimer);
     };
   }, [urlEventId, sportId, competitionId, marketId, currentSport]);
 
@@ -515,21 +546,35 @@ const MarketPage = () => {
   // Normalize Match Odds Runners
   const matchOddsRunners = useMemo(() => {
     let runners = [];
-    if (Array.isArray(liveMatchOdds)) {
-      const valid = liveMatchOdds.filter(Boolean);
-      if (valid[0]?.runners && Array.isArray(valid[0].runners)) {
+    const sourceOdds = (Array.isArray(liveMatchOdds) && liveMatchOdds.length > 0)
+      ? liveMatchOdds
+      : (liveMatchOdds?.runners && liveMatchOdds.runners.length > 0)
+      ? liveMatchOdds
+      : (Array.isArray(rawMatch?.matchOdds) && rawMatch.matchOdds.length > 0)
+      ? rawMatch.matchOdds
+      : rawMatch?.matchOdds || null;
+
+    if (Array.isArray(sourceOdds)) {
+      const valid = sourceOdds.filter(Boolean);
+      if (valid[0]?.runners && Array.isArray(valid[0].runners) && valid[0].runners.length > 0) {
         runners = valid[0].runners.filter(Boolean);
-      } else {
+      } else if (valid.length > 0 && valid[0]?.ex) {
         runners = valid;
       }
-    } else if (liveMatchOdds?.runners && Array.isArray(liveMatchOdds.runners)) {
-      runners = liveMatchOdds.runners.filter(Boolean);
+    } else if (sourceOdds?.runners && Array.isArray(sourceOdds.runners)) {
+      runners = sourceOdds.runners.filter(Boolean);
     }
 
+    const sourceMetaRunners = (Array.isArray(liveRunners) && liveRunners.length > 0)
+      ? liveRunners
+      : (Array.isArray(rawMatch?.matchRunners) && rawMatch.matchRunners.length > 0)
+      ? rawMatch.matchRunners
+      : [];
+
     if (runners.length > 0) {
-      // Pair with runner names from liveRunners if missing
+      // Pair with runner names from meta runners if missing
       return runners.filter(Boolean).map((r, idx) => {
-        const matchedMeta = (liveRunners || []).filter(Boolean).find((lr) => String(lr?.selectionId) === String(r?.selectionId));
+        const matchedMeta = sourceMetaRunners.filter(Boolean).find((lr) => String(lr?.selectionId) === String(r?.selectionId));
         return {
           ...r,
           name: r?.runnerName || r?.name || matchedMeta?.runnerName || matchedMeta?.name || (idx === 0 ? team1Name : idx === 1 ? team2Name : "The Draw"),
@@ -538,24 +583,40 @@ const MarketPage = () => {
       });
     }
 
-    // Default match runners if socket hasn't pushed yet (matches user prompt exact figures)
-    const fallbackRunners = [
+    // If meta runners exist, construct them with clean state
+    if (sourceMetaRunners.length > 0) {
+      return sourceMetaRunners.filter(Boolean).map((mr, idx) => ({
+        selectionId: mr?.selectionId || idx + 101,
+        name: mr?.runnerName || mr?.name || (idx === 0 ? team1Name : idx === 1 ? team2Name : "The Draw"),
+        runnerName: mr?.runnerName || mr?.name || (idx === 0 ? team1Name : idx === 1 ? team2Name : "The Draw"),
+        status: mr?.status || "ACTIVE",
+        ex: {
+          availableToBack: [],
+          availableToLay: [],
+        },
+      }));
+    }
+
+    // If socket hasn't pushed market odds yet, provide clean runner containers
+    return [
       {
         selectionId: 101,
         name: team1Name,
         runnerName: team1Name,
+        status: "ACTIVE",
         ex: {
-          availableToBack: [{ price: "30", size: "1,222" }, { price: "29", size: "551" }, { price: "28", size: "939" }],
-          availableToLay: [{ price: "32", size: "314" }, { price: "34", size: "308" }, { price: "36", size: "8,997" }],
+          availableToBack: [],
+          availableToLay: [],
         },
       },
       {
         selectionId: 102,
         name: team2Name,
         runnerName: team2Name,
+        status: "ACTIVE",
         ex: {
-          availableToBack: [{ price: "1.03", size: "3,22,412" }, { price: "1.02", size: "2,60,600" }, { price: "1.01", size: "2,99,856" }],
-          availableToLay: [{ price: "1.04", size: "4,13,990" }, { price: "1.05", size: "1,07,702" }, { price: "1.06", size: "1,24,622" }],
+          availableToBack: [],
+          availableToLay: [],
         },
       },
       ...(isFootball
@@ -564,19 +625,18 @@ const MarketPage = () => {
               selectionId: 103,
               name: "The Draw",
               runnerName: "The Draw",
+              status: "ACTIVE",
               ex: {
-                availableToBack: [{ price: "3.65", size: "8" }],
-                availableToLay: [{ price: "3.75", size: "37" }],
+                availableToBack: [],
+                availableToLay: [],
               },
             },
           ]
         : []),
     ];
+  }, [liveMatchOdds, liveRunners, rawMatch, team1Name, team2Name, isFootball]);
 
-    return fallbackRunners;
-  }, [liveMatchOdds, liveRunners, team1Name, team2Name, isFootball]);
-
-  // Bookmaker Data Evaluation (Conditional: ONLY for Cricket or when bm is true)
+  // Bookmaker Data Evaluation (Conditional: ONLY for Cricket or when bm is true, 100% REAL)
   const bookmakerRunners = useMemo(() => {
     // If not cricket and not explicitly requested, Bookmaker must NOT be shown
     if (!isCricket && !hasBmQuery && !rawMatch?.bm) return [];
@@ -603,30 +663,7 @@ const MarketPage = () => {
       }));
     }
 
-    // Default bookmaker runners for cricket (matches user prompt exact figures)
-    if (isCricket || hasBmQuery || rawMatch?.bm) {
-      return [
-        {
-          selectionId: 201,
-          name: team1Name,
-          runnerName: team1Name,
-          ex: {
-            availableToBack: [{ price: "2,222", size: "1,25,000" }],
-            availableToLay: [{ price: "2,857", size: "1,25,000" }],
-          },
-        },
-        {
-          selectionId: 202,
-          name: team2Name,
-          runnerName: team2Name,
-          ex: {
-            availableToBack: [{ price: "3.5", size: "500.000+" }],
-            availableToLay: [{ price: "4.5", size: "500.000+" }],
-          },
-        },
-      ];
-    }
-
+    // Never return fake bookmaker odds if server has none
     return [];
   }, [liveBookmaker, isCricket, hasBmQuery, rawMatch, team1Name, team2Name]);
 
@@ -640,7 +677,7 @@ const MarketPage = () => {
     return null;
   }, [liveMatchOdds]);
 
-  // Fancy Markets Evaluation (Conditional: ONLY for Cricket or when fancy is true)
+  // Fancy Markets Evaluation (Conditional: 100% LIVE REAL FANCY DATA)
   const fancyList = useMemo(() => {
     // If not cricket and not explicitly requested, Fancy must NOT be shown
     if (!isCricket && !hasFancyQuery && !rawMatch?.fancy) return [];
@@ -660,33 +697,8 @@ const MarketPage = () => {
     }
 
     const validItems = (list || []).filter((item) => item && (item.RunnerName || item.runnerName || item.name));
-    if (validItems.length > 0) return validItems;
-
-    // Default cricket session markets exactly as shown in user's prompt HTML & screenshots
-    if (isCricket || hasFancyQuery || rawMatch?.fancy) {
-      return [
-        { RunnerName: `15 over run ${team1Name}`, LayPrice1: 67, LaySize1: 100, BackPrice1: 68, BackSize1: 100, min: 1, max: 100000, category: "NORMAL" },
-        { RunnerName: `15 over run bhav ${team1Name}`, LayPrice1: 66, LaySize1: 70, BackPrice1: 66, BackSize1: 40, min: 1, max: 100000, category: "NORMAL" },
-        { RunnerName: `20 over run ${team1Name}`, LayPrice1: "-", LaySize1: "-", BackPrice1: "-", BackSize1: "-", min: 1, max: 100000, GameStatus: "BALL RUNNING", category: "NORMAL" },
-        { RunnerName: `14 over run ${team1Name}`, LayPrice1: 63, LaySize1: 100, BackPrice1: 64, BackSize1: 100, min: 1, max: 100000, category: "NORMAL" },
-        { RunnerName: `13.3 over run ${team1Name}`, LayPrice1: "-", LaySize1: "-", BackPrice1: "-", BackSize1: "-", min: 1, max: 100000, GameStatus: "SUSPENDED", category: "Ball by Ball" },
-        { RunnerName: `14.3 over run ${team1Name}`, LayPrice1: 65, LaySize1: 100, BackPrice1: 66, BackSize1: 100, min: 1, max: 100000, category: "Ball by Ball" },
-        { RunnerName: `50 over run bhav ${team1Name}.`, LayPrice1: "-", LaySize1: "-", BackPrice1: "-", BackSize1: "-", min: 1, max: 100000, GameStatus: "BALL RUNNING", category: "NORMAL" },
-        { RunnerName: `50 over run ${team1Name}`, LayPrice1: 190, LaySize1: 100, BackPrice1: 193, BackSize1: 100, min: 1, max: 100000, GameStatus: "BALL RUNNING", category: "NORMAL" },
-        { RunnerName: `5th wkt ${team1Name}`, LayPrice1: "-", LaySize1: "-", BackPrice1: "-", BackSize1: "-", min: 1, max: 100000, GameStatus: "BALL RUNNING", category: "NORMAL" },
-        { RunnerName: `6th wkt ${team1Name}`, LayPrice1: "-", LaySize1: "-", BackPrice1: "-", BackSize1: "-", min: 1, max: 100000, GameStatus: "BALL RUNNING", category: "NORMAL" },
-        { RunnerName: `C Ervine run bhav`, LayPrice1: 38, LaySize1: 120, BackPrice1: 38, BackSize1: 95, min: 1, max: 100000, category: "NORMAL" },
-        { RunnerName: `C Ervine run`, LayPrice1: 36, LaySize1: 110, BackPrice1: 36, BackSize1: 90, min: 1, max: 100000, category: "NORMAL" },
-        { RunnerName: `C Ervine boundaries`, LayPrice1: 4, LaySize1: 100, BackPrice1: 5, BackSize1: 100, min: 1, max: 100000, category: "NORMAL" },
-        { RunnerName: `C Ervine balls`, LayPrice1: 49, LaySize1: 110, BackPrice1: 49, BackSize1: 90, min: 1, max: 100000, category: "NORMAL" },
-        { RunnerName: `13.4 ball run ${team1Name}`, LayPrice1: 63, LaySize1: 250, BackPrice1: 63, BackSize1: 175, min: 1, max: 50000, category: "Ball by Ball" },
-        { RunnerName: `13.5 ball run ${team1Name}`, LayPrice1: "-", LaySize1: "-", BackPrice1: "-", BackSize1: "-", min: 1, max: 50000, GameStatus: "BALL RUNNING", category: "Ball by Ball" },
-        { RunnerName: `13.6 ball run ${team1Name}`, LayPrice1: "-", LaySize1: "-", BackPrice1: "-", BackSize1: "-", min: 1, max: 50000, GameStatus: "SUSPENDED", category: "Ball by Ball" },
-      ];
-    }
-
-    return [];
-  }, [liveFancy, isCricket, hasFancyQuery, rawMatch, team1Name, team2Name]);
+    return validItems;
+  }, [liveFancy, isCricket, hasFancyQuery, rawMatch]);
 
   const hasFancy = fancyList.length > 0;
 
@@ -890,6 +902,13 @@ const MarketPage = () => {
 
                   <div className="bg-bg_Quaternary rounded-[3px] shadow-[0_8px_30px_rgb(0,0,0,0.12)] py-[1px] cursor-pointer">
                     {(matchOddsRunners || []).filter(Boolean).map((runner, rIdx) => {
+                      const isLast = rIdx === (matchOddsRunners || []).length - 1;
+                      const runnerName = runner?.runnerName || runner?.name || `Runner ${rIdx + 1}`;
+                      const runnerId = runner?.selectionId ?? runner?.SelectionId ?? runner?.id ?? rIdx;
+                      const runnerBetKey = `match_${runnerId}_${rIdx}`;
+                      const isBetOpen = Boolean(activeBet && activeBet.betKey === runnerBetKey);
+                      const preview = getBetPreview(runnerBetKey, "Match Odds");
+
                       const backOdds = runner?.ex?.availableToBack || [];
                       const layOdds = runner?.ex?.availableToLay || [];
 
@@ -902,12 +921,10 @@ const MarketPage = () => {
                       const l1 = layOdds[1] || null;
                       const l2 = layOdds[2] || null;
 
-                      const isLast = rIdx === (matchOddsRunners || []).length - 1;
-                      const runnerName = runner?.name || runner?.runnerName || `Team ${rIdx + 1}`;
-                      const runnerId = runner?.selectionId ?? runner?.SelectionId ?? runner?.id ?? rIdx;
-                      const runnerBetKey = `match_odds_${runnerId}_${rIdx}`;
-                      const isBetOpen = Boolean(activeBet && activeBet.betKey === runnerBetKey);
-                      const preview = getBetPreview(runnerBetKey, "Match Odds");
+                      const statusRaw = String(runner?.status || runner?.GameStatus || "").toLowerCase().trim();
+                      const isBallRunning = statusRaw === "ball running" || Boolean(runner?.isBallRunning);
+                      const isMissingRates = (!b0?.price || b0?.price === "-" || b0?.price === 0 || b0?.price === "0") && (!l0?.price || l0?.price === "-" || l0?.price === 0 || l0?.price === "0");
+                      const isSuspended = statusRaw === "suspended" || statusRaw === "closed" || statusRaw === "inactive" || (!isBallRunning && isMissingRates);
 
                       return (
                         <div key={runnerBetKey} className={`grid grid-cols-12 ${!isLast ? "border-b border-borderColorOfMarket" : ""}`}>
@@ -928,77 +945,93 @@ const MarketPage = () => {
                             </div>
                           </div>
                           <div className="col-span-5 md:col-span-7 h-12 grid grid-cols-2 md:grid-cols-6 relative">
-                            {/* Box 1 (Desktop only): Back[2] */}
-                            <span className="hidden md:block text-center min-h-12">
-                              <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
-                                <OddsButton
-                                  price={b2?.price}
-                                  size={b2?.size}
-                                  isBack={true}
-                                  onClick={() => handleBetClick(runnerName, runnerId, "Back", b2?.price, "Match Odds", b2?.size, 1, 50000, runnerBetKey)}
-                                />
+                            {isBallRunning ? (
+                              <span className="col-span-2 md:col-span-6 text-center min-h-12 py-[1px] px-[1px]">
+                                <span className="text-center bg-bg_ballRunning cursor-not-allowed w-full h-full rounded-sm flex text-xs flex-col items-center justify-center font-bold tracking-wider">
+                                  BALL RUNNING
+                                </span>
                               </span>
-                            </span>
+                            ) : isSuspended ? (
+                              <span className="col-span-2 md:col-span-6 text-center min-h-12 py-[1px] px-[1px]">
+                                <span className="text-center bg-bg_ballRunning cursor-not-allowed w-full h-full rounded-sm flex text-xs flex-col items-center justify-center font-bold tracking-wider">
+                                  SUSPENDED
+                                </span>
+                              </span>
+                            ) : (
+                              <>
+                                {/* Box 1 (Desktop only): Back[2] */}
+                                <span className="hidden md:block text-center min-h-12">
+                                  <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
+                                    <OddsButton
+                                      price={b2?.price}
+                                      size={b2?.size}
+                                      isBack={true}
+                                      onClick={() => handleBetClick(runnerName, runnerId, "Back", b2?.price, "Match Odds", b2?.size, 1, 50000, runnerBetKey)}
+                                    />
+                                  </span>
+                                </span>
 
-                            {/* Box 2 (Desktop only): Back[1] */}
-                            <span className="hidden md:block text-center min-h-12">
-                              <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
-                                <OddsButton
-                                  price={b1?.price}
-                                  size={b1?.size}
-                                  isBack={true}
-                                  onClick={() => handleBetClick(runnerName, runnerId, "Back", b1?.price, "Match Odds", b1?.size, 1, 50000, runnerBetKey)}
-                                />
-                              </span>
-                            </span>
+                                {/* Box 2 (Desktop only): Back[1] */}
+                                <span className="hidden md:block text-center min-h-12">
+                                  <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
+                                    <OddsButton
+                                      price={b1?.price}
+                                      size={b1?.size}
+                                      isBack={true}
+                                      onClick={() => handleBetClick(runnerName, runnerId, "Back", b1?.price, "Match Odds", b1?.size, 1, 50000, runnerBetKey)}
+                                    />
+                                  </span>
+                                </span>
 
-                            {/* Box 3 (Desktop & Mobile): Best Back [0] */}
-                            <span className="text-center min-h-12">
-                              <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
-                                <OddsButton
-                                  price={b0?.price}
-                                  size={b0?.size}
-                                  isBack={true}
-                                  onClick={() => handleBetClick(runnerName, runnerId, "Back", b0?.price, "Match Odds", b0?.size, 1, 50000, runnerBetKey)}
-                                />
-                              </span>
-                            </span>
+                                {/* Box 3 (Desktop & Mobile): Best Back [0] */}
+                                <span className="text-center min-h-12">
+                                  <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
+                                    <OddsButton
+                                      price={b0?.price}
+                                      size={b0?.size}
+                                      isBack={true}
+                                      onClick={() => handleBetClick(runnerName, runnerId, "Back", b0?.price, "Match Odds", b0?.size, 1, 50000, runnerBetKey)}
+                                    />
+                                  </span>
+                                </span>
 
-                            {/* Box 4 (Desktop & Mobile): Best Lay [0] */}
-                            <span className="text-center min-h-12">
-                              <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
-                                <OddsButton
-                                  price={l0?.price}
-                                  size={l0?.size}
-                                  isBack={false}
-                                  onClick={() => handleBetClick(runnerName, runnerId, "Lay", l0?.price, "Match Odds", l0?.size, 1, 50000, runnerBetKey)}
-                                />
-                              </span>
-                            </span>
+                                {/* Box 4 (Desktop & Mobile): Best Lay [0] */}
+                                <span className="text-center min-h-12">
+                                  <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
+                                    <OddsButton
+                                      price={l0?.price}
+                                      size={l0?.size}
+                                      isBack={false}
+                                      onClick={() => handleBetClick(runnerName, runnerId, "Lay", l0?.price, "Match Odds", l0?.size, 1, 50000, runnerBetKey)}
+                                    />
+                                  </span>
+                                </span>
 
-                            {/* Box 5 (Desktop only): Lay[1] */}
-                            <span className="hidden md:block text-center min-h-12">
-                              <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
-                                <OddsButton
-                                  price={l1?.price}
-                                  size={l1?.size}
-                                  isBack={false}
-                                  onClick={() => handleBetClick(runnerName, runnerId, "Lay", l1?.price, "Match Odds", l1?.size, 1, 50000, runnerBetKey)}
-                                />
-                              </span>
-                            </span>
+                                {/* Box 5 (Desktop only): Lay[1] */}
+                                <span className="hidden md:block text-center min-h-12">
+                                  <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
+                                    <OddsButton
+                                      price={l1?.price}
+                                      size={l1?.size}
+                                      isBack={false}
+                                      onClick={() => handleBetClick(runnerName, runnerId, "Lay", l1?.price, "Match Odds", l1?.size, 1, 50000, runnerBetKey)}
+                                    />
+                                  </span>
+                                </span>
 
-                            {/* Box 6 (Desktop only): Lay[2] */}
-                            <span className="hidden md:block text-center min-h-12">
-                              <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
-                                <OddsButton
-                                  price={l2?.price}
-                                  size={l2?.size}
-                                  isBack={false}
-                                  onClick={() => handleBetClick(runnerName, runnerId, "Lay", l2?.price, "Match Odds", l2?.size, 1, 50000, runnerBetKey)}
-                                />
-                              </span>
-                            </span>
+                                {/* Box 6 (Desktop only): Lay[2] */}
+                                <span className="hidden md:block text-center min-h-12">
+                                  <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
+                                    <OddsButton
+                                      price={l2?.price}
+                                      size={l2?.size}
+                                      isBack={false}
+                                      onClick={() => handleBetClick(runnerName, runnerId, "Lay", l2?.price, "Match Odds", l2?.size, 1, 50000, runnerBetKey)}
+                                    />
+                                  </span>
+                                </span>
+                              </>
+                            )}
                           </div>
                           {isBetOpen && (
                             <BetSlip
@@ -1064,18 +1097,23 @@ const MarketPage = () => {
 
                   <div className="bg-bg_Quaternary rounded-[3px] shadow-[0_8px_30px_rgb(0,0,0,0.12)] py-[1px] cursor-pointer">
                     {(bookmakerRunners || []).filter(Boolean).map((runner, rIdx) => {
+                      const isLast = rIdx === (bookmakerRunners || []).length - 1;
+                      const runnerName = runner?.runnerName || runner?.runner || runner?.name || `Runner ${rIdx + 1}`;
+                      const runnerId = runner?.selectionId ?? runner?.SelectionId ?? runner?.id ?? rIdx;
+                      const runnerBetKey = `bm_${runnerId}_${rIdx}`;
+                      const isBetOpen = Boolean(activeBet && activeBet.betKey === runnerBetKey);
+                      const preview = getBetPreview(runnerBetKey, "Bookmaker");
+
                       const backOdds = runner?.ex?.availableToBack || runner?.back || [];
                       const layOdds = runner?.ex?.availableToLay || runner?.lay || [];
 
                       const b0 = backOdds[0] || null;
                       const l0 = layOdds[0] || null;
 
-                      const isLast = rIdx === (bookmakerRunners || []).length - 1;
-                      const runnerName = runner?.name || runner?.runnerName || `Team ${rIdx + 1}`;
-                      const runnerId = runner?.selectionId ?? runner?.SelectionId ?? runner?.id ?? rIdx;
-                      const runnerBetKey = `bookmaker_${runnerId}_${rIdx}`;
-                      const isBetOpen = Boolean(activeBet && activeBet.betKey === runnerBetKey);
-                      const preview = getBetPreview(runnerBetKey, "Bookmaker");
+                      const statusRaw = String(runner?.status || runner?.GameStatus || "").toLowerCase().trim();
+                      const isBallRunning = statusRaw === "ball running" || Boolean(runner?.isBallRunning);
+                      const isMissingRates = (!b0?.price || b0?.price === "-" || b0?.price === 0 || b0?.price === "0") && (!l0?.price || l0?.price === "-" || l0?.price === 0 || l0?.price === "0");
+                      const isSuspended = statusRaw === "suspended" || statusRaw === "closed" || statusRaw === "inactive" || (!isBallRunning && isMissingRates);
 
                       return (
                         <div key={runnerBetKey} className={`grid grid-cols-12 ${!isLast ? "border-b border-borderColorOfMarket" : ""}`}>
@@ -1096,52 +1134,68 @@ const MarketPage = () => {
                             </div>
                           </div>
                           <div className="col-span-5 md:col-span-7 h-12 grid grid-cols-2 md:grid-cols-6 relative">
-                            {/* Empty Box 1 */}
-                            <span className="hidden md:block text-center min-h-12">
-                              <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
-                                <OddsButton disabled={true} isBack={true} />
+                            {isBallRunning ? (
+                              <span className="col-span-2 md:col-span-6 text-center min-h-12 py-[1px] px-[1px]">
+                                <span className="text-center bg-bg_ballRunning cursor-not-allowed w-full h-full rounded-sm flex text-xs flex-col items-center justify-center font-bold tracking-wider">
+                                  BALL RUNNING
+                                </span>
                               </span>
-                            </span>
-                            {/* Empty Box 2 */}
-                            <span className="hidden md:block text-center min-h-12">
-                              <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
-                                <OddsButton disabled={true} isBack={true} />
+                            ) : isSuspended ? (
+                              <span className="col-span-2 md:col-span-6 text-center min-h-12 py-[1px] px-[1px]">
+                                <span className="text-center bg-bg_ballRunning cursor-not-allowed w-full h-full rounded-sm flex text-xs flex-col items-center justify-center font-bold tracking-wider">
+                                  SUSPENDED
+                                </span>
                               </span>
-                            </span>
-                            {/* Best Back */}
-                            <span className="text-center min-h-12">
-                              <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
-                                <OddsButton
-                                  price={b0?.price}
-                                  size={b0?.size}
-                                  isBack={true}
-                                  onClick={() => handleBetClick(runnerName, runnerId, "Back", b0?.price, "Bookmaker", b0?.size, 100, 200000, runnerBetKey)}
-                                />
-                              </span>
-                            </span>
-                            {/* Best Lay */}
-                            <span className="text-center min-h-12">
-                              <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
-                                <OddsButton
-                                  price={l0?.price}
-                                  size={l0?.size}
-                                  isBack={false}
-                                  onClick={() => handleBetClick(runnerName, runnerId, "Lay", l0?.price, "Bookmaker", l0?.size, 100, 200000, runnerBetKey)}
-                                />
-                              </span>
-                            </span>
-                            {/* Empty Box 5 */}
-                            <span className="hidden md:block text-center min-h-12">
-                              <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
-                                <OddsButton disabled={true} isBack={false} />
-                              </span>
-                            </span>
-                            {/* Empty Box 6 */}
-                            <span className="hidden md:block text-center min-h-12">
-                              <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
-                                <OddsButton disabled={true} isBack={false} />
-                              </span>
-                            </span>
+                            ) : (
+                              <>
+                                {/* Empty Box 1 */}
+                                <span className="hidden md:block text-center min-h-12">
+                                  <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
+                                    <OddsButton disabled={true} isBack={true} />
+                                  </span>
+                                </span>
+                                {/* Empty Box 2 */}
+                                <span className="hidden md:block text-center min-h-12">
+                                  <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
+                                    <OddsButton disabled={true} isBack={true} />
+                                  </span>
+                                </span>
+                                {/* Best Back */}
+                                <span className="text-center min-h-12">
+                                  <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
+                                    <OddsButton
+                                      price={b0?.price}
+                                      size={b0?.size}
+                                      isBack={true}
+                                      onClick={() => handleBetClick(runnerName, runnerId, "Back", b0?.price, "Bookmaker", b0?.size, 100, 200000, runnerBetKey)}
+                                    />
+                                  </span>
+                                </span>
+                                {/* Best Lay */}
+                                <span className="text-center min-h-12">
+                                  <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
+                                    <OddsButton
+                                      price={l0?.price}
+                                      size={l0?.size}
+                                      isBack={false}
+                                      onClick={() => handleBetClick(runnerName, runnerId, "Lay", l0?.price, "Bookmaker", l0?.size, 100, 200000, runnerBetKey)}
+                                    />
+                                  </span>
+                                </span>
+                                {/* Empty Box 5 */}
+                                <span className="hidden md:block text-center min-h-12">
+                                  <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
+                                    <OddsButton disabled={true} isBack={false} />
+                                  </span>
+                                </span>
+                                {/* Empty Box 6 */}
+                                <span className="hidden md:block text-center min-h-12">
+                                  <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
+                                    <OddsButton disabled={true} isBack={false} />
+                                  </span>
+                                </span>
+                              </>
+                            )}
                           </div>
                           {isBetOpen && (
                             <BetSlip
@@ -1206,6 +1260,11 @@ const MarketPage = () => {
                       const isBetOpen = Boolean(activeBet && activeBet.betKey === runnerBetKey);
                       const preview = getBetPreview(runnerBetKey, "To Win The Toss");
 
+                      const statusRaw = String(runner?.status || runner?.GameStatus || "").toLowerCase().trim();
+                      const isBallRunning = statusRaw === "ball running" || Boolean(runner?.isBallRunning);
+                      const isMissingRates = (!b0?.price || b0?.price === "-") && (!l0?.price || l0?.price === "-");
+                      const isSuspended = statusRaw === "suspended" || statusRaw === "closed" || statusRaw === "inactive" || (!isBallRunning && isMissingRates);
+
                       return (
                         <div key={runnerBetKey} className={`grid grid-cols-12 ${!isLast ? "border-b border-borderColorOfMarket" : ""}`}>
                           <div className="w-full md:col-span-5 col-span-7 h-12 grid grid-cols-12 grid-flow-col pl-2.5 md:pl-2 py-0.5 pr-[3px]">
@@ -1225,46 +1284,62 @@ const MarketPage = () => {
                             </div>
                           </div>
                           <div className="col-span-5 md:col-span-7 h-12 grid grid-cols-2 md:grid-cols-6 relative">
-                            <span className="hidden md:block text-center min-h-12">
-                              <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
-                                <OddsButton disabled={true} isBack={true} />
+                            {isBallRunning ? (
+                              <span className="col-span-2 md:col-span-6 text-center min-h-12 py-[1px] px-[1px]">
+                                <span className="text-center bg-bg_ballRunning cursor-not-allowed w-full h-full rounded-sm flex text-xs flex-col items-center justify-center font-bold tracking-wider">
+                                  BALL RUNNING
+                                </span>
                               </span>
-                            </span>
-                            <span className="hidden md:block text-center min-h-12">
-                              <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
-                                <OddsButton disabled={true} isBack={true} />
+                            ) : isSuspended ? (
+                              <span className="col-span-2 md:col-span-6 text-center min-h-12 py-[1px] px-[1px]">
+                                <span className="text-center bg-bg_ballRunning cursor-not-allowed w-full h-full rounded-sm flex text-xs flex-col items-center justify-center font-bold tracking-wider">
+                                  SUSPENDED
+                                </span>
                               </span>
-                            </span>
-                            <span className="text-center min-h-12">
-                              <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
-                                <OddsButton
-                                  price={b0?.price}
-                                  size={b0?.size}
-                                  isBack={true}
-                                  onClick={() => handleBetClick(runnerName, runnerId, "Back", b0?.price, "To Win The Toss", b0?.size, 1, 25000, runnerBetKey)}
-                                />
-                              </span>
-                            </span>
-                            <span className="text-center min-h-12">
-                              <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
-                                <OddsButton
-                                  price={l0?.price}
-                                  size={l0?.size}
-                                  isBack={false}
-                                  onClick={() => handleBetClick(runnerName, runnerId, "Lay", l0?.price, "To Win The Toss", l0?.size, 1, 25000, runnerBetKey)}
-                                />
-                              </span>
-                            </span>
-                            <span className="hidden md:block text-center min-h-12">
-                              <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
-                                <OddsButton disabled={true} isBack={false} />
-                              </span>
-                            </span>
-                            <span className="hidden md:block text-center min-h-12">
-                              <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
-                                <OddsButton disabled={true} isBack={false} />
-                              </span>
-                            </span>
+                            ) : (
+                              <>
+                                <span className="hidden md:block text-center min-h-12">
+                                  <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
+                                    <OddsButton disabled={true} isBack={true} />
+                                  </span>
+                                </span>
+                                <span className="hidden md:block text-center min-h-12">
+                                  <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
+                                    <OddsButton disabled={true} isBack={true} />
+                                  </span>
+                                </span>
+                                <span className="text-center min-h-12">
+                                  <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
+                                    <OddsButton
+                                      price={b0?.price}
+                                      size={b0?.size}
+                                      isBack={true}
+                                      onClick={() => handleBetClick(runnerName, runnerId, "Back", b0?.price, "To Win The Toss", b0?.size, 1, 25000, runnerBetKey)}
+                                    />
+                                  </span>
+                                </span>
+                                <span className="text-center min-h-12">
+                                  <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
+                                    <OddsButton
+                                      price={l0?.price}
+                                      size={l0?.size}
+                                      isBack={false}
+                                      onClick={() => handleBetClick(runnerName, runnerId, "Lay", l0?.price, "To Win The Toss", l0?.size, 1, 25000, runnerBetKey)}
+                                    />
+                                  </span>
+                                </span>
+                                <span className="hidden md:block text-center min-h-12">
+                                  <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
+                                    <OddsButton disabled={true} isBack={false} />
+                                  </span>
+                                </span>
+                                <span className="hidden md:block text-center min-h-12">
+                                  <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
+                                    <OddsButton disabled={true} isBack={false} />
+                                  </span>
+                                </span>
+                              </>
+                            )}
                           </div>
                           {isBetOpen && (
                             <BetSlip
@@ -1387,7 +1462,7 @@ const MarketPage = () => {
                                 <span className="text-[12px] font-bold text-text_Success" />
                               )}
                             </div>
-                            <span className="col-span-2 md:col-span-1 flex flex-row items-center justify-center relative">
+                            <span className="col-span-2 md:col-span-1 flex flex-row items-center justify-center">
                               {/* Red Circular 'i' icon with clickable Popover */}
                               <div className="relative">
                                 <span
@@ -1395,7 +1470,7 @@ const MarketPage = () => {
                                     e.stopPropagation();
                                     setActiveInfoTooltip((prev) => (prev === fancyBetKey ? null : fancyBetKey));
                                   }}
-                                  className="info-tooltip-btn w-4 h-4 bg-headerBg text-white rounded-full text-xs flex items-center justify-center cursor-pointer active:scale-95"
+                                  className="info-tooltip-btn w-4 h-4 bg-headerBg text-white rounded-full text-xs flex items-center justify-center cursor-pointer"
                                 >
                                   i
                                 </span>
@@ -1403,23 +1478,21 @@ const MarketPage = () => {
                                 {activeInfoTooltip === fancyBetKey && (
                                   <div
                                     onClick={(e) => e.stopPropagation()}
-                                    className="info-tooltip-box absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 bg-white text-black p-2 rounded shadow-lg border text-xs font-semibold whitespace-nowrap"
+                                    className="info-tooltip-box absolute shadow-[0_8px_30px_rgba(0,0,0,0.35)] top-full bg-[#ffffff] text-[#000000] mb-2 text-xs rounded whitespace-nowrap z-50 px-[12px] py-[5px]"
                                   >
-                                    <div>Min: {minBetVal.toLocaleString()}</div>
-                                    <div>Max: {maxBetVal.toLocaleString()}</div>
-                                    <div className="w-2 h-2 bg-white rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2 border-r border-b" />
+                                    Min: {minBetVal.toLocaleString()}<br />Max: {maxBetVal.toLocaleString()}
                                   </div>
                                 )}
                               </div>
 
-                              <div className="opacity-50 cursor-not-allowed ml-1.5">
+                              <div className="opacity-50 cursor-not-allowed">
                                 <svg height="18" width="18" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                                   <g id="63d691358b4e4026f6539708_stairs 1">
-                                    <path id="Vector" d="M5.21875 3.13672V13.1367" stroke="var(--color-ternary4)" />
-                                    <path id="Vector_2" d="M5.21875 5.48047H10.5312" stroke="var(--color-ternary4)" />
-                                    <path id="Vector_3" d="M5.21875 8.13672H10.5312" stroke="var(--color-ternary4)" />
-                                    <path id="Vector_4" d="M5.21875 11.1055H10.5312" stroke="var(--color-ternary4)" />
-                                    <path id="Vector_5" d="M10.5312 3.13672V13.1367" stroke="var(--color-ternary4)" />
+                                    <path id="Vector" d="M5.21875 3.13672V13.1367" stroke="var(--color-ternary4)"></path>
+                                    <path id="Vector_2" d="M5.21875 5.48047H10.5312" stroke="var(--color-ternary4)"></path>
+                                    <path id="Vector_3" d="M5.21875 8.13672H10.5312" stroke="var(--color-ternary4)"></path>
+                                    <path id="Vector_4" d="M5.21875 11.1055H10.5312" stroke="var(--color-ternary4)"></path>
+                                    <path id="Vector_5" d="M10.5312 3.13672V13.1367" stroke="var(--color-ternary4)"></path>
                                   </g>
                                 </svg>
                               </div>

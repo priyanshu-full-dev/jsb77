@@ -1,7 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
 import InPlaySportsWidget from "../../components/InPlaySportsWidget";
 import UpcomingEvent from "../../components/UpcomingEvent";
+import {
+  setRunningData,
+  setMarketName,
+  setMarketOddsData,
+} from "../../../redux/slices/fullmarketSlice";
 
 // ==========================================
 // SVG ICONS
@@ -31,198 +37,205 @@ const CricketIcon = () => (
       d="M17.9928 8.49706C17.9761 8.16556 17.9451 7.83643 17.8927 7.50967C17.8283 7.11424 17.7305 6.72591 17.6137 6.33995C17.3777 5.55146 17.0225 4.8198 16.5814 4.12365C16.4336 3.89161 16.2762 3.66903 16.1022 3.45119C16.0879 3.46776 16.0736 3.48197 16.0617 3.49854C15.7231 3.93423 15.3869 4.36991 15.0484 4.80322C14.2426 5.84271 13.4367 6.88219 12.6309 7.92167C11.7988 8.99431 10.9691 10.0669 10.1371 11.1372C9.34792 12.1554 8.55639 13.1759 7.76724 14.1941C6.99001 15.1981 6.2104 16.202 5.43317 17.2036C5.40456 17.2391 5.40695 17.251 5.44986 17.2699C6.43213 17.6867 7.45492 17.9211 8.52063 17.9803C9.05468 18.0087 9.58872 17.9921 10.1204 17.9258C10.571 17.869 11.0144 17.7814 11.4483 17.6511C12.247 17.412 13.0052 17.0852 13.7157 16.6495C14.4619 16.1925 15.1247 15.6385 15.7112 14.9897C16.0998 14.5587 16.4455 14.097 16.7411 13.5998C17.1917 12.8421 17.5136 12.0346 17.7353 11.1846C17.8736 10.6518 17.9594 10.1096 17.988 9.56022C18.0095 9.20741 18.0119 8.85224 17.9928 8.49706ZM9.17865 15.8587C8.93547 16.1618 8.70182 16.472 8.46579 16.7821C8.3299 16.9621 8.15586 17.0473 7.92936 16.9952C7.69572 16.9408 7.54552 16.7443 7.5479 16.5051C7.54552 16.382 7.58843 16.2754 7.66472 16.1783C7.90075 15.8776 8.13678 15.5745 8.37281 15.2738C8.52778 15.0797 8.7805 15.0063 8.98792 15.1128C9.31931 15.2809 9.336 15.6598 9.17865 15.8587ZM11.105 13.2612C11.0955 13.3606 11.055 13.4435 10.9954 13.5216C10.7569 13.8271 10.5233 14.1349 10.2873 14.4403C10.1633 14.6014 10.0012 14.6795 9.79853 14.644C9.58157 14.6061 9.44567 14.4688 9.39322 14.2557C9.38369 14.2201 9.38369 14.1823 9.3813 14.1444C9.3813 14.026 9.42183 13.9194 9.49336 13.8271C9.73654 13.5169 9.97972 13.2043 10.2253 12.8941C10.3588 12.726 10.6115 12.6621 10.807 12.7426C10.9977 12.8231 11.1265 13.0457 11.105 13.2612ZM12.8407 11.1443C12.5927 11.4569 12.3519 11.7742 12.0992 12.082C11.98 12.2264 11.8131 12.3069 11.6176 12.2643C11.4078 12.2169 11.2695 12.082 11.2242 11.8689C11.1932 11.7268 11.2266 11.5918 11.3172 11.4734C11.5485 11.1704 11.7845 10.872 12.0134 10.5666C12.2494 10.2493 12.7501 10.28 12.9098 10.666C12.936 10.7276 12.9432 10.7915 12.9432 10.8554C12.9432 10.9644 12.9098 11.0591 12.8407 11.1443ZM14.6645 8.77646C14.419 9.09139 14.1758 9.41105 13.9326 9.72834C13.7991 9.90119 13.5678 9.97459 13.358 9.90829C13.1602 9.84673 13.0195 9.66204 13.0123 9.44656C13.0076 9.31633 13.0576 9.19794 13.1363 9.09849C13.3747 8.79067 13.6203 8.48996 13.8635 8.18687C14.0018 8.01639 14.2235 7.95009 14.4238 8.02112C14.624 8.09216 14.7575 8.27922 14.7599 8.49943C14.7528 8.59414 14.7313 8.69122 14.6645 8.77646ZM16.5099 6.40152C16.2667 6.71644 16.0235 7.03373 15.7827 7.34866C15.6254 7.55466 15.4084 7.62333 15.1795 7.53808C14.9888 7.46705 14.86 7.27288 14.8648 7.03847C14.8624 6.94375 14.9077 6.8372 14.9816 6.74012C15.2153 6.44177 15.4465 6.14342 15.6826 5.84508C15.8638 5.61303 16.1308 5.56804 16.3835 5.72432C16.5933 5.85691 16.6601 6.20736 16.5099 6.40152Z"
       fill="var(--color-iconsColor, #c10931)"
     />
-    <path
-      d="M12.5188 0.709924C11.5127 0.274241 10.4589 0.0469281 9.36222 0.00667475C8.58975 -0.0217394 7.82444 0.0398245 7.06866 0.205573C6.33911 0.364219 5.63817 0.605739 4.97299 0.94434C3.79522 1.54104 2.7915 2.35084 1.96896 3.38559C1.49213 3.98702 1.09398 4.63344 0.784041 5.33432C0.469333 6.04467 0.245222 6.78581 0.116478 7.55062C0.0592586 7.88212 0.0306488 8.21598 0.0163439 8.54985C0.00203901 8.85057 0.00203901 9.14891 0.0163439 9.44963C0.0282647 9.72904 0.0521062 10.0108 0.0902526 10.2878C0.142704 10.6738 0.233302 11.0527 0.338204 11.4268C0.457412 11.8577 0.602845 12.2816 0.791193 12.6888C0.979541 13.0937 1.19888 13.4821 1.4373 13.8609C1.57796 14.0835 1.72816 14.2966 1.89029 14.5097C5.44744 9.91609 8.99982 5.32248 12.5522 0.733602C12.5451 0.717027 12.5308 0.71466 12.5188 0.709924ZM3.05375 11.1379C2.81057 11.4505 2.56739 11.7654 2.31943 12.0732C2.17162 12.2579 1.91651 12.3171 1.70909 12.2082C1.45637 12.0732 1.3014 11.7441 1.5279 11.4741C1.61134 11.3747 1.68525 11.2681 1.76393 11.1639C1.92366 10.9532 2.07863 10.7377 2.24076 10.5294C2.37427 10.3565 2.55308 10.2831 2.77004 10.3328C2.987 10.3826 3.11097 10.5246 3.15627 10.7401C3.15865 10.7472 3.15865 10.7567 3.16104 10.7638C3.16104 10.7851 3.16104 10.8064 3.16104 10.8277C3.16342 10.9414 3.12528 11.0456 3.05375 11.1379ZM4.8824 8.78427C4.68213 9.03999 4.48186 9.29809 4.28159 9.55382C4.24583 9.60117 4.21006 9.64853 4.17192 9.69352C4.06463 9.82849 3.91681 9.89952 3.6784 9.89715C3.5282 9.89242 3.38753 9.77166 3.29932 9.5917C3.21349 9.42122 3.24687 9.2602 3.36369 9.10866C3.60449 8.79611 3.83814 8.47882 4.07655 8.16389C4.20291 7.99814 4.37457 7.92711 4.57722 7.96263C4.78226 7.99814 4.91816 8.1189 4.97538 8.32254C5.02544 8.49302 4.98968 8.64693 4.8824 8.78427ZM6.69673 6.43063C6.4607 6.73372 6.22467 7.03443 5.98864 7.33515C5.85275 7.508 5.66917 7.55772 5.46413 7.508C5.27101 7.46064 5.14704 7.32804 5.09697 7.13625C5.05882 6.98471 5.09935 6.84264 5.18995 6.72424C5.4379 6.40222 5.69301 6.08729 5.95049 5.77C6.07209 5.62083 6.23659 5.5711 6.42017 5.61136C6.61806 5.65398 6.74203 5.78421 6.79687 5.98074C6.80879 6.02099 6.81117 6.06125 6.80879 6.11571C6.81594 6.227 6.77303 6.33355 6.69673 6.43063ZM8.59452 3.9515C8.52538 4.09831 8.41332 4.21433 8.31796 4.33983C8.15107 4.55767 7.98179 4.77551 7.81013 4.98862C7.68139 5.14963 7.50496 5.21119 7.30708 5.17094C7.09727 5.12832 6.96138 4.99572 6.91369 4.78498C6.90654 4.75183 6.90654 4.71395 6.90177 4.67843C6.90416 4.5553 6.95422 4.45348 7.02575 4.35877C7.25701 4.05332 7.49066 3.75023 7.72669 3.44715C7.88166 3.24825 8.13199 3.17722 8.34657 3.2814C8.6279 3.42347 8.71134 3.70288 8.59452 3.9515ZM10.3683 1.70679C10.1299 2.02408 9.88673 2.33663 9.64355 2.65155C9.5148 2.8173 9.28115 2.8836 9.08089 2.81967C8.88062 2.75574 8.74234 2.57105 8.73518 2.35557C8.7328 2.22534 8.78287 2.10695 8.85678 2.00513C9.09042 1.69495 9.32884 1.38713 9.56725 1.07931C9.665 0.953812 9.79852 0.885144 9.97494 0.878041C10.1704 0.894616 10.3254 0.998801 10.4232 1.17639C10.5281 1.36108 10.4899 1.54577 10.3683 1.70679Z"
-      fill="var(--color-iconsColor, #c10931)"
-    />
   </svg>
 );
 
-// ==========================================
-// COMPETITIONS LIST DATA
-// ==========================================
-const COMPETITIONS = [
-  {
-    id: "womens-odi",
-    name: "Womens One Day Internationals",
-    hasMatches: true,
-    upcomingMatches: [
-      {
-        time: "Tomorrow at 5:00 PM",
-        team1: "Zimbabwe W",
-        team2: "South Africa W",
-        back: [
-          { price: "34", size: "134", disabled: false },
-          { price: "-", size: "", disabled: true },
-          { price: "1.02", size: "17,611", disabled: false },
-        ],
-        lay: [
-          { price: "48", size: "21", disabled: false },
-          { price: "-", size: "", disabled: true },
-          { price: "1.03", size: "1,469", disabled: false },
-        ],
-      },
-    ],
-  },
-  {
-    id: "womens-t20",
-    name: "Womens International Twenty20 Matches",
-    hasMatches: false,
-    upcomingMatches: [],
-  },
-  {
-    id: "womens-cpl",
-    name: "Women's Caribbean Premier League",
-    hasMatches: true,
-    upcomingMatches: [
-      {
-        time: "Today at 7:30 PM",
-        team1: "Barbados Tridents W",
-        team2: "Guyana Amazon Warriors",
-        back: [
-          { price: "1.75", size: "45", disabled: false },
-          { price: "-", size: "", disabled: true },
-          { price: "2.2", size: "89", disabled: false },
-        ],
-        lay: [
-          { price: "1.80", size: "60", disabled: false },
-          { price: "-", size: "", disabled: true },
-          { price: "2.28", size: "75", disabled: false },
-        ],
-      },
-    ],
-  },
-  {
-    id: "unofficial-intl",
-    name: "Unofficial International Matches",
-    hasMatches: false,
-    upcomingMatches: [],
-  },
-  {
-    id: "one-day",
-    name: "One Day Matches",
-    hasMatches: false,
-    upcomingMatches: [],
-  },
-  {
-    id: "oman-d50",
-    name: "Oman D50",
-    hasMatches: false,
-    upcomingMatches: [],
-  },
-  {
-    id: "metro-bank-w-cup",
-    name: "Metro Bank Womens One Day Cup",
-    hasMatches: true,
-    upcomingMatches: [
-      {
-        time: "Today at 5:00 PM",
-        team1: "Hampshire W",
-        team2: "Surrey W",
-        back: [
-          { price: "1.71", size: "83", disabled: false },
-          { price: "-", size: "", disabled: true },
-          { price: "2.36", size: "27", disabled: false },
-        ],
-        lay: [
-          { price: "1.75", size: "120", disabled: false },
-          { price: "-", size: "", disabled: true },
-          { price: "2.42", size: "45", disabled: false },
-        ],
-      },
-    ],
-  },
-  {
-    id: "intl-t20",
-    name: "International Twenty20 Matches",
-    hasMatches: false,
-    upcomingMatches: [],
-  },
-  {
-    id: "euro-t20",
-    name: "European T20 Premier League",
-    hasMatches: true,
-    upcomingMatches: [
-      {
-        time: "Today at 6:45 PM",
-        team1: "Glasgow Cosmic",
-        team2: "Amsterdam Flames",
-        back: [
-          { price: "2.46", size: "33", disabled: false },
-          { price: "-", size: "", disabled: true },
-          { price: "1.66", size: "52", disabled: false },
-        ],
-        lay: [
-          { price: "2.52", size: "85", disabled: false },
-          { price: "-", size: "", disabled: true },
-          { price: "1.70", size: "110", disabled: false },
-        ],
-      },
-    ],
-  },
-  {
-    id: "euro-cricket",
-    name: "European Cricket Series",
-    hasMatches: true,
-    upcomingMatches: [
-      {
-        time: "Tomorrow at 3:00 PM",
-        team1: "Edinburgh Castle Rocks",
-        team2: "Belfast Wolves",
-        back: [
-          { price: "1.76", size: "11", disabled: false },
-          { price: "-", size: "", disabled: true },
-          { price: "1.64", size: "11", disabled: false },
-        ],
-        lay: [
-          { price: "1.82", size: "35", disabled: false },
-          { price: "-", size: "", disabled: true },
-          { price: "1.70", size: "25", disabled: false },
-        ],
-      },
-    ],
-  },
-  {
-    id: "cpl",
-    name: "Caribbean Premier League",
-    hasMatches: true,
-    upcomingMatches: [
-      {
-        time: "Tomorrow at 4:30 AM",
-        team1: "Barbados Tridents",
-        team2: "Jamaica Kingsmen",
-        back: [
-          { price: "1.67", size: "28", disabled: false },
-          { price: "-", size: "", disabled: true },
-          { price: "2.3", size: "59", disabled: false },
-        ],
-        lay: [
-          { price: "1.72", size: "40", disabled: false },
-          { price: "-", size: "", disabled: true },
-          { price: "2.38", size: "64", disabled: false },
-        ],
-      },
-    ],
-  },
-  {
-    id: "acc-mens",
-    name: "ACC Mens Premier Cup",
-    hasMatches: false,
-    upcomingMatches: [],
-  },
-];
-
 export default function SportsPage() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState("inplay"); // "inplay" or "competitions"
   const [selectedCompetition, setSelectedCompetition] = useState(null);
 
+  // Read real matches from Redux store
+  const { matches: cricketState } = useSelector(
+    (state) => state.matches?.cricket || {},
+  );
+  const { matches: soccerState } = useSelector(
+    (state) => state.matches?.soccer || {},
+  );
+  const { matches: tennisState } = useSelector(
+    (state) => state.matches?.tennis || {},
+  );
+
+  const formatMatchTime = (dateStr) => {
+    if (!dateStr) return "Upcoming";
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return "Upcoming";
+      const today = new Date();
+      const tomorrow = new Date();
+      tomorrow.setDate(today.getDate() + 1);
+
+      const timeStr = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true });
+      if (d.toDateString() === today.toDateString()) {
+        return `Today at ${timeStr}`;
+      }
+      if (d.toDateString() === tomorrow.toDateString()) {
+        return `Tomorrow at ${timeStr}`;
+      }
+      return `${d.getDate()}/${d.getMonth() + 1} at ${timeStr}`;
+    } catch {
+      return "Upcoming";
+    }
+  };
+
+  const parseTeams = (eventName = "", runners = []) => {
+    let team1 = "";
+    let team2 = "";
+    if (eventName && (eventName.includes(" v ") || eventName.includes(" vs ") || eventName.includes(" Vs "))) {
+      const parts = eventName.split(/\s+v(?:s)?\.?\s+/i);
+      team1 = parts[0]?.trim() || "";
+      team2 = parts[1]?.trim() || "";
+    } else if (runners && runners.length >= 2) {
+      team1 = runners[0]?.runnerName || runners[0]?.name || "Team 1";
+      team2 = runners[1]?.runnerName || runners[1]?.name || "Team 2";
+    }
+    return { team1: team1 || "Team 1", team2: team2 || "Team 2" };
+  };
+
+  const extractBackOdds = (match) => {
+    const market =
+      match?.matchOdds?.find(
+        (m) =>
+          m?.marketId === match?.marketId || m?.marketName === "Match Odds",
+      ) || match?.matchOdds?.[0];
+
+    const runners = market?.runners || [];
+    const r0 = runners[0] || {};
+    const r1 = runners[1] || {};
+    const r2 = runners[2] || {};
+
+    const b0 = r0.ex?.availableToBack?.[0] || null;
+    const b1 = r1.ex?.availableToBack?.[0] || null;
+    const b2 = r2.ex?.availableToBack?.[0] || null;
+
+    if (match.sportId === "1") {
+      return [
+        { price: b0?.price || "-", size: b0?.size || "" },
+        { price: b2?.price || "-", size: b2?.size || "" },
+        { price: b1?.price || "-", size: b1?.size || "" },
+      ];
+    }
+
+    return [
+      { price: b0?.price || "-", size: b0?.size || "" },
+      { price: "-", size: "" },
+      { price: b1?.price || "-", size: b1?.size || "" },
+    ];
+  };
+
+  // Dynamically derive real competitions from Redux matches
+  const competitions = useMemo(() => {
+    const getMatchList = (sportObj) => {
+      if (!sportObj) return [];
+      if (Array.isArray(sportObj.matches?.data)) return sportObj.matches.data;
+      if (Array.isArray(sportObj.matches)) return sportObj.matches;
+      if (Array.isArray(sportObj.data)) return sportObj.data;
+      if (Array.isArray(sportObj)) return sportObj;
+      return [];
+    };
+
+    const rawCricket = getMatchList(cricketState);
+    const rawSoccer = getMatchList(soccerState);
+    const rawTennis = getMatchList(tennisState);
+
+    const allMatches = [
+      ...rawCricket.map((m) => ({ ...m, sportName: "Cricket", sportId: "4" })),
+      ...rawSoccer.map((m) => ({ ...m, sportName: "Football", sportId: "1" })),
+      ...rawTennis.map((m) => ({ ...m, sportName: "Tennis", sportId: "2" })),
+    ];
+
+    const compMap = new Map();
+
+    allMatches.forEach((raw) => {
+      const compName =
+        raw?.competitionName || raw?.competition || "Other Competitions";
+      const compId = String(raw?.competitionId || compName);
+
+      if (!compMap.has(compId)) {
+        compMap.set(compId, {
+          id: compId,
+          name: compName,
+          sportName: raw.sportName,
+          sportId: raw.sportId,
+          matches: [],
+        });
+      }
+
+      const runners =
+        raw?.matchOdds?.find(
+          (m) =>
+            m?.marketId === raw?.marketId || m?.marketName === "Match Odds",
+        )?.runners ||
+        raw?.matchOdds?.[0]?.runners ||
+        raw?.matchRunners ||
+        [];
+
+      const { team1, team2 } = parseTeams(raw?.eventName, runners);
+      const isInPlay = Boolean(
+        raw?.inplay ||
+        raw?.inPlay ||
+        raw?.matchOdds?.some((o) => o?.inplay || o?.inPlay),
+      );
+
+      compMap.get(compId).matches.push({
+        eventId: raw?.eventId,
+        sportId: raw.sportId,
+        sportName: raw.sportName,
+        eventName: raw?.eventName || `${team1} v ${team2}`,
+        team1,
+        team2,
+        time: formatMatchTime(raw?.openDate || raw?.eventDate),
+        inplay: isInPlay,
+        back: extractBackOdds({ ...raw, sportId: raw.sportId }),
+        raw,
+      });
+    });
+
+    return Array.from(compMap.values()).map((c) => ({
+      ...c,
+      inplayMatches: c.matches.filter((m) => m.inplay),
+      upcomingMatches: c.matches.filter((m) => !m.inplay),
+    }));
+  }, [cricketState, soccerState, tennisState]);
+
   const handleMatchClick = (match) => {
-    const eventName = `${match.team1} v ${match.team2}`;
+    if (!match) return;
+    const raw = match.raw || match;
+    const eventId = raw.eventId || match.eventId;
+    const sportId = raw.sportId || match.sportId || "4";
+    const eventName = raw.eventName || match.eventName || `${match.team1} v ${match.team2}`;
+    const marketId = raw.marketId || match.marketId || `m-${eventId}`;
+    const competitionId = raw.competitionId || match.competitionId || "comp-1";
+    const bm = raw.bm ?? sportId === "4";
+    const fancy = raw.fancy ?? sportId === "4";
+
+    const runners = raw.matchRunners || [
+      { runnerName: match.team1 || "Team 1", selectionId: 101 },
+      { runnerName: match.team2 || "Team 2", selectionId: 102 },
+      ...(sportId === "1"
+        ? [{ runnerName: "The Draw", selectionId: 103 }]
+        : []),
+    ];
+
+    dispatch(setRunningData(runners));
+    dispatch(
+      setMarketName(raw.markets || [{ marketName: "Match Odds", marketId }]),
+    );
+
+    if (raw.matchOdds) {
+      dispatch(
+        setMarketOddsData({
+          data: { data: raw.matchOdds },
+          sport: match.sportName || "cricket",
+        }),
+      );
+    }
+
     navigate(
-      `/full-market?eventType=4&eventId=36050867&marketId=m-36050867&competitionId=comp-1&bm=true&fancy=true&pc=false&eventName=${encodeURIComponent(
-        eventName
-      )}&openDate=${encodeURIComponent(match.time || "")}&tv=true`
+      `/full-market?eventType=${sportId}&eventId=${eventId}&marketId=${marketId}&joinedMarketIds=${marketId}&competitionId=${competitionId}&bm=${bm}&fancy=${fancy}&pc=false&eventName=${encodeURIComponent(
+        eventName,
+      )}&openDate=${encodeURIComponent(raw.openDate || match.time || "")}&tv=${raw.tv || "true"}`,
     );
   };
 
@@ -291,20 +304,29 @@ export default function SportsPage() {
         <div className="w-full">
           {/* Sub-view A: Competitions List (When no competition is clicked) */}
           {!selectedCompetition && (
-            <div className="w-full pt-[15px] px-2 block lg:hidden">
+            <div className="w-full pt-[15px] px-2">
               <div className="font-lato flex flex-col gap-y-[5px] pb-2 h-full">
-                {COMPETITIONS.map((comp) => (
-                  <button
-                    key={comp.id}
-                    onClick={() => setSelectedCompetition(comp)}
-                    className="leading-normal relative overflow-hidden transition duration-150 ease-in-out bg-bg_Quaternary py-2.5 px-2 rounded-sm min-h-[40px] flex items-center shadow-sm cursor-pointer"
-                    type="button"
-                  >
-                    <span className="font-semibold w-full truncate text-left text-text_Ternary leading-5">
-                      {comp.name}
-                    </span>
-                  </button>
-                ))}
+                {competitions.length > 0 ? (
+                  competitions.map((comp) => (
+                    <button
+                      key={comp.id}
+                      onClick={() => setSelectedCompetition(comp)}
+                      className="leading-normal relative overflow-hidden transition duration-150 ease-in-out bg-bg_Quaternary py-2.5 px-3 rounded-sm min-h-[40px] flex items-center justify-between shadow-sm cursor-pointer hover:bg-black/5 dark:hover:bg-white/5"
+                      type="button"
+                    >
+                      <span className="font-semibold truncate text-left text-text_Ternary leading-5">
+                        {comp.name}
+                      </span>
+                      <span className="text-xs text-text_Ternary-new opacity-70 ml-2 whitespace-nowrap">
+                        {comp.matches.length} {comp.matches.length === 1 ? "match" : "matches"}
+                      </span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="p-8 text-center text-text_Ternary text-sm font-semibold">
+                    No active competitions found right now.
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -326,31 +348,50 @@ export default function SportsPage() {
                 </span>
               </div>
 
-              {/* In Play Section Header */}
+              {/* In Play Section */}
               <div title="In Play" className="w-full">
                 <div className="w-full font-helvetica-neue">
                   <div className="flex flex-col items-center justify-start gap-y-1 px-2">
                     <h6 className="text-start w-full text-sm font-semibold text-text_Primary text-[#c10931]">
                       In Play
                     </h6>
-                    <div className="flex w-full">
-                      <div className="flex flex-col w-full items-center">
-                        <span className="text-text_Ternary font-semibold text-[14px] py-[4px] px-[2px]">
-                          No In Play Events Found...
-                        </span>
-                        <div className="w-full flex flex-row font-lato items-center">
-                          <div className="flex flex-row items-center justify-evenly w-full">
-                            <span></span>
+                    {selectedCompetition.inplayMatches.length > 0 ? (
+                      <div className="w-full bg-bg_Quaternary-new rounded shadow-lg overflow-hidden">
+                        {selectedCompetition.inplayMatches.map((m, idx) => (
+                          <div
+                            key={m.eventId || idx}
+                            onClick={() => handleMatchClick(m)}
+                            className="p-2.5 flex items-center justify-between border-b border-borderColorOfMarket cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                          >
+                            <div className="flex flex-col">
+                              <span className="text-sm font-bold text-text_Ternary-new">
+                                {m.eventName}
+                              </span>
+                              <span className="text-xs text-[#28a745] font-semibold mt-0.5">
+                                ● LIVE IN PLAY
+                              </span>
+                            </div>
+                            <span className="text-xs font-bold text-[#c10831] px-2 py-1 rounded bg-[#c10831]/10">
+                              Bet Now
+                            </span>
                           </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex w-full">
+                        <div className="flex flex-col w-full items-center">
+                          <span className="text-text_Ternary font-semibold text-[14px] py-[4px] px-[2px]">
+                            No In Play Events Found...
+                          </span>
                         </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>
 
               {/* Upcoming Events Section */}
-              {selectedCompetition.hasMatches && selectedCompetition.upcomingMatches.length > 0 ? (
+              {selectedCompetition.upcomingMatches.length > 0 ? (
                 <div className="py-1 px-[6px] w-full">
                   <div className="w-full font-helvetica-neue">
                     <div
@@ -369,13 +410,13 @@ export default function SportsPage() {
 
                     <div className="bg-bg_Quaternary-new rounded-b border border-ternary4 border-t-0 border-b-0 shadow-lg">
                       <div className="eventHeadName grid grid-cols-12">
-                        {/* Cricket Header */}
+                        {/* Sport Header */}
                         <div className="text-text_Ternary-new px-2 h-full py-2.5 col-span-6 lg:col-span-5 pl-2 flex items-center justify-start w-full gap-x-2 border-t-[color:var(--border-borderColorOfMarket)] border-t border-solid">
                           <span>
                             <CricketIcon />
                           </span>
                           <div className="text-text_Ternary-new md:text-[18px] text-base font-semibold leading-3 tracking-wide text-center">
-                            Cricket
+                            {selectedCompetition.sportName || "Cricket"}
                           </div>
                         </div>
 
@@ -430,9 +471,9 @@ export default function SportsPage() {
 
                             <span className="col-span-6 h-12 lg:col-span-7 w-full overflow-hidden border-t border-borderColorOfMarket">
                               <div className="w-full flex h-full sm:px-[2px]">
-                                {/* Back Odds (1, X, 2) with 50% opacity fade */}
+                                {/* Back Odds (1, X, 2) */}
                                 <span className="grid grid-cols-12 grid-flow-col h-full w-full">
-                                  {match.back.map((item, idx) => (
+                                  {(match.back || []).map((item, idx) => (
                                     <span key={`back-${idx}`} className="col-span-4">
                                       <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
                                         <div className="overflow-hidden relative opacity-50 cursor-not-allowed w-full h-full px-1 py-[1px] rounded-sm flex flex-col items-center justify-center bg-bg_BackBtnBg border border-backBtn">
@@ -440,7 +481,7 @@ export default function SportsPage() {
                                             id="oddBtnPrice"
                                             className="relative z-10 transition-all ease-in-out duration-300 origin-center flex items-center justify-center w-full text-text_OddValue leading-5 text-sm md:text-[15px] font-semibold text-[#4a5568] dark:text-[#cbd5e1]"
                                           >
-                                            {item.price}
+                                            {item.price || "-"}
                                           </span>
                                           <span
                                             id="oddBtnSize"

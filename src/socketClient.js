@@ -75,7 +75,7 @@ export const socket = io(baseUrl, {
   reconnectionDelay: 1000,
   reconnectionDelayMax: 5000,
   reconnectionAttempts: Infinity,
-  transports: ["websocket"],
+  transports: ["polling", "websocket"],
 });
 
 // Expose socket and logger globally for browser DevTools inspect
