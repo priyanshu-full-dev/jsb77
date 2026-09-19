@@ -12,6 +12,7 @@ import IndianCardGamesSection from "../../components/IndianCardGamesSection";
 import Trendinggame from "../../components/Trendinggame";
 import UpcomingEvent from "../../components/UpcomingEvent";
 import CasinoPointNoticeModal from "../../components/CasinoPointNoticeModal";
+import KuberScreenLoader from "../../components/Loader/KuberScreenLoader";
 
 import { selectDomainID } from "../../../utils/helper/commonSelectors";
 import { updateCasinoSlice } from "../../../redux/slices/casinoSlice";
@@ -488,6 +489,15 @@ const Home = () => {
       setIsProcessing(false);
     }
   };
+
+  const cricketStatus = useSelector((state) => state.matches?.cricket?.status);
+  const isPageInitialLoading =
+    (!casinoApiData || casinoApiData.length === 0) &&
+    cricketStatus === "loading";
+
+  if (isPageInitialLoading) {
+    return <KuberScreenLoader />;
+  }
 
   return (
     <div className="w-full space-y-2 animate-in fade-in duration-200">

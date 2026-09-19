@@ -2,7 +2,7 @@ import { lazy, Suspense, Component } from "react";
 import PropTypes from "prop-types";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import AppLayout from "./components/AppLayout";
-import PageSkeleton from "./components/Loader/PageSkeleton";
+import KuberScreenLoader from "./components/Loader/KuberScreenLoader";
 
 // ==========================================================================
 // ADVANCED INDUSTRY-GRADE ERROR BOUNDARY & LAZY LOADER (0.1% ZERO JANK)
@@ -58,7 +58,7 @@ RouteErrorBoundary.propTypes = {
 /**
  * Higher-order loadable component with Lazy Loading, Suspense Fallback & Preload capability
  */
-export const loadable = (importFn, Fallback = PageSkeleton) => {
+export const loadable = (importFn, Fallback = KuberScreenLoader) => {
   const LazyComponent = lazy(importFn);
 
   // Expose preload method so routes can be pre-fetched on hover

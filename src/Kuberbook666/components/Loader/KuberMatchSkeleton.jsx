@@ -1,7 +1,7 @@
 import React from "react";
 import "../../styles/kuber.css";
 
-export default function KuberMatchSkeleton({ rows = 3, headerTitle = "Fetching Real-time Events..." }) {
+export default function KuberMatchSkeleton({ rows = 3, headerTitle = "Upcoming Events" }) {
   return (
     <div className="py-1 px-[6px] w-full animate-fadeIn">
       <div className="w-full font-helvetica-neue">

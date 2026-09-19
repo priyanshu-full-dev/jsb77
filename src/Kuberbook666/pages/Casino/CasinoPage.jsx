@@ -559,8 +559,8 @@ export default function CasinoPage({ tab }) {
           {isLoading ? (
             <div className="w-full mt-2 grid gap-x-2 gap-y-3 grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 2xl:grid-cols-10">
               {Array.from({ length: 18 }).map((_, i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="rounded-[8px] w-full aspect-[3/4] bg-[#2a2a2a]" />
+                <div key={i}>
+                  <div className="rounded-[8px] w-full aspect-[3/4] kb-skeleton border border-white/5" />
                 </div>
               ))}
             </div>
