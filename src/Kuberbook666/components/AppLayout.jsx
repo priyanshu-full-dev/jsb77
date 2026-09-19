@@ -12,6 +12,7 @@ import LoginModal from "./AuthModals/LoginModal";
 import SignupModal from "./AuthModals/SignupModal";
 import Footer from "./Footer";
 import "../styles/kuber.css";
+import { ThemeProvider, useTheme } from "../context/ThemeContext";
 
 import { fetchAllMatchesFast } from "../../redux/slices/matchSlice";
 import {
@@ -24,7 +25,7 @@ import {
 } from "../../socketClient";
 import { getUserId } from "../../utils/helper/commonSelectors";
 
-const AppLayout = () => {
+const AppLayoutContent = () => {
   const dispatch = useDispatch();
   const location = useLocation();
   const navigate = useNavigate();
@@ -36,10 +37,7 @@ const AppLayout = () => {
 
   const isLoggedIn = useSelector((state) => state?.user?.isLoggedIn);
   const currentUserId = useSelector(getUserId());
-
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem("kuber_theme") || "light";
-  });
+  const { theme, toggleTheme } = useTheme();
 
   // Log active route for developer inspection
   useEffect(() => {
@@ -92,17 +90,6 @@ const AppLayout = () => {
   }, [currentUserId]);
 
   useEffect(() => {
-    localStorage.setItem("kuber_theme", theme);
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-      document.documentElement.setAttribute("data-theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      document.documentElement.setAttribute("data-theme", "light");
-    }
-  }, [theme]);
-
-  useEffect(() => {
     const handleOpenLogin = () => setLoginOpen(true);
     const handleOpenSignup = () => setSignupOpen(true);
     const handleOpenDeposit = () => setDepositModalOpen(true);
@@ -120,10 +107,6 @@ const AppLayout = () => {
       window.removeEventListener("kuber_open_profile", handleOpenProfile);
     };
   }, []);
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
-  };
 
   return (
     <div
@@ -218,6 +201,14 @@ const AppLayout = () => {
         }}
       />
     </div>
+  );
+};
+
+const AppLayout = () => {
+  return (
+    <ThemeProvider>
+      <AppLayoutContent />
+    </ThemeProvider>
   );
 };
 

@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import LanguageModal, { getStoredLanguage } from "./LanguageModal";
 
 const Header = ({
   theme = "dark",
@@ -9,16 +11,28 @@ const Header = ({
   onOpenLogin,
   onOpenSignup,
   onOpenProfileDrawer,
-  onOpenDeposit,
 }) => {
-  const [showLangMenu, setShowLangMenu] = useState(false);
-  const [currentLang, setCurrentLang] = useState("EN");
+  const [isLangModalOpen, setIsLangModalOpen] = useState(false);
+  const [currentLang, setCurrentLang] = useState(getStoredLanguage);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
   const navigate = useNavigate();
   const isLoggedIn = useSelector((state) => state?.user?.isLoggedIn);
   const userData = useSelector((state) => state?.user?.userData);
+
+  // Sync language with global event
+  useEffect(() => {
+    const handleLangChanged = (e) => {
+      if (e.detail?.language) {
+        setCurrentLang(e.detail.language);
+      }
+    };
+    window.addEventListener("kuber_language_changed", handleLangChanged);
+    return () => {
+      window.removeEventListener("kuber_language_changed", handleLangChanged);
+    };
+  }, []);
 
   // Live timer for date and time display
   useEffect(() => {
@@ -27,13 +41,6 @@ const Header = ({
     }, 1000);
     return () => clearInterval(timer);
   }, []);
-
-  const languages = [
-    { code: "EN", label: "English" },
-    { code: "HI", label: "हिन्दी" },
-    { code: "BN", label: "বাংলা" },
-    { code: "TE", label: "తెలుగు" },
-  ];
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -97,8 +104,12 @@ const Header = ({
   return (
     <div
       id="header_body"
-      style={{ background: "linear-gradient(90deg, #6e081d, #c10931)" }}
-      className="w-full bg-headerBg h-[54px] lg:h-[72px] pr-[4px] md:px-4 flex items-center justify-between gap-1 relative select-none shadow-md"
+      style={
+        theme === "dark"
+          ? { background: "linear-gradient(90deg, #0e1017, #181b26)", borderBottom: "1px solid rgba(193, 9, 49, 0.35)" }
+          : { background: "linear-gradient(90deg, #6e081d, #c10931)" }
+      }
+      className="w-full h-[54px] lg:h-[72px] pr-[4px] md:px-4 flex items-center justify-between gap-1 relative select-none shadow-md transition-all duration-200"
     >
       {/* Left: Hamburger, Brand Logo, Theme Toggle */}
       <div
@@ -414,10 +425,11 @@ const Header = ({
             {/* Desktop Language Button */}
             <div className="relative">
               <button
-                onClick={() => setShowLangMenu(!showLangMenu)}
+                onClick={() => setIsLangModalOpen(true)}
                 className="relative overflow-hidden hidden md:flex items-center md:ml-2 text-text_color_primary2 justify-center text-xs py-1 md:py-2 px-1 md:px-2 rounded-full bg-bg_color_secondary border border-border_color_primary cursor-pointer active:scale-95"
                 type="button"
                 style={{ color: "rgb(255, 255, 255)" }}
+                title="Select Language"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -450,27 +462,6 @@ const Header = ({
                   <path d="M325.607,79.393c-5.857-5.857-15.355-5.858-21.213,0.001l-139.39,139.393L25.607,79.393 c-5.857-5.857-15.355-5.858-21.213,0.001c-5.858,5.858-5.858,15.355,0,21.213l150.004,150c2.813,2.813,6.628,4.393,10.606,4.393 s7.794-1.581,10.606-4.394l149.996-150C331.465,94.749,331.465,85.251,325.607,79.393z"></path>
                 </svg>
               </button>
-
-              {showLangMenu && (
-                <div className="absolute right-0 mt-2 w-32 bg-[#1f1619] border border-red-900/50 rounded-lg shadow-xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
-                  {languages.map((lang) => (
-                    <button
-                      key={lang.code}
-                      onClick={() => {
-                        setCurrentLang(lang.code);
-                        setShowLangMenu(false);
-                      }}
-                      className={`w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-red-900/40 ${
-                        currentLang === lang.code
-                          ? "text-yellow-400 font-bold"
-                          : "text-gray-200"
-                      }`}
-                    >
-                      {lang.label}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
 
@@ -479,11 +470,12 @@ const Header = ({
             <div className="flex justify-between items-center gap-x-1 h-max lg:hidden">
               {/* Mobile Language Button */}
               <button
-                onClick={() => setShowLangMenu(!showLangMenu)}
+                onClick={() => setIsLangModalOpen(true)}
                 className="relative overflow-hidden md:hidden flex items-center text-text_color_primary2 justify-center text-xs py-1 px-1 cursor-pointer active:scale-95"
                 type="button"
                 style={{ color: "rgb(255, 255, 255)" }}
                 aria-label="Language"
+                title="Select Language"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -587,9 +579,9 @@ const Header = ({
           {/* Language Selector Dropdown */}
           <div className="relative">
             <button
-              onClick={() => setShowLangMenu(!showLangMenu)}
-              className="p-1.5 rounded-full hover:bg-black/20 text-white transition-colors flex items-center justify-center"
-              title="Language"
+              onClick={() => setIsLangModalOpen(true)}
+              className="p-1.5 rounded-full hover:bg-black/20 text-white transition-colors flex items-center justify-center cursor-pointer"
+              title="Select Language"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -611,27 +603,6 @@ const Header = ({
                 <path d="M12.5 3a17 17 0 0 1 0 18"></path>
               </svg>
             </button>
-
-            {showLangMenu && (
-              <div className="absolute right-0 mt-2 w-32 bg-[#1f1619] border border-red-900/50 rounded-lg shadow-xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
-                {languages.map((lang) => (
-                  <button
-                    key={lang.code}
-                    onClick={() => {
-                      setCurrentLang(lang.code);
-                      setShowLangMenu(false);
-                    }}
-                    className={`w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-red-900/40 ${
-                      currentLang === lang.code
-                        ? "text-yellow-400 font-bold"
-                        : "text-gray-200"
-                    }`}
-                  >
-                    {lang.label}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Login Button */}
@@ -653,18 +624,18 @@ const Header = ({
                 strokeLinejoin="round"
               >
                 <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                <path d="M15 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
-                <path d="M21 12h-13l3 -3" />
-                <path d="M11 15l-3 -3" />
+                <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
+                <path d="M20 12h-13l3 -3m0 6l-3 -3" />
               </svg>
             </span>
-            <span className="text-xs sm:text-sm text-white font-semibold font-sans">
+            <span className="text-xs sm:text-sm text-white font-extrabold font-sans">
               Log In
             </span>
           </button>
 
           {/* Sign Up Button */}
           <button
+            id="signupButton"
             onClick={onOpenSignup}
             className="flex rounded-full lg:border border-white/60 gap-1 hover:opacity-90 w-max font-extrabold items-center justify-center lg:pr-4 lg:pl-3 py-1.5 sm:py-2 px-3 sm:px-4 bg-white shadow-sm active:scale-95 transition cursor-pointer"
           >
@@ -693,8 +664,25 @@ const Header = ({
           </button>
         </div>
       )}
+
+      {/* Language Selection Modal */}
+      <LanguageModal
+        isOpen={isLangModalOpen}
+        onClose={() => setIsLangModalOpen(false)}
+        onSelectLanguage={(code) => setCurrentLang(code)}
+        currentLanguage={currentLang}
+      />
     </div>
   );
+};
+
+Header.propTypes = {
+  theme: PropTypes.string,
+  onToggleTheme: PropTypes.func,
+  onOpenDrawer: PropTypes.func,
+  onOpenLogin: PropTypes.func,
+  onOpenSignup: PropTypes.func,
+  onOpenProfileDrawer: PropTypes.func,
 };
 
 export default Header;

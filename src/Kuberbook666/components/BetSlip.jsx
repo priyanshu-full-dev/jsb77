@@ -6,6 +6,7 @@ import { placeBet } from "../../socketClient";
 import { handleCancelPlaceBet } from "../../redux/slices/placeBetSlice";
 import { updateAvailableBalance, updateExposureBalance } from "../../redux/slices/userSlice";
 import { fetchBets } from "../../redux/slices/betsSlice";
+import { useTheme } from "../context/ThemeContext";
 
 export function calculateMargins(markettype, betType, selectedOdds, betStake, betSize = 100) {
   const stake = Number(betStake);
@@ -111,6 +112,7 @@ const BetSlip = ({
   const [loading, setLoading] = useState(false);
   const [, setIsCountingDown] = useState(false);
   const [userStakes, setUserStakes] = useState(getStoredStakes);
+  const { isDark } = useTheme();
 
   useEffect(() => {
     const handleStakesUpdate = () => {
@@ -373,22 +375,42 @@ const BetSlip = ({
       <div
         title="Bet Slip"
         id="betSlipPlaceorder"
-        className={`w-full bg-white dark:bg-[#1c1f2b] text-selection-none border-[2px] border-b-[5px] font-lato origin-top transition-all ease-in-out p-3 rounded-sm scaleVerticalOpen ${
+        style={{
+          backgroundColor: isDark ? "#1c1f2b" : "#ffffff",
+          color: isDark ? "#ffffff" : "#111827",
+        }}
+        className={`w-full text-selection-none border-[2px] border-b-[5px] font-lato origin-top transition-all ease-in-out p-3 rounded-sm scaleVerticalOpen ${
           isBack ? "border-backBtn" : "border-layBtn"
         }`}
       >
         {/* Top Part: ODDS & STAKE inputs */}
         <div id="topPartOfBetSlip" title="Bet Slip Top Part" className="grid grid-cols-12 pt-[2px] gap-x-[15px]">
-          <span className="col-span-6 text-[10px] text-gray-800 dark:text-gray-300 font-bold uppercase tracking-wider">ODDS</span>
+          <span
+            style={{ color: isDark ? "#cbd5e1" : "#1f2937" }}
+            className="col-span-6 text-[10px] font-bold uppercase tracking-wider"
+          >
+            ODDS
+          </span>
           <div className="col-span-6 w-full flex items-center justify-between">
-            <span className="text-[10px] text-gray-800 dark:text-gray-300 font-bold uppercase tracking-wider text-start pl-1">STAKE</span>
+            <span
+              style={{ color: isDark ? "#cbd5e1" : "#1f2937" }}
+              className="text-[10px] font-bold uppercase tracking-wider text-start pl-1"
+            >
+              STAKE
+            </span>
           </div>
 
           {/* Odds Stepper: [-] [60] [+] */}
           <span title="Odds" className="col-span-6 pt-1.5 w-full">
             <div className="grid grid-cols-12 min-h-[35px]">
               <span className="col-span-12 h-full pr-1 overflow-hidden">
-                <div className="flex items-center justify-center bg-white dark:bg-[#252836] border border-[#94a3b8] dark:border-[#323647] rounded-[4px] overflow-hidden h-[36px]">
+                <div
+                  style={{
+                    backgroundColor: isDark ? "#252836" : "#ffffff",
+                    borderColor: isDark ? "#323647" : "#94a3b8",
+                  }}
+                  className="flex items-center justify-center border rounded-[4px] overflow-hidden h-[36px]"
+                >
                   <button
                     onClick={handleDecrementOdds}
                     type="button"
@@ -407,7 +429,8 @@ const BetSlip = ({
                     id="odd-input"
                     aria-label="Odds input"
                     inputMode="decimal"
-                    className="block w-full focus:outline-none bg-transparent text-sm md:text-base font-bold text-center text-gray-900 dark:text-white border-0 py-1"
+                    style={{ color: isDark ? "#ffffff" : "#111827" }}
+                    className="block w-full focus:outline-none bg-transparent text-sm md:text-base font-bold text-center border-0 py-1"
                     autoComplete="off"
                     type="number"
                     step="0.01"
@@ -441,7 +464,12 @@ const BetSlip = ({
             <input
               id="stakeInput"
               inputMode="numeric"
-              className="focus:outline-none bg-[#e2e8f0] dark:bg-[#252836] border border-transparent dark:border-[#323647] text-sm md:text-base font-bold w-full h-[36px] text-center flex items-center justify-center text-gray-900 dark:text-white rounded-[4px] placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-[#c10931] active:border-[#c10931]"
+              style={{
+                backgroundColor: isDark ? "#252836" : "#e2e8f0",
+                borderColor: isDark ? "#323647" : "transparent",
+                color: isDark ? "#ffffff" : "#111827",
+              }}
+              className="focus:outline-none border text-sm md:text-base font-bold w-full h-[36px] text-center flex items-center justify-center rounded-[4px] placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-[#c10931] active:border-[#c10931]"
               placeholder={`Max : ${maxStakeDisplay}`}
               autoComplete="off"
               pattern="\d*"
@@ -453,7 +481,13 @@ const BetSlip = ({
         </div>
 
         {/* Quick Stake Preset Buttons Grid */}
-        <div className="mt-[15px] p-2.5 rounded-md border border-[#cbd5e1] dark:border-[#2e3344] bg-[#e4e7ec] dark:bg-[#1a1d29]">
+        <div
+          style={{
+            backgroundColor: isDark ? "#1a1d29" : "#e4e7ec",
+            borderColor: isDark ? "#2e3344" : "#cbd5e1",
+          }}
+          className="mt-[15px] p-2.5 rounded-md border"
+        >
           <div className="grid grid-cols-12 gap-x-1.5 gap-y-1.5">
             {userStakes.map((val, idx) => (
               <button
@@ -508,7 +542,12 @@ const BetSlip = ({
           <button
             type="button"
             onClick={handleCancel}
-            className="leading-normal relative overflow-hidden transition duration-150 ease-in-out px-5 py-2.5 w-[50%] flex items-center justify-center min-h-[46px] text-sm bg-white dark:bg-transparent text-[#64748b] dark:text-gray-300 font-bold border-[1.5px] border-[#e11d48] rounded-md cursor-pointer hover:bg-red-50 dark:hover:bg-red-500/10 active:scale-95"
+            style={{
+              backgroundColor: isDark ? "transparent" : "#ffffff",
+              color: isDark ? "#cbd5e1" : "#64748b",
+              borderColor: "#e11d48",
+            }}
+            className="leading-normal relative overflow-hidden transition duration-150 ease-in-out px-5 py-2.5 w-[50%] flex items-center justify-center min-h-[46px] text-sm font-bold border-[1.5px] rounded-md cursor-pointer hover:bg-red-50 dark:hover:bg-red-500/10 active:scale-95"
           >
             <span className="font-bold text-base leading-5">Cancel Bet</span>
           </button>
@@ -518,10 +557,15 @@ const BetSlip = ({
               disabled={!isStakeValid || loading}
               onClick={handlePlaceBet}
               type="button"
+              style={
+                !isStakeValid || loading
+                  ? { backgroundColor: isDark ? "#475569" : "#94a3b8" }
+                  : {}
+              }
               className={`leading-normal overflow-hidden transition duration-150 ease-in-out py-1 relative w-full flex min-h-[46px] px-3 rounded-md font-medium border-0 flex-row items-center justify-between ${
                 isStakeValid && !loading
                   ? "bg-placeBetBtnGrd cursor-pointer hover:brightness-110 active:scale-95 shadow-md"
-                  : "bg-[#94a3b8] dark:bg-[#475569] opacity-90 cursor-not-allowed"
+                  : "opacity-90 cursor-not-allowed"
               }`}
             >
               <div className="flex items-start justify-start flex-col">
@@ -561,7 +605,12 @@ const BetSlip = ({
 
         {/* Toggle Switch: Confirm bet before placing */}
         <div className="flex items-center justify-between w-full px-1 pt-3.5">
-          <span className="text-[13px] text-gray-800 dark:text-gray-200 font-medium">Confirm bet before placing</span>
+          <span
+            style={{ color: isDark ? "#e2e8f0" : "#1f2937" }}
+            className="text-[13px] font-medium"
+          >
+            Confirm bet before placing
+          </span>
           <label className="inline-flex items-center cursor-pointer relative">
             <input
               className="sr-only peer"
@@ -569,12 +618,31 @@ const BetSlip = ({
               checked={confirmBet}
               onChange={(e) => setConfirmBet(e.target.checked)}
             />
-            <div className={`relative border-[0.5px] font-lato rounded-full h-7 w-14 transition-colors duration-200 ${
-              confirmBet ? "bg-[#40af52] border-[#40af52]" : "bg-white dark:bg-gray-700 border-gray-400 dark:border-gray-500"
-            }`}>
+            <div
+              style={{
+                backgroundColor: confirmBet
+                  ? "#40af52"
+                  : isDark
+                    ? "#374151"
+                    : "#ffffff",
+                borderColor: confirmBet
+                  ? "#40af52"
+                  : isDark
+                    ? "#6b7280"
+                    : "#9ca3af",
+              }}
+              className="relative border-[0.5px] font-lato rounded-full h-7 w-14 transition-colors duration-200"
+            >
               <span
+                style={{
+                  color: confirmBet
+                    ? "#ffffff"
+                    : isDark
+                      ? "#d1d5db"
+                      : "#374151",
+                }}
                 className={`absolute top-1/2 transform -translate-y-1/2 font-bold text-[10px] ${
-                  confirmBet ? "left-[7px] text-white" : "right-[6px] text-gray-700 dark:text-gray-300"
+                  confirmBet ? "left-[7px]" : "right-[6px]"
                 }`}
               >
                 {confirmBet ? "ON" : "OFF"}
