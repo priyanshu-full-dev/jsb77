@@ -1,1 +1,0 @@
-import{j as o}from"./index.BUlAnrPc.js";import t from"./CasinoPage.CGIfy8Cl.js";import"./react.Dvwkxfce.js";import"./App.2H9Y3fjl.js";import"./index.BBSDxEfD.js";import"./lib.D4d-9vzj.js";import"./CasinoPointNoticeModal.Bup2_SnJ.js";function n(){return o.jsx(t,{tab:"live"})}export{n as default};

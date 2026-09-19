@@ -13,6 +13,7 @@ import Trendinggame from "../../components/Trendinggame";
 import UpcomingEvent from "../../components/UpcomingEvent";
 import CasinoPointNoticeModal from "../../components/CasinoPointNoticeModal";
 import KuberScreenLoader from "../../components/Loader/KuberScreenLoader";
+import { getCache, setCache } from "../../utils/cache";
 
 import { selectDomainID } from "../../../utils/helper/commonSelectors";
 import { updateCasinoSlice } from "../../../redux/slices/casinoSlice";
@@ -27,25 +28,40 @@ const Home = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  // Granular Narrow Selectors
   const domainId = useSelector(selectDomainID());
   const casinoApiData = useSelector((state) => state.casino?.casinoApiData);
 
   const isLoggedIn = useSelector((state) => state.user?.isLoggedIn);
   const loginType = useSelector((state) => state.user?.loggedInType);
-  const userData = useSelector((state) => state?.user?.userData);
+  const userToken = useSelector((state) => state?.user?.userData?.token);
+  const availableBalance = useSelector((state) => state?.user?.userData?.availableBalance);
+  const exposureBalance = useSelector((state) => state?.user?.exposureBalance);
   const siteCasinoData = useSelector((state) => state?.siteCasino);
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedGameForNotice, setSelectedGameForNotice] = useState(null);
 
-  /* ---------------- FETCH CASINO API DATA (MAHADEV LOGIC) ---------------- */
+  /* ---------------- FETCH CASINO API DATA (SMART CACHING) ---------------- */
   useEffect(() => {
+    const cacheKey = `casino_data_${domainId || "default"}`;
+    const cached = getCache(cacheKey);
+    if (cached && Array.isArray(cached) && cached.length > 0) {
+      if (!casinoApiData || casinoApiData.length === 0) {
+        dispatch(updateCasinoSlice({ casinoApiData: cached }));
+      }
+      return;
+    }
+
     const fetchCasinoData = async () => {
       try {
         const res = await axios.get(
           `https://api.professor.monster/api/int/getIntCasinos?domainId=${domainId || ""}`,
         );
         const data = res?.data || [];
+        if (Array.isArray(data) && data.length > 0) {
+          setCache(cacheKey, data);
+        }
         dispatch(updateCasinoSlice({ casinoApiData: data }));
       } catch (error) {
         console.error("Error fetching casino list for Kuber Home:", error);

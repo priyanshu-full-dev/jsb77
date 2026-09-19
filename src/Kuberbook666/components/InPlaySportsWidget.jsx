@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef } from "react";
+import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { socket } from "../../socketClient";
@@ -302,9 +302,10 @@ const extractOdds = (
 };
 
 // ==========================================
-// ODDS BUTTON COMPONENT (WITH 0.2s YELLOW FLASH ON UPDATE)
 // ==========================================
-const OddsButton = ({ price, size, disabled, isLay, onClick }) => {
+// ODDS BUTTON COMPONENT (WITH 0.2s YELLOW FLASH ON UPDATE - MEMOIZED)
+// ==========================================
+const OddsButton = React.memo(({ price, size, disabled, isLay, onClick }) => {
   const [flashing, setFlashing] = useState(false);
   const prevPriceRef = useRef(price);
   const prevSizeRef = useRef(size);
@@ -348,35 +349,29 @@ const OddsButton = ({ price, size, disabled, isLay, onClick }) => {
       ? "bg-[#fed7e2] border border-[#fbb6ce]"
       : "bg-bg_LayBtnBg border border-layBtn"
     : disabled
-      ? "bg-[#bfdbfe] border border-[#93c5fd]"
-      : "bg-bg_BackBtnBg border border-backBtn";
-
-  // Flash yellow with !important rule from kuber.css for 0.2s then fade back
-  const bgClass = flashing ? "odds-flash-yellow shadow-md" : defaultBg;
-  const isClickable = !disabled && price && price !== "-";
-  const stateClass = !isClickable
-    ? "cursor-default opacity-85"
-    : "cursor-pointer active:scale-95 opacity-100";
+    ? "bg-[#bee3f8] border border-[#90cdf4]"
+    : "bg-bg_BackBtnBg border border-backBtn";
 
   return (
     <span className="col-span-4">
       <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
         <div
-          onClick={(e) => {
-            e.stopPropagation();
-            if (isClickable && onClick) onClick();
-          }}
-          className={`overflow-hidden relative ${stateClass} w-full h-full px-1 py-[1px] rounded-sm flex flex-col items-center justify-center transition-colors duration-200 ease-out ${bgClass}`}
+          onClick={!disabled && onClick ? onClick : undefined}
+          className={`overflow-hidden relative ${
+            disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+          } w-full h-full px-1 py-[1px] rounded-sm flex flex-col items-center justify-center ${
+            flashing ? "odds-flash-yellow" : defaultBg
+          } transition-colors duration-150`}
         >
           <span
             id="oddBtnPrice"
-            className="relative z-10 transition-all ease-in-out duration-200 origin-center flex items-center justify-center w-full text-text_OddValue leading-5 text-sm md:text-[15px] font-semibold "
+            className="relative z-10 transition-all ease-in-out duration-300 origin-center flex items-center justify-center w-full text-text_OddValue leading-5 text-sm md:text-[15px] font-semibold"
           >
-            {price || "-"}
+            {disabled || !price ? "-" : price}
           </span>
           <span
             id="oddBtnSize"
-            className="relative z-10 transition-all ease-in-out duration-200 origin-center flex items-center justify-center w-full text-[10px] text-text_OddValue leading-3 text-center whitespace-normal font-normal "
+            className="relative z-10 transition-all ease-in-out duration-300 origin-center flex items-center justify-center w-full text-[10px] text-text_OddValue leading-3 text-center whitespace-normal font-normal"
           >
             <span className="w-max break-all truncate">
               {size ? <div className="odd-button__volume">{size}</div> : null}
@@ -386,12 +381,12 @@ const OddsButton = ({ price, size, disabled, isLay, onClick }) => {
       </span>
     </span>
   );
-};
+});
 
 // ==========================================
-// MATCH ROW COMPONENT
+// MATCH ROW COMPONENT (MEMOIZED)
 // ==========================================
-const MatchRow = ({
+const MatchRow = React.memo(({
   match,
   onOpen,
   activeBet,
@@ -508,12 +503,12 @@ const MatchRow = ({
       )}
     </div>
   );
-};
+});
 
 // ==========================================
-// SPORT BLOCK COMPONENT
+// SPORT BLOCK COMPONENT (MEMOIZED)
 // ==========================================
-const SportBlock = ({
+const SportBlock = React.memo(({
   sportData,
   onOpen,
   activeBet,
@@ -575,7 +570,7 @@ const SportBlock = ({
       </div>
     </div>
   );
-};
+});
 
 // ==========================================
 // MAIN IN-PLAY SPORTS WIDGET COMPONENT

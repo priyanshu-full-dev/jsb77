@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { placeBet } from "../../socketClient";
@@ -34,6 +34,11 @@ const BetSlip = ({
   const isBack = activeBet?.betType === "Back";
   const initialOdds = activeBet?.odds || "1.00";
 
+  // Granular Redux Selectors (Leaf / Primitive nodes)
+  const availableBalance = useSelector((state) => state.user?.userData?.availableBalance ?? 0);
+  const exposureBalance = useSelector((state) => state.user?.exposureBalance ?? 0);
+  const isUserLoggedInState = useSelector((state) => Boolean(state.user?.token || state.user?.userData?.token));
+
   const [odds, setOdds] = useState(initialOdds);
   const [stake, setStake] = useState("");
   const [confirmBet, setConfirmBet] = useState(false);
@@ -49,22 +54,22 @@ const BetSlip = ({
     }
   }, [activeBet?.odds, activeBet?.betKey]);
 
-  const updateOdds = (newOdds) => {
+  const updateOdds = useCallback((newOdds) => {
     setOdds(newOdds);
     if (onBetChange) {
       onBetChange({ odds: newOdds, stake });
     }
-  };
+  }, [onBetChange, stake]);
 
-  const updateStake = (newStake) => {
+  const updateStake = useCallback((newStake) => {
     setStake(newStake);
     if (onBetChange) {
       onBetChange({ odds, stake: newStake });
     }
-  };
+  }, [onBetChange, odds]);
 
   // Decrement Odds handler
-  const handleDecrementOdds = () => {
+  const handleDecrementOdds = useCallback(() => {
     const val = parseFloat(odds) || 0;
     if (val <= 1.01) return;
     let nextVal;
@@ -90,10 +95,10 @@ const BetSlip = ({
       nextVal = (val - 10).toFixed(0);
     }
     updateOdds(nextVal);
-  };
+  }, [odds, updateOdds]);
 
   // Increment Odds handler
-  const handleIncrementOdds = () => {
+  const handleIncrementOdds = useCallback(() => {
     const val = parseFloat(odds) || 0;
     let nextVal;
     if (val < 2) {
@@ -118,19 +123,19 @@ const BetSlip = ({
       nextVal = (val + 10).toFixed(0);
     }
     updateOdds(nextVal);
-  };
+  }, [odds, updateOdds]);
 
   // Handle stake additions
-  const handleAddStake = (val) => {
+  const handleAddStake = useCallback((val) => {
     const curr = Number(stake) || 0;
     const nextStake = String(curr + val);
     updateStake(nextStake);
-  };
+  }, [stake, updateStake]);
 
   // Min, Max, Clear
-  const handleMin = () => updateStake(String(activeBet?.min || min || 100));
-  const handleMax = () => updateStake(String(activeBet?.max || max || 100000));
-  const handleClear = () => updateStake("");
+  const handleMin = useCallback(() => updateStake(String(activeBet?.min || min || 100)), [activeBet?.min, min, updateStake]);
+  const handleMax = useCallback(() => updateStake(String(activeBet?.max || max || 100000)), [activeBet?.max, max, updateStake]);
+  const handleClear = useCallback(() => updateStake(""), [updateStake]);
 
   // Profit / Exposure Calculation
   const profit = useMemo(() => {
@@ -150,26 +155,44 @@ const BetSlip = ({
     }
   }, [stake, odds, isBack, activeBet?.marketType, activeBet?.size]);
 
-  // Place Bet submission
+  // Place Bet submission with Strict Pre-Flight Validations
   const handlePlaceBet = async () => {
-    const numStake = Number(stake) || 0;
-    const minVal = activeBet?.min || min || 100;
-    const maxVal = activeBet?.max || max || 100000;
+    // 1. Market Suspended Pre-flight Check
+    if (activeBet?.isSuspended || activeBet?.status === "SUSPENDED" || activeBet?.status === "BALL RUNNING") {
+      toast.warning("Market is currently suspended or inactive");
+      return;
+    }
 
+    const numStake = Number(stake) || 0;
+    const minVal = Number(activeBet?.min || min || 100);
+    const maxVal = Number(activeBet?.max || max || 100000);
+
+    // 2. Stake Amount Validity
     if (!numStake || numStake <= 0) {
       toast.warning("Please enter a valid stake amount");
       return;
     }
 
+    // 3. Min & Max Limits Check
     if (numStake < minVal || numStake > maxVal) {
-      toast.warning(`Bet must be between ${minVal.toLocaleString()} - ${maxVal.toLocaleString()}`);
+      toast.warning(`Bet must be between ₹${minVal.toLocaleString()} - ₹${maxVal.toLocaleString()}`);
       return;
     }
 
+    // 4. User Authentication Pre-flight Check
     const token = localStorage.getItem("token") || localStorage.getItem("userId");
-    if (!token) {
+    if (!token && !isUserLoggedInState) {
       toast.info("Please login to place bets");
       window.dispatchEvent(new Event("kuber_open_login"));
+      return;
+    }
+
+    // 5. Usable Balance Pre-flight Check: (availableBalance - exposure) >= stake
+    const numAvail = Number(availableBalance) || 0;
+    const numExpo = Number(exposureBalance) || 0;
+    const usableBalance = numAvail - numExpo;
+    if (usableBalance < numStake && numAvail > 0) {
+      toast.error(`Insufficient balance! Usable Balance: ₹${Math.max(0, usableBalance).toLocaleString()}`);
       return;
     }
 

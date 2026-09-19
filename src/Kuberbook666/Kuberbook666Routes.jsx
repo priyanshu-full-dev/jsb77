@@ -2,6 +2,7 @@ import { lazy, Suspense, Component } from "react";
 import PropTypes from "prop-types";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import AppLayout from "./components/AppLayout";
+import Loader from "./components/Loader/Loader";
 import KuberScreenLoader from "./components/Loader/KuberScreenLoader";
 
 // ==========================================================================
@@ -76,16 +77,16 @@ export const loadable = (importFn, Fallback = KuberScreenLoader) => {
 };
 
 // ==========================================================================
-// CODE-SPLIT PAGES (PREFETCHABLE CHUNKS)
+// CODE-SPLIT PAGES WITH WEBPACK PREFETCHING (PREFETCHABLE CHUNKS)
 // ==========================================================================
-const Home = loadable(() => import("./pages/Home/Home"));
-const SportsPage = loadable(() => import("./pages/Sports/SportsPage"));
-const CasinoPage = loadable(() => import("./pages/Casino/CasinoPage"));
-const LiveCasinoPage = loadable(() => import("./pages/LiveCasino/LiveCasinoPage"));
-const InPlayPage = loadable(() => import("./pages/InPlay/InPlayPage"));
-const ProfilePage = loadable(() => import("./pages/Account/ProfilePage"));
-const MarketPage = loadable(() => import("./pages/Market/MarketPage"));
-const GameLobby = loadable(() => import("./pages/GameLobby/GameLobby"));
+const Home = loadable(() => import(/* webpackPrefetch: true */ "./pages/Home/Home"));
+const SportsPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Sports/SportsPage"));
+const CasinoPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Casino/CasinoPage"));
+const LiveCasinoPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/LiveCasino/LiveCasinoPage"));
+const InPlayPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/InPlay/InPlayPage"));
+const ProfilePage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Account/ProfilePage"));
+const MarketPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Market/MarketPage"));
+const GameLobby = loadable(() => import(/* webpackPrefetch: true */ "./pages/GameLobby/GameLobby"));
 
 // ==========================================================================
 // ROUTE CONFIGURATION

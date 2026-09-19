@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { socket } from "../../socketClient";
@@ -88,9 +88,9 @@ const TvIcon = () => (
 );
 
 // ==========================================
-// ODDS BUTTON COMPONENT
+// ODDS BUTTON COMPONENT (MEMOIZED FOR ZERO-JANK)
 // ==========================================
-const OddsButton = ({ price, size, isLay }) => {
+const OddsButton = React.memo(({ price, size, isLay }) => {
   const isDash = !price || price === "-" || price === 0 || price === "0";
   const bgClass = isLay
     ? "bg-bg_LayBtnBg border border-layBtn"
@@ -124,12 +124,12 @@ const OddsButton = ({ price, size, isLay }) => {
       </span>
     </span>
   );
-};
+});
 
 // ==========================================
-// MATCH ROW COMPONENT
+// MATCH ROW COMPONENT (MEMOIZED)
 // ==========================================
-const MatchRow = ({ match, onOpen }) => {
+const MatchRow = React.memo(({ match, onOpen }) => {
   return (
     <div className="col-span-12 grid grid-cols-12">
       <div className="col-span-6 h-12 lg:col-span-5 grid grid-cols-7 border-t border-borderColorOfMarket">
@@ -198,12 +198,12 @@ const MatchRow = ({ match, onOpen }) => {
       </span>
     </div>
   );
-};
+});
 
 // ==========================================
-// SPORT BLOCK COMPONENT
+// SPORT BLOCK COMPONENT (MEMOIZED)
 // ==========================================
-const SportBlock = ({ sportData, onOpen }) => {
+const SportBlock = React.memo(({ sportData, onOpen }) => {
   const renderSportIcon = () => {
     switch (sportData.sport) {
       case "Cricket":
@@ -255,7 +255,7 @@ const SportBlock = ({ sportData, onOpen }) => {
       </div>
     </div>
   );
-};
+});
 
 // ==========================================
 // MAIN UPCOMING EVENT COMPONENT
@@ -452,7 +452,7 @@ export default function UpcomingEvent({
     tennisMatches,
   ]);
 
-  const handleOpen = (match) => {
+  const handleOpen = React.useCallback((match) => {
     if (!match) return;
     const sportName = match.sportName || "Cricket";
     const sportId =
@@ -468,7 +468,7 @@ export default function UpcomingEvent({
         eventName,
       )}&openDate=${encodeURIComponent(match.time || "")}&tv=true`,
     );
-  };
+  }, [navigate]);
 
   const cricketLoading = useSelector((state) => state.matches?.cricket?.status === "loading");
   const soccerLoading = useSelector((state) => state.matches?.soccer?.status === "loading");
