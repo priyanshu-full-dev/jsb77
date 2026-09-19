@@ -14,6 +14,19 @@ import {
 import CasinoPointNoticeModal from "../../components/CasinoPointNoticeModal";
 import { openLoginModal, isUserLoggedIn } from "../../utils/authModalEvents";
 
+import mac88Img from "../../CasinoImage/mac88-BAzKFZNt.png";
+import slotImg from "../../CasinoImage/slot-CzSBovEw.png";
+import auraImg from "../../CasinoImage/aura-Dv5kU8Ie.png";
+import betgamesImg from "../../CasinoImage/betgames.png";
+import royaltyImg from "../../CasinoImage/rg-ecI0QzAQ.png";
+import evolutionImg from "../../CasinoImage/evolution.svg";
+import btgImg from "../../CasinoImage/bigtime gaming.svg";
+import evoplayImg from "../../CasinoImage/evoplay.png";
+import ezugiImg from "../../CasinoImage/ezugi.svg";
+import saGamingImg from "../../CasinoImage/Sa Gaming.png";
+import vivoGamingImg from "../../CasinoImage/Vivo gaming.png";
+import turboGamingImg from "../../CasinoImage/Turbo gaming.png";
+
 const normalizeGameId = (id) => {
   if (!id) return null;
   if (id.startsWith("DMD")) return id.split("-").pop();
@@ -21,27 +34,23 @@ const normalizeGameId = (id) => {
 };
 
 const providerLogos = {
-  mac88: "https://luckmedia.link/providers/mc8/logo_3_2_cl_dark.svg?q=65&w=600&px=auto&auto=format",
-  slot: "/assets/slot-CzSBovEw.png",
-  aura: "/assets/aura-Dv5kU8Ie.png",
-  betgames: "https://luckmedia.link/providers/bgm/logo_3_2_cl_dark.svg?q=65&w=600&px=auto&auto=format",
-  "betgames.tv": "https://luckmedia.link/providers/bgm/logo_3_2_cl_dark.svg?q=65&w=600&px=auto&auto=format",
-  royalgaming: "/assets/rg-ecI0QzAQ.png",
-  royaltygaming: "/assets/rg-ecI0QzAQ.png",
-  evolution: "https://luckmedia.link/providers/evo/logo_3_2_cl_dark.svg?q=65&w=600&px=auto&auto=format",
-  evolutiongaming: "https://luckmedia.link/providers/evo/logo_3_2_cl_dark.svg?q=65&w=600&px=auto&auto=format",
-  bigtimegaming: "https://luckmedia.link/providers/btg/logo_3_2_cl_dark.svg?q=65&w=600&px=auto&auto=format",
-  btg: "https://luckmedia.link/providers/btg/logo_3_2_cl_dark.svg?q=65&w=600&px=auto&auto=format",
-  evoplay: "/assets/evo-play-B4a-CkvN.svg",
-  ezugi: "https://luckmedia.link/providers/ezg/logo_3_2_cl_dark.svg?q=65&w=600&px=auto&auto=format",
-  sagaming: "/assets/SA-Gaming-BUOAf51M.svg",
-  vivo: "/assets/vivo-gaming-DgqeW9vk.svg",
-  vivogaming: "/assets/vivo-gaming-DgqeW9vk.svg",
-  turbogames: "/assets/turbo-games-BaS9dDhA.svg",
-  spribe: "/providerLogo/Spribe.webp",
-  jili: "/providerLogo/jili.webp",
-  jilli: "/providerLogo/jili.webp",
-  oddin: "/providerLogo/Oddin.webp",
+  mac88: mac88Img,
+  slot: slotImg,
+  aura: auraImg,
+  betgames: betgamesImg,
+  "betgames.tv": betgamesImg,
+  royalgaming: royaltyImg,
+  royaltygaming: royaltyImg,
+  evolution: evolutionImg,
+  evolutiongaming: evolutionImg,
+  bigtimegaming: btgImg,
+  btg: btgImg,
+  evoplay: evoplayImg,
+  ezugi: ezugiImg,
+  sagaming: saGamingImg,
+  vivo: vivoGamingImg,
+  vivogaming: vivoGamingImg,
+  turbogames: turboGamingImg,
 };
 
 const getProviderLogo = (name) => {
@@ -50,20 +59,20 @@ const getProviderLogo = (name) => {
   return providerLogos[key] || null;
 };
 
-// 12 Top Providers from user structure
+// 12 Top Providers matching CasinoImage folder
 const TOP_PROVIDERS = [
-  { name: "MAC88", logo: "https://luckmedia.link/providers/mc8/logo_3_2_cl_dark.svg?q=65&w=600&px=auto&auto=format", fallback: "/assets/mac88-BAzKFZNt.png", invert: true },
-  { name: "SLOT", logo: "/assets/slot-CzSBovEw.png", fallback: "/assets/slot-CzSBovEw.png", invert: false },
-  { name: "Aura", logo: "/assets/aura-Dv5kU8Ie.png", fallback: "/assets/aura-Dv5kU8Ie.png", invert: false },
-  { name: "BetGames.TV", logo: "/assets/Bet_Games-DQk1EkcT.svg", fallback: "https://luckmedia.link/providers/bgm/logo_3_2_cl_dark.svg?q=65&w=600&px=auto&auto=format", invert: false },
-  { name: "Royal Gaming", logo: "/assets/rg-ecI0QzAQ.png", fallback: "/assets/rg-ecI0QzAQ.png", invert: false },
-  { name: "Evolution Gaming", logo: "https://luckmedia.link/providers/evo/logo_3_2_cl_dark.svg?q=65&w=600&px=auto&auto=format", fallback: "/providerLogo/EvolutionGaming.webp", invert: false },
-  { name: "Big Time Gaming", logo: "https://luckmedia.link/providers/btg/logo_3_2_cl_dark.svg?q=65&w=600&px=auto&auto=format", fallback: "https://luckmedia.link/providers/btg/logo_3_2_cl_dark.svg?q=65&w=600&px=auto&auto=format", invert: false },
-  { name: "Evoplay", logo: "/assets/evo-play-B4a-CkvN.svg", fallback: "/providerLogo/evoplay.webp", invert: false },
-  { name: "Ezugi", logo: "https://luckmedia.link/providers/ezg/logo_3_2_cl_dark.svg?q=65&w=600&px=auto&auto=format", fallback: "/providerLogo/EzugiGaming.webp", invert: false },
-  { name: "SA Gaming", logo: "/assets/SA-Gaming-BUOAf51M.svg", fallback: "/providerLogo/AESexy.webp", invert: false },
-  { name: "Vivo Gaming", logo: "/assets/vivo-gaming-DgqeW9vk.svg", fallback: "/providerLogo/Vivo.webp", invert: false },
-  { name: "Turbo Games", logo: "/assets/turbo-games-BaS9dDhA.svg", fallback: "/providerLogo/turbogames.webp", invert: false },
+  { name: "MAC88", logo: mac88Img },
+  { name: "SLOT", logo: slotImg },
+  { name: "Aura", logo: auraImg },
+  { name: "BetGames.TV", logo: betgamesImg },
+  { name: "Royal Gaming", logo: royaltyImg },
+  { name: "Evolution Gaming", logo: evolutionImg },
+  { name: "Big Time Gaming", logo: btgImg },
+  { name: "Evoplay", logo: evoplayImg },
+  { name: "Ezugi", logo: ezugiImg },
+  { name: "SA Gaming", logo: saGamingImg },
+  { name: "Vivo Gaming", logo: vivoGamingImg },
+  { name: "Turbo Games", logo: turboGamingImg },
 ];
 
 export default function CasinoPage({ tab }) {
@@ -424,19 +433,18 @@ export default function CasinoPage({ tab }) {
         style={{ minHeight: "calc(100dvh - 110px)" }}
       >
         <div className="w-full h-full px-2">
-          {/* Top Provider Bar (Exact HTML Structure from Prompt) */}
-          <div className="w-full pb-1 bg-headerBg_casino mb-2 mt-1">
+          {/* Top Provider Bar (Matching Image 2) */}
+          <div className="w-full pb-1 bg-[#70081d] rounded-md mb-2 mt-1 shadow-sm">
             <div className="flex items-center p-2 md:p-3 justify-between w-full overflow-x-auto gap-[3px] mt-2 text-center">
               <div className="grid grid-cols-3 md:grid-cols-6 gap-2 w-full">
                 {TOP_PROVIDERS.map((provider) => {
                   const isSelected = activeProvider.toLowerCase() === provider.name.toLowerCase();
-                  const logoUrl = getProviderLogo(provider.name) || provider.logo;
 
                   return (
                     <button
                       key={provider.name}
-                      className={`relative overflow-hidden w-full aspect-[2.27] rounded-md inline-block active:scale-95 transition-all duration-100 ease-in-out bg-[#f3f4f6] shadow-md md:min-w-[200px] cursor-pointer ${
-                        isSelected ? "ring-2 ring-[#c10831]" : ""
+                      className={`relative overflow-hidden w-full aspect-[2.27] rounded-md inline-flex items-center justify-center active:scale-95 transition-all duration-100 ease-in-out bg-[#f3f4f6] shadow-md md:min-w-[200px] cursor-pointer p-1 ${
+                        isSelected ? "ring-2 ring-[#c10831] shadow-lg" : "hover:bg-white"
                       }`}
                       type="button"
                       title={provider.name}
@@ -446,17 +454,11 @@ export default function CasinoPage({ tab }) {
                       }}
                     >
                       <img
-                        src={logoUrl}
-                        onError={(e) => {
-                          if (provider.fallback && e.target.src !== provider.fallback) {
-                            e.target.src = provider.fallback;
-                          }
-                        }}
-                        className="w-[75%] max-h-[75%] [@supports(-webkit-touch-callout:none)]:h-full m-auto object-contain"
+                        src={provider.logo}
+                        className="w-[75%] max-h-[75%] [@supports(-webkit-touch-callout:none)]:h-full m-auto object-contain pointer-events-none"
                         alt={provider.name}
                         loading="lazy"
                         title={provider.name}
-                        style={provider.invert ? { filter: "invert(1)" } : undefined}
                       />
                     </button>
                   );
