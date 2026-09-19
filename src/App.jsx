@@ -36,7 +36,11 @@ const App = () => {
 
   const domainName = useMemo(() => {
     const host = window.location.host;
-    if (host.includes("localhost") || host.includes("127.0.0.1")) {
+    if (
+      host.includes("localhost") ||
+      host.includes("127.0.0.1") ||
+      host.includes("vercel.app")
+    ) {
       return "asianexchange.club";
     }
     return host;
