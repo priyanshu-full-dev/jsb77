@@ -362,6 +362,12 @@ const BetSlip = ({
 
   const isStakeValid = Number(stake) > 0;
 
+  const maxStakeDisplay = useMemo(() => {
+    const raw = activeBet?.max ?? max ?? 100000;
+    const num = Number(raw);
+    return isNaN(num) || num <= 0 ? "100,000" : num.toLocaleString();
+  }, [activeBet?.max, max]);
+
   return (
     <span className="col-span-12 h-max w-full">
       <div
@@ -373,23 +379,23 @@ const BetSlip = ({
       >
         {/* Top Part: ODDS & STAKE inputs */}
         <div id="topPartOfBetSlip" title="Bet Slip Top Part" className="grid grid-cols-12 pt-[2px] gap-x-[15px]">
-          <span className="col-span-6 text-[10px] text-text_Ternary-new dark:text-gray-300 font-normal">ODDS</span>
+          <span className="col-span-6 text-[10px] text-gray-800 dark:text-gray-300 font-bold uppercase tracking-wider">ODDS</span>
           <div className="col-span-6 w-full flex items-center justify-between">
-            <span className="text-[10px] text-text_Ternary-new dark:text-gray-300 font-normal text-start pl-1">STAKE</span>
+            <span className="text-[10px] text-gray-800 dark:text-gray-300 font-bold uppercase tracking-wider text-start pl-1">STAKE</span>
           </div>
 
-          {/* Odds Stepper: [-] [1.04] [+] */}
+          {/* Odds Stepper: [-] [60] [+] */}
           <span title="Odds" className="col-span-6 pt-1.5 w-full">
             <div className="grid grid-cols-12 min-h-[35px]">
               <span className="col-span-12 h-full pr-1 overflow-hidden">
-                <div className="flex items-center justify-center bg-[#dedede] dark:bg-[#252836] rounded-[4px] overflow-hidden h-[36px]">
+                <div className="flex items-center justify-center bg-white dark:bg-[#252836] border border-[#94a3b8] dark:border-[#323647] rounded-[4px] overflow-hidden h-[36px]">
                   <button
                     onClick={handleDecrementOdds}
                     type="button"
                     title="Decrease Odds"
-                    className="relative rounded-l-[4px] h-full w-[42px] min-w-[38px] flex items-center justify-center bg-placeBetBtnGrd text-white cursor-pointer active:opacity-80 transition select-none"
+                    className="relative rounded-l-[3px] h-full w-[36px] min-w-[32px] flex items-center justify-center bg-placeBetBtnGrd text-white cursor-pointer active:opacity-80 transition select-none"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="4" viewBox="0 0 18 4" fill="none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="3" viewBox="0 0 18 4" fill="none">
                       <path
                         d="M16.3363 3.1535H1.66367C1.02639 3.1535 0.51001 2.63713 0.51001 1.99985C0.51001 1.36257 1.02639 0.846191 1.66367 0.846191H16.3363C16.9736 0.846191 17.49 1.36257 17.49 1.99985C17.49 2.63713 16.9736 3.1535 16.3363 3.1535Z"
                         fill="#ffffff"
@@ -412,9 +418,9 @@ const BetSlip = ({
                     onClick={handleIncrementOdds}
                     type="button"
                     title="Increase Odds"
-                    className="relative rounded-r-[4px] h-full w-[42px] min-w-[38px] flex items-center justify-center bg-placeBetBtnGrd text-white cursor-pointer active:opacity-80 transition select-none"
+                    className="relative rounded-r-[3px] h-full w-[36px] min-w-[32px] flex items-center justify-center bg-placeBetBtnGrd text-white cursor-pointer active:opacity-80 transition select-none"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 18 18" fill="none">
                       <path
                         d="M8.99997 17.4897C8.36269 17.4897 7.84631 16.9734 7.84631 16.3361V1.66342C7.84631 1.02614 8.36269 0.509766 8.99997 0.509766C9.63725 0.509766 10.1536 1.02614 10.1536 1.66342V16.3361C10.1536 16.9734 9.63725 17.4897 8.99997 17.4897Z"
                         fill="#ffffff"
@@ -435,8 +441,8 @@ const BetSlip = ({
             <input
               id="stakeInput"
               inputMode="numeric"
-              className="focus:outline-none bg-[#dedede] dark:bg-[#252836] text-sm md:text-base font-bold w-full h-[36px] text-center flex items-center justify-center border border-transparent text-gray-900 dark:text-white rounded-[4px] placeholder:text-gray-500 focus:border-[#c10931] active:border-[#c10931]"
-              placeholder={`Max : ${(activeBet?.max || max || 100000).toLocaleString()}`}
+              className="focus:outline-none bg-[#e2e8f0] dark:bg-[#252836] border border-transparent dark:border-[#323647] text-sm md:text-base font-bold w-full h-[36px] text-center flex items-center justify-center text-gray-900 dark:text-white rounded-[4px] placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-[#c10931] active:border-[#c10931]"
+              placeholder={`Max : ${maxStakeDisplay}`}
               autoComplete="off"
               pattern="\d*"
               type="number"
@@ -447,13 +453,13 @@ const BetSlip = ({
         </div>
 
         {/* Quick Stake Preset Buttons Grid */}
-        <div className="mt-[15px] p-2.5 rounded-md border border-[#d1d5db] dark:border-[#2e3344] bg-[#e5e7eb] dark:bg-[#1a1d29]">
+        <div className="mt-[15px] p-2.5 rounded-md border border-[#cbd5e1] dark:border-[#2e3344] bg-[#e4e7ec] dark:bg-[#1a1d29]">
           <div className="grid grid-cols-12 gap-x-1.5 gap-y-1.5">
             {userStakes.map((val, idx) => (
               <button
                 key={`${val}-${idx}`}
                 onClick={() => handleAddStake(Number(val))}
-                className="inline-block leading-normal relative transition duration-150 ease-in-out col-span-4 w-full overflow-hidden text-[12px] font-bold rounded-[4px] bg-bg_text_brand_primary-new text-white text-center py-2 cursor-pointer active:scale-95 shadow-sm hover:brightness-110"
+                className="inline-block leading-normal relative transition duration-150 ease-in-out col-span-4 w-full overflow-hidden text-[12px] font-bold rounded-[4px] bg-[#9e092f] hover:bg-[#830827] text-white text-center py-2 cursor-pointer active:scale-95 shadow-sm"
                 type="button"
               >
                 <span>{formatStakeLabel(val)}</span>
@@ -502,9 +508,9 @@ const BetSlip = ({
           <button
             type="button"
             onClick={handleCancel}
-            className="leading-normal relative overflow-hidden transition duration-150 ease-in-out px-5 py-2.5 w-[50%] flex items-center justify-center min-h-[46px] text-sm bg-white dark:bg-transparent text-[#737373] font-bold border-[1.5px] border-[#e90038] rounded-md cursor-pointer hover:bg-red-50 dark:hover:bg-red-500/10 active:scale-95"
+            className="leading-normal relative overflow-hidden transition duration-150 ease-in-out px-5 py-2.5 w-[50%] flex items-center justify-center min-h-[46px] text-sm bg-white dark:bg-transparent text-[#64748b] dark:text-gray-300 font-bold border-[1.5px] border-[#e11d48] rounded-md cursor-pointer hover:bg-red-50 dark:hover:bg-red-500/10 active:scale-95"
           >
-            <span className="text-[#737373] dark:text-gray-300 font-bold text-base leading-5">Cancel Bet</span>
+            <span className="font-bold text-base leading-5">Cancel Bet</span>
           </button>
 
           <div className="w-[50%] h-max">
@@ -512,10 +518,10 @@ const BetSlip = ({
               disabled={!isStakeValid || loading}
               onClick={handlePlaceBet}
               type="button"
-              className={`leading-normal overflow-hidden transition duration-150 ease-in-out py-1 relative w-full flex min-h-[46px] px-3 rounded-md font-medium border-0 flex-row items-center justify-between bg-placeBetBtnGrd ${
+              className={`leading-normal overflow-hidden transition duration-150 ease-in-out py-1 relative w-full flex min-h-[46px] px-3 rounded-md font-medium border-0 flex-row items-center justify-between ${
                 isStakeValid && !loading
-                  ? "cursor-pointer hover:brightness-110 active:scale-95"
-                  : "opacity-90 cursor-pointer"
+                  ? "bg-placeBetBtnGrd cursor-pointer hover:brightness-110 active:scale-95 shadow-md"
+                  : "bg-[#94a3b8] dark:bg-[#475569] opacity-90 cursor-not-allowed"
               }`}
             >
               <div className="flex items-start justify-start flex-col">
@@ -525,13 +531,13 @@ const BetSlip = ({
                 <span className="text-xs text-white">
                   <div>
                     <span>Profit : </span>
-                    <span className="font-semibold">{profit.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</span>
+                    <span className="font-semibold">{profit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                 </span>
               </div>
 
               {/* Stopwatch countdown icon & text in white */}
-              <span className="text-xs flex items-center justify-center gap-x-1 text-white">
+              <span className="text-xs flex items-center justify-center gap-x-1 text-white opacity-80">
                 <span>
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 12 12" fill="none">
                     <g clipPath="url(#clip0_2144_3162)">
@@ -547,7 +553,7 @@ const BetSlip = ({
                     </defs>
                   </svg>
                 </span>
-                <span className="font-bold text-sm text-white">7s</span>
+                <span className="font-bold text-sm text-white">0s</span>
               </span>
             </button>
           </div>
@@ -564,11 +570,11 @@ const BetSlip = ({
               onChange={(e) => setConfirmBet(e.target.checked)}
             />
             <div className={`relative border-[0.5px] font-lato rounded-full h-7 w-14 transition-colors duration-200 ${
-              confirmBet ? "bg-[#40af52] border-[#40af52]" : "bg-white dark:bg-gray-700 border-gray-400"
+              confirmBet ? "bg-[#40af52] border-[#40af52]" : "bg-white dark:bg-gray-700 border-gray-400 dark:border-gray-500"
             }`}>
               <span
                 className={`absolute top-1/2 transform -translate-y-1/2 font-bold text-[10px] ${
-                  confirmBet ? "left-[7px] text-white" : "right-[6px] text-gray-600 dark:text-gray-300"
+                  confirmBet ? "left-[7px] text-white" : "right-[6px] text-gray-700 dark:text-gray-300"
                 }`}
               >
                 {confirmBet ? "ON" : "OFF"}

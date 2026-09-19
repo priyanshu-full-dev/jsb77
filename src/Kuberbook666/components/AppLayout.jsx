@@ -38,7 +38,7 @@ const AppLayout = () => {
   const currentUserId = useSelector(getUserId());
 
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem("kuber_theme") || "dark";
+    return localStorage.getItem("kuber_theme") || "light";
   });
 
   // Log active route for developer inspection
