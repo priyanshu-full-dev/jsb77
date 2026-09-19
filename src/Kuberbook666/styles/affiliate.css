@@ -1,0 +1,530 @@
+/* ==========================================================================
+   AFFILIATE (REFER & EARN) - EXACT CSS
+   ========================================================================== */
+
+:root {
+  --color-bg-primary-aff: #c10931;
+  --color-bg-secondary-aff: #580516;
+  --color-primary-aff-text: #ffd200;
+  --color-bg-headerBg: linear-gradient(90deg, #6e081d, #c10931);
+}
+
+.nw-affi-how-to-get-bonus {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #c10931;
+  color: #ffffff;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.ellip-bg-img {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.35;
+}
+
+.nw-affi-heading-flex {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.nw-affi-heading-text {
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffd200;
+  text-transform: capitalize;
+}
+
+.nw-affi-how-to-get-bonus-content {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.nw-affi-how-to-get-bonus-content-sec {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  padding: 10px 4px;
+}
+
+.nw-affi-status-digit {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.nw-affi-status-digit-para p {
+  font-size: 11px;
+  color: #ffffff;
+  text-transform: capitalize;
+  margin-top: 2px;
+  line-height: 1.2;
+}
+
+/* 2. Invite Section */
+.nw-affi-invite-sec {
+  background: #c10931;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+  color: #ffffff;
+}
+
+.nw-affi-invite-content-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.nw-affi-invite-content h2 {
+  font-size: 17px;
+  font-weight: 800;
+  color: #ffd200;
+  margin: 0;
+}
+
+.nw-affi-invite-content p {
+  font-size: 12px;
+  color: #ffffff;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+.nw-affi-invite-img img {
+  width: 55px;
+  height: auto;
+}
+
+.nw-affi-add-new-user-btn-sec {
+  margin-bottom: 12px;
+}
+
+.nw-affi-add-new-user-btn {
+  width: 100%;
+  padding: 11px 16px;
+  border-radius: 9999px;
+  background: #580516;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease-in-out;
+}
+
+.nw-affi-add-new-user-btn:active {
+  transform: scale(0.98);
+}
+
+.nw-affi-qr-invite-wrapper {
+  border-radius: 10px;
+}
+
+.nw-affi-qr-invite-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.nw-affi-qr-invite-heading h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffd200;
+  margin: 0;
+}
+
+.nw-affi-qr-invite-heading img {
+  width: 20px;
+  height: 20px;
+}
+
+.nw-affi-share-link-sec {
+  background: #c10931;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  word-break: break-all;
+  margin-bottom: 14px;
+  text-align: center;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.affi-qr-btn-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 16px;
+}
+
+.nw-affi-qr-sec {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.nw-affi-qr-sec .qr-canvas {
+  background: #ffffff;
+  padding: 6px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.af-form-btn-sec {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.thm-but.thm-bdr-btn.affi-cancel-btn.affi-yellow-btn {
+  background: #c10931;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 10px 18px;
+  border-radius: 9999px;
+  border: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* 3. Graph Wrapper */
+.nw-affi-graph-wrapper {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  margin-bottom: 12px;
+}
+
+.dark .nw-affi-graph-wrapper {
+  background: #151622;
+  border-color: #272733;
+}
+
+.af-graph-img-sec {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  overflow-x: auto;
+}
+
+/* 4. Top User / PL Table */
+.af-top-user-sec {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  margin-bottom: 24px;
+}
+
+.dark .af-top-user-sec {
+  background: #151622;
+  border-color: #272733;
+}
+
+.af-top-user-sec table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.af-top-user-sec table th {
+  padding: 10px 14px;
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.dark .af-top-user-sec table th {
+  background: rgba(255, 255, 255, 0.05);
+  color: #e5e7eb;
+}
+
+.af-top-user-sec table td {
+  padding: 10px 14px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  color: inherit;
+}
+
+.dark .af-top-user-sec table td {
+  border-color: #272733;
+}
+
+/* ==========================================================================
+   5. MOBILE FOOTER - EXACT 0.1% MATCH
+   ========================================================================== */
+.mobileFooter {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: linear-gradient(90deg, #6e081d, #c10931) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 50;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.footerMenu {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: #ffffff;
+  cursor: pointer;
+  flex: 1;
+  padding: 0 4px;
+  transition: all 0.2s ease;
+}
+
+.footerMenu span {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  letter-spacing: 0.2px;
+}
+
+.footerMenu img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+/* Active State requested by User */
+.footerMenu.active {
+  background: linear-gradient(180deg, #6e081c, #72000f) !important;
+  color: #ffffff;
+}
+
+.footerCasino {
+  position: relative;
+  top: -10px;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+}
+
+.affi-share-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.affi-share-button img {
+  width: 76px !important;
+  max-width: 80px;
+  height: auto;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+  transition: transform 0.15s ease-in-out;
+}
+
+.affi-share-button:active img {
+  transform: scale(0.92);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+.animate-scaleUp {
+  animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-slideUp {
+  animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ==========================================================================
+   6. SHARE DRAWER / MODAL STYLES
+   ========================================================================== */
+.modal_affi {
+  background: #ffffff;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  padding: 18px 16px 24px;
+}
+
+.modal_affi .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eeeeee;
+}
+
+.modal_affi .modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111111;
+  margin: 0;
+}
+
+.modal_affi .btn-close {
+  background: #000000;
+  color: #ffffff;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.modal_affi .btn-close::before {
+  content: "✕";
+}
+
+.share-link-img-sec {
+  width: 100%;
+  max-width: 220px;
+  margin: 14px auto 10px;
+  display: flex;
+  justify-content: center;
+}
+
+.af-share-link-wrapper {
+  margin-top: 12px;
+}
+
+.af-share-link-wrapper p {
+  font-size: 12px;
+  font-weight: 600;
+  color: #444444;
+  margin-bottom: 6px;
+}
+
+.af-share-link-sec {
+  background: #f4f5f7;
+  border: 1px solid #e2e4e8;
+  border-radius: 8px;
+  padding: 6px 8px 6px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.af-share-link-sec span {
+  font-size: 12px;
+  color: #333333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  font-weight: 500;
+}
+
+.af-share-link-sec button.thm-but.btn-gradient {
+  background: linear-gradient(90deg, #c10931, #7a0017);
+  color: #ffffff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.affilate-cmn-footer {
+  margin-top: 14px;
+  text-align: center;
+}
+
+.shre-text-title p {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666666;
+  margin-bottom: 8px;
+}
+
+.af-share-social-link-sec {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.af-share-social-link-sec a img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  transition: transform 0.15s;
+}
+
+.af-share-social-link-sec a:active img {
+  transform: scale(0.9);
+}
+
+

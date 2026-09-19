@@ -43,8 +43,10 @@ export default function TopNavChips() {
         </Link>
 
         {/* Cricket */}
-        <Link to="/sports" onMouseEnter={() => preloadRoute("sports")} onTouchStart={() => preloadRoute("sports")}>
-          <button className="text-xs gap-1 cursor-pointer uppercase mr-1 active:border-primary hide-border-in-dark rounded-full text-nowrap whitespace-nowrap font-semibold bg-bg_Ternary8 hover:bg-bg_Ternary9 border w-max px-2 py-1 text-text_HeaderDeskNavMenu hidden md:flex">
+        <Link to="/sports/cricket" onMouseEnter={() => preloadRoute("sports")} onTouchStart={() => preloadRoute("sports")}>
+          <button className={`text-xs gap-1 cursor-pointer uppercase mr-1 active:border-primary hide-border-in-dark rounded-full text-nowrap whitespace-nowrap font-semibold bg-bg_Ternary8 hover:bg-bg_Ternary9 border w-max px-2 py-1 text-text_HeaderDeskNavMenu hidden md:flex ${
+            path.includes("cricket") ? "border-primary border-[#c10831]" : "border-transparent"
+          }`}>
             <svg width="16" height="16" viewBox="0 0 19 18" xmlns="http://www.w3.org/2000/svg" fill="var(--cricket-icon-color)">
               <circle cx="9.5" cy="9" r="8.5" fill="#ffffff" />
               <path d="M4.36255 16.7108C4.35063 16.7037 4.34109 16.6966 4.32917 16.6895C3.88333 16.4077 3.4518 16.107 3.05842 15.7566C2.91299 15.6263 2.77709 15.489 2.63404 15.3564C2.59828 15.3256 2.61974 15.3067 2.63642 15.283C2.81524 15.0533 2.99643 14.8213 3.17524 14.5916C3.92148 13.635 4.6701 12.676 5.41634 11.7194C6.27225 10.6231 7.12578 9.52678 7.98169 8.43047C8.8066 7.37204 9.6339 6.31125 10.4588 5.25282C11.329 4.14231 12.1969 3.02942 13.0647 1.9189C13.2292 1.70816 13.3961 1.49506 13.5582 1.28195C13.5797 1.25354 13.5916 1.24644 13.6274 1.26538C13.9468 1.45244 14.2472 1.67028 14.5333 1.90233C14.6692 2.01125 14.8123 2.1107 14.9458 2.22199C15.0817 2.34038 15.2128 2.46351 15.3439 2.58663C15.3773 2.61742 15.3535 2.63162 15.3368 2.65293C15.1008 2.95602 14.8623 3.26147 14.6263 3.56455C13.9254 4.46433 13.222 5.36411 12.5211 6.26389C11.7343 7.27259 10.9476 8.28129 10.1584 9.29C9.42648 10.2277 8.69693 11.1653 7.965 12.103C7.12101 13.1827 6.2794 14.2648 5.43542 15.3446C5.08971 15.7874 4.7464 16.2278 4.40069 16.6706C4.39116 16.6848 4.38401 16.7037 4.36255 16.7108Z" fill="var(--cricket-icon-color)"></path>

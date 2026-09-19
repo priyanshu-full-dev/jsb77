@@ -575,7 +575,7 @@ const SportBlock = React.memo(({
 // ==========================================
 // MAIN IN-PLAY SPORTS WIDGET COMPONENT
 // ==========================================
-export default function InPlaySportsWidget({ headerBg }) {
+export default function InPlaySportsWidget({ headerBg, selectedSport, filterSport }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -710,7 +710,7 @@ export default function InPlaySportsWidget({ headerBg }) {
       return [];
     };
 
-    return [
+    const allSports = [
       {
         sport: "Cricket",
         matches: mapMatches(rawCricket, "cricket", 0),
@@ -724,7 +724,18 @@ export default function InPlaySportsWidget({ headerBg }) {
         matches: mapMatches(rawTennis, "tennis", 2),
       },
     ].filter((s) => s.matches && s.matches.length > 0);
-  }, [liveSocketMatches, cricketState, soccerState, tennisState]);
+
+    const filterTarget = (selectedSport || filterSport || "").toLowerCase().trim();
+    if (filterTarget && filterTarget !== "all") {
+      return allSports.filter((s) => {
+        const sName = s.sport.toLowerCase();
+        if (filterTarget === "soccer" || filterTarget === "football") return sName === "football";
+        return sName.includes(filterTarget) || filterTarget.includes(sName);
+      });
+    }
+
+    return allSports;
+  }, [liveSocketMatches, cricketState, soccerState, tennisState, selectedSport, filterSport]);
 
   // Console log in-play matches and expose testing utility in DevTools
   useEffect(() => {

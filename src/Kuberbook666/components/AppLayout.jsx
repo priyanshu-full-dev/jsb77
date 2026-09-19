@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import Header from "./Header";
 import TopNavChips from "./TopNavChips";
@@ -13,7 +13,7 @@ import SignupModal from "./AuthModals/SignupModal";
 import Footer from "./Footer";
 import "../styles/kuber.css";
 
-import { fetchAllMatchesFast, fetchMatchesByEventId } from "../../redux/slices/matchSlice";
+import { fetchAllMatchesFast } from "../../redux/slices/matchSlice";
 import {
   subscribeToMatchData,
   subscribeToKabaddiMatchesData,
@@ -27,6 +27,7 @@ import { getUserId } from "../../utils/helper/commonSelectors";
 const AppLayout = () => {
   const dispatch = useDispatch();
   const location = useLocation();
+  const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [profileDrawerOpen, setProfileDrawerOpen] = useState(false);
   const [depositModalOpen, setDepositModalOpen] = useState(false);
@@ -153,17 +154,19 @@ const AppLayout = () => {
       {/* Floating Support (WhatsApp & Telegram) */}
       <FloatingSupport />
 
-      {/* Mobile Bottom Navigation */}
-      <BottomNav
-        onOpenMenu={() => setDrawerOpen(true)}
-        onOpenProfile={() => {
-          if (isLoggedIn) {
-            setProfileDrawerOpen(true);
-          } else {
-            setLoginOpen(true);
-          }
-        }}
-      />
+      {/* Mobile Bottom Navigation (Hidden on Affiliate Pages which have their own special mobile footer) */}
+      {!(location.pathname.startsWith("/affiliate") || location.pathname.startsWith("/refer-earn")) && (
+        <BottomNav
+          onOpenMenu={() => setDrawerOpen(true)}
+          onOpenProfile={() => {
+            if (isLoggedIn) {
+              setProfileDrawerOpen(true);
+            } else {
+              setLoginOpen(true);
+            }
+          }}
+        />
+      )}
 
       {/* Left Slide-out Sidebar Drawer (Hamburger) */}
       <SidebarDrawer
@@ -184,7 +187,10 @@ const AppLayout = () => {
         isOpen={profileDrawerOpen}
         onClose={() => setProfileDrawerOpen(false)}
         onOpenDeposit={() => setDepositModalOpen(true)}
-        onOpenWithdraw={() => alert("Withdraw modal / transfer")}
+        onOpenWithdraw={() => {
+          setProfileDrawerOpen(false);
+          navigate("/withdraw");
+        }}
       />
 
       {/* Deposit Modal */}

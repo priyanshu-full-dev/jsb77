@@ -88,6 +88,10 @@ export default function CasinoPage({ tab }) {
   const siteCasinoData = useSelector((state) => state?.siteCasino);
 
   // Initial provider based on route
+  const isAviatorOrCrashRoute =
+    location.pathname.toLowerCase().includes("crash") ||
+    location.pathname.toLowerCase().includes("aviator");
+
   const getInitialProvider = useCallback(() => {
     const currentPath = location.pathname.toLowerCase();
     if (currentPath.includes("mac88")) return "MAC88";
@@ -95,7 +99,7 @@ export default function CasinoPage({ tab }) {
     if (currentPath.includes("aura")) return "Aura";
     if (currentPath.includes("live-casino") || currentPath.includes("table") || currentPath.includes("cards"))
       return "ALL";
-    if (currentPath.includes("crash") || currentPath.includes("aviator")) return "Turbo Games";
+    if (currentPath.includes("crash") || currentPath.includes("aviator")) return "ALL";
     return "Aura";
   }, [location.pathname]);
 
@@ -256,16 +260,17 @@ export default function CasinoPage({ tab }) {
           }
         }
 
-        // 2. Tab Matching
-        if (tab === "slots" && !category.includes("slot")) return false;
-        if (tab === "live" && !category.includes("live")) return false;
-        if (tab === "crash") {
+        // 2. Tab & Route Matching
+        if ((tab === "crash" || isAviatorOrCrashRoute)) {
           const isCrash =
             category.includes("crash") ||
             category.includes("instantwin") ||
-            ["aviator", "crash", "mines", "balloon", "double roll", "limbo"].some((k) => gameName.includes(k));
+            category.includes("turbo") ||
+            ["aviator", "crash", "mines", "balloon", "double roll", "limbo", "jetx", "aviatrix", "spaceman", "plinko"].some((k) => gameName.includes(k));
           if (!isCrash) return false;
         }
+        if (tab === "slots" && !category.includes("slot")) return false;
+        if (tab === "live" && !category.includes("live")) return false;
         if (tab === "table" || tab === "cards" || tab === "ace") {
           const isCardOrTable =
             category.includes("table") ||

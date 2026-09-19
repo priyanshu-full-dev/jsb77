@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams, useLocation, Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import InPlaySportsWidget from "../../components/InPlaySportsWidget";
 import UpcomingEvent from "../../components/UpcomingEvent";
@@ -44,6 +44,19 @@ const CricketIcon = () => (
 export default function SportsPage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { sport, type } = useParams();
+  const location = useLocation();
+
+  // Derive active sport filter from URL path/params or query string
+  const querySport = new URLSearchParams(location.search).get("sport");
+  const rawSportTarget = (sport || querySport || "").toLowerCase();
+
+  let activeSportFilter = "";
+  if (rawSportTarget.includes("cricket")) activeSportFilter = "Cricket";
+  else if (rawSportTarget.includes("football") || rawSportTarget.includes("soccer")) activeSportFilter = "Football";
+  else if (rawSportTarget.includes("tennis")) activeSportFilter = "Tennis";
+  else if (rawSportTarget.includes("election")) activeSportFilter = "Election";
+
   const [activeTab, setActiveTab] = useState("inplay"); // "inplay" or "competitions"
   const [selectedCompetition, setSelectedCompetition] = useState(null);
 
@@ -193,12 +206,20 @@ export default function SportsPage() {
       });
     });
 
-    return Array.from(compMap.values()).map((c) => ({
+    const parsedComps = Array.from(compMap.values()).map((c) => ({
       ...c,
       inplayMatches: c.matches.filter((m) => m.inplay),
       upcomingMatches: c.matches.filter((m) => !m.inplay),
     }));
-  }, [cricketState, soccerState, tennisState]);
+
+    if (activeSportFilter) {
+      return parsedComps.filter(
+        (c) => c.sportName?.toLowerCase() === activeSportFilter.toLowerCase(),
+      );
+    }
+
+    return parsedComps;
+  }, [cricketState, soccerState, tennisState, activeSportFilter]);
 
   const handleMatchClick = (match) => {
     if (!match) return;
@@ -243,7 +264,7 @@ export default function SportsPage() {
   return (
     <div className="w-full min-h-screen bg-[#f1f2f6] dark:bg-[#0e1017] text-gray-900 dark:text-gray-100 pb-12 font-helvetica-neue">
       {/* Top Pill Navigation Tabs */}
-      <div className="flex items-center gap-3 px-3 pt-2.5 pb-2">
+      <div className="flex items-center gap-3 px-3 pt-2 pb-2">
         <button
           onClick={() => {
             setActiveTab("inplay");
@@ -286,13 +307,15 @@ export default function SportsPage() {
       {/* ========================================================================= */}
       {activeTab === "inplay" && (
         <div className="space-y-3 w-full">
-          {/* In-Play Widget with Red Gradient Header */}
+          {/* In-Play Widget filtered by activeSportFilter */}
           <InPlaySportsWidget
+            selectedSport={activeSportFilter}
             headerBg="linear-gradient(90deg, rgb(193, 9, 49), rgb(110, 8, 29))"
           />
 
-          {/* Upcoming Events with Red Gradient Header */}
+          {/* Upcoming Events filtered by activeSportFilter */}
           <UpcomingEvent
+            selectedSport={activeSportFilter}
             headerBg="linear-gradient(90deg, rgb(193, 9, 49), rgb(110, 8, 29))"
           />
         </div>

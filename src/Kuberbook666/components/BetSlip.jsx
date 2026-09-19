@@ -1,22 +1,30 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { placeBet } from "../../socketClient";
 import { handleCancelPlaceBet } from "../../redux/slices/placeBetSlice";
 import { updateAvailableBalance, updateExposureBalance } from "../../redux/slices/userSlice";
 
-const STAKE_PRESETS = [
-  { label: "+ 100", value: 100 },
-  { label: "+ 200", value: 200 },
-  { label: "+ 500", value: 500 },
-  { label: "+ 1,000", value: 1000 },
-  { label: "+ 2,500", value: 2500 },
-  { label: "+ 5,000", value: 5000 },
-  { label: "+ 10,000", value: 10000 },
-  { label: "+ 25,000", value: 25000 },
-  { label: "+ 50,000", value: 50000 },
-  { label: "+ 1,00,000", value: 100000 },
-];
+const DEFAULT_STAKE_PRESETS = [50, 200, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000];
+
+const getStoredStakes = () => {
+  try {
+    const saved = localStorage.getItem("kuber_user_stakes");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {
+    // fallback
+  }
+  return DEFAULT_STAKE_PRESETS;
+};
+
+const formatStakeLabel = (val) => {
+  const num = Number(val);
+  return `+ ${num.toLocaleString("en-IN")}`;
+};
 
 const BetSlip = ({
   activeBet,
@@ -25,7 +33,6 @@ const BetSlip = ({
   min = 100,
   max = 100000,
   sportId,
-  competitionId,
   eventId,
   eventName,
   currentSport = "cricket",
@@ -43,8 +50,20 @@ const BetSlip = ({
   const [stake, setStake] = useState("");
   const [confirmBet, setConfirmBet] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [countdown, setCountdown] = useState(7);
-  const [isCountingDown, setIsCountingDown] = useState(false);
+  const [, setIsCountingDown] = useState(false);
+  const [userStakes, setUserStakes] = useState(getStoredStakes);
+
+  useEffect(() => {
+    const handleStakesUpdate = () => {
+      setUserStakes(getStoredStakes());
+    };
+    window.addEventListener("kuber_stakes_updated", handleStakesUpdate);
+    window.addEventListener("storage", handleStakesUpdate);
+    return () => {
+      window.removeEventListener("kuber_stakes_updated", handleStakesUpdate);
+      window.removeEventListener("storage", handleStakesUpdate);
+    };
+  }, []);
 
   useEffect(() => {
     const nextOdds = activeBet?.odds || "1.00";
@@ -358,14 +377,14 @@ const BetSlip = ({
         {/* Quick Stake Preset Buttons Grid */}
         <div className="mt-[15px] p-2.5 rounded-md border border-[#d1d5db] dark:border-[#2e3344] bg-[#e5e7eb] dark:bg-[#1a1d29]">
           <div className="grid grid-cols-12 gap-x-1.5 gap-y-1.5">
-            {STAKE_PRESETS.map((preset) => (
+            {userStakes.map((val, idx) => (
               <button
-                key={preset.value}
-                onClick={() => handleAddStake(preset.value)}
-                className="inline-block leading-normal relative transition duration-150 ease-in-out col-span-4 w-full overflow-hidden text-[12px] font-bold rounded-[4px] bg-bg_text_brand_primary-new text-white text-center py-2 cursor-pointer active:scale-95 shadow-sm"
+                key={`${val}-${idx}`}
+                onClick={() => handleAddStake(Number(val))}
+                className="inline-block leading-normal relative transition duration-150 ease-in-out col-span-4 w-full overflow-hidden text-[12px] font-bold rounded-[4px] bg-bg_text_brand_primary-new text-white text-center py-2 cursor-pointer active:scale-95 shadow-sm hover:brightness-110"
                 type="button"
               >
-                <span>{preset.label}</span>
+                <span>{formatStakeLabel(val)}</span>
               </button>
             ))}
           </div>
@@ -388,8 +407,7 @@ const BetSlip = ({
             </button>
             <button
               onClick={() => {
-                const custom = window.prompt("Enter quick stake amount:", "1000");
-                if (custom && !isNaN(custom)) handleAddStake(Number(custom));
+                window.location.href = "/settings";
               }}
               className="inline-block leading-normal relative overflow-hidden transition duration-150 ease-in-out col-span-3 w-full text-[11px] font-bold rounded-[4px] text-white py-2 bg-editStakesGrd cursor-pointer active:scale-95 shadow-sm"
               type="button"
@@ -494,6 +512,19 @@ const BetSlip = ({
       </div>
     </span>
   );
+};
+
+BetSlip.propTypes = {
+  activeBet: PropTypes.any,
+  onClose: PropTypes.func,
+  onBetChange: PropTypes.func,
+  min: PropTypes.number,
+  max: PropTypes.number,
+  sportId: PropTypes.any,
+  competitionId: PropTypes.any,
+  eventId: PropTypes.any,
+  eventName: PropTypes.string,
+  currentSport: PropTypes.string,
 };
 
 export default BetSlip;

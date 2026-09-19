@@ -284,7 +284,7 @@ const Header = ({
               </span>
             </button>
             <button
-              onClick={() => navigate("/transactions")}
+              onClick={() => navigate("/withdraw")}
               className="inline-block leading-normal relative overflow-hidden transition duration-150 ease-in-out bg-none border-none shadow-none cursor-pointer active:scale-95"
               type="button"
             >

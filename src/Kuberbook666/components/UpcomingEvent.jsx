@@ -261,6 +261,8 @@ const SportBlock = React.memo(({ sportData, onOpen }) => {
 export default function UpcomingEvent({
   customData,
   title = "Upcoming Events",
+  selectedSport,
+  filterSport,
 }) {
   const navigate = useNavigate();
 
@@ -399,18 +401,29 @@ export default function UpcomingEvent({
           eventId: m.eventId || `upcoming-${sportId}-${mIdx}`,
           sportId,
           sportName,
+          eventName: m?.eventName || `${team1} v ${team2}`,
           team1,
           team2,
-          time: formatTime(m.openDate || m.eventDate),
-          hasTv: Boolean(m.tv),
+          time: formatTime(m?.openDate || m?.eventDate),
+          tv: Boolean(m?.tv),
+          bm: m?.bm ?? sportId === "4",
+          fancy: m?.fancy ?? sportId === "4",
+          competitionId: m?.competitionId || "comp-1",
+          marketId: m?.marketId || `m-${m.eventId}`,
           back: [
             { price: b0.price || "-", size: b0.size || "" },
-            { price: b2.price || "-", size: b2.size || "" },
+            {
+              price: sportId === "1" ? b2.price || "-" : "-",
+              size: sportId === "1" ? b2.size || "" : "",
+            },
             { price: b1.price || "-", size: b1.size || "" },
           ],
           lay: [
             { price: l0.price || "-", size: l0.size || "" },
-            { price: l2.price || "-", size: l2.size || "" },
+            {
+              price: sportId === "1" ? l2.price || "-" : "-",
+              size: sportId === "1" ? l2.size || "" : "",
+            },
             { price: l1.price || "-", size: l1.size || "" },
           ],
           raw: m,
@@ -439,15 +452,28 @@ export default function UpcomingEvent({
       "2",
     );
 
-    return [cricket, soccer, tennis].filter(
+    const all = [cricket, soccer, tennis].filter(
       (s) => s && s.matches && s.matches.length > 0,
     );
+
+    const filterTarget = (selectedSport || filterSport || "").toLowerCase().trim();
+    if (filterTarget && filterTarget !== "all") {
+      return all.filter((s) => {
+        const sName = s.sport.toLowerCase();
+        if (filterTarget === "soccer" || filterTarget === "football") return sName === "football";
+        return sName.includes(filterTarget) || filterTarget.includes(sName);
+      });
+    }
+
+    return all;
   }, [
     customData,
     liveSocketMatches,
     cricketMatches,
     soccerMatches,
     tennisMatches,
+    selectedSport,
+    filterSport,
   ]);
 
   const handleOpen = React.useCallback((match) => {

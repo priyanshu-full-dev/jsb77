@@ -68,9 +68,8 @@ const ProfileDrawer = ({ isOpen, onClose, onOpenDeposit, onOpenWithdraw }) => {
     onClose();
     if (onOpenWithdraw) {
       onOpenWithdraw();
-    } else {
-      navigate("/transactions");
     }
+    navigate("/withdraw");
   };
 
   const handleLinkClick = () => {
