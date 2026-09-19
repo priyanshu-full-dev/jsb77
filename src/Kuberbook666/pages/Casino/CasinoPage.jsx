@@ -33,32 +33,6 @@ const normalizeGameId = (id) => {
   return id;
 };
 
-const providerLogos = {
-  mac88: mac88Img,
-  slot: slotImg,
-  aura: auraImg,
-  betgames: betgamesImg,
-  "betgames.tv": betgamesImg,
-  royalgaming: royaltyImg,
-  royaltygaming: royaltyImg,
-  evolution: evolutionImg,
-  evolutiongaming: evolutionImg,
-  bigtimegaming: btgImg,
-  btg: btgImg,
-  evoplay: evoplayImg,
-  ezugi: ezugiImg,
-  sagaming: saGamingImg,
-  vivo: vivoGamingImg,
-  vivogaming: vivoGamingImg,
-  turbogames: turboGamingImg,
-};
-
-const getProviderLogo = (name) => {
-  if (!name) return null;
-  const key = name.toLowerCase().replace(/[\s._-]/g, "");
-  return providerLogos[key] || null;
-};
-
 // 12 Top Providers matching CasinoImage folder
 const TOP_PROVIDERS = [
   { name: "MAC88", logo: mac88Img },
@@ -345,50 +319,48 @@ export default function CasinoPage({ tab }) {
     if (!game || isProcessing) return;
 
     setIsProcessing(true);
-    const gameId = game.gameId || game._id || game.id;
-    const isRealUser = isLoggedIn && loginType === "real";
 
-    // Demo user check
+    const gameId = game.gameId || game.id;
+
     if (loginType === "" || loginType === "demo") {
-      toast.error("Please login with real ID to play casino games");
+      toast.error("login with real id");
       setIsProcessing(false);
       setSelectedGameForNotice(null);
       return;
     }
 
-    if (isRealUser) {
-      let amount = (userData?.availableBalance || 0) - (userData?.exposure || 0);
-      let siteCasinoBalance = siteCasinoData?.casinoBalance || 0;
-      let finalAmountToDeduct = Math.min(Math.max(amount, 0), siteCasinoBalance);
+    let amount = (userData?.availableBalance || 0) - (userData?.exposure || 0);
+    let siteCasinoBalance = siteCasinoData?.casinoBalance || 0;
 
-      if (
-        finalAmountToDeduct === 0 &&
-        (!userData?.casinoBalance || userData?.casinoBalance <= 0)
-      ) {
-        toast.warning("Insufficient balance");
-        setIsProcessing(false);
-        setSelectedGameForNotice(null);
-        return;
+    let finalAmountToDeduct = Math.min(amount, siteCasinoBalance);
+
+    if (
+      finalAmountToDeduct === 0 &&
+      (!userData?.casinoBalance || userData?.casinoBalance <= 0)
+    ) {
+      toast.warning("Insufficient balance");
+      setIsProcessing(false);
+      setSelectedGameForNotice(null);
+      return;
+    }
+
+    try {
+      const response = await updateCasinoBalance({
+        CasinoBalance: finalAmountToDeduct,
+      });
+
+      if (response?.data?.user) {
+        dispatch(updateAvailableBalance(response.data.user.availableBalance));
+        dispatch(updateUserCasinoBalance(response.data.user.casinoBalance));
       }
-
-      try {
-        const response = await updateCasinoBalance({
-          CasinoBalance: finalAmountToDeduct,
-        });
-
-        if (response?.data?.user) {
-          dispatch(updateAvailableBalance(response.data.user.availableBalance));
-          dispatch(updateUserCasinoBalance(response.data.user.casinoBalance));
-        }
-      } catch (error) {
-        console.error("Balance update note:", error.response?.data?.message || error.message);
-      }
+    } catch (error) {
+      console.error("error", error.response?.data?.message);
     }
 
     const data = {
       gameId: gameId,
       playerId: userData?._id || "",
-      displayName: userData?.casinoDisplayName || userData?.userName || "",
+      displayName: userData?.casinoDisplayName || "",
       currency: "INR",
       country: "IN",
       gender: "M",
@@ -396,26 +368,18 @@ export default function CasinoPage({ tab }) {
       mode: isLoggedIn ? "real" : "demo",
       device: isMobile ? "mobile" : "desktop",
       returnUrl: window.location.href,
-      walletSessionId: userData?.sessionToken || localStorage.getItem("token") || "",
+      walletSessionId: userData?.sessionToken || "",
     };
 
     try {
       const res = await launcherUrl(data);
+
       if (res?.success && res?.data?.url) {
         const gameUrl = encodeURIComponent(res.data.url);
-        setSelectedGameForNotice(null);
         navigate(`/game-lobby?gameId=${gameUrl}`);
-      } else {
-        toast.error(res?.message || "Failed to launch game.");
       }
-    } catch (err) {
-      console.error("Launcher error:", err);
-      const errMsg =
-        err?.response?.data?.message ||
-        (err?.response?.data?.code === "ACCOUNT_LOCKED"
-          ? "Please login with real ID to play casino games"
-          : "Game launch failed. Please try again.");
-      toast.error(errMsg);
+    } catch (error) {
+      console.error("Game launch error:", error);
     } finally {
       setSelectedGameForNotice(null);
       setIsProcessing(false);

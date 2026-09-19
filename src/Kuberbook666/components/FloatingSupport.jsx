@@ -1,7 +1,10 @@
-import React from "react";
 import { useSelector } from "react-redux";
+import { useLocation } from "react-router-dom";
 
 const FloatingSupport = () => {
+  const location = useLocation();
+  const isHomePage = location.pathname === "/" || location.pathname === "/home";
+
   const siteDetails = useSelector((state) => state?.site?.siteDetails);
   const whatsappNumber = siteDetails?.support_contact_number || "16093083535";
   const whatsappUrl = `https://api.whatsapp.com/send/?phone=${whatsappNumber.replace(/[^0-9]/g, "")}&text=Hi&type=phone_number&app_absent=0`;
@@ -10,6 +13,8 @@ const FloatingSupport = () => {
       ? siteDetails.telegram_channel
       : `https://t.me/${siteDetails.telegram_channel}`
     : "https://t.me/kuberbookoffer";
+
+  if (!isHomePage) return null;
 
   const handleWhatsAppClick = () => {
     window.open(whatsappUrl, "_blank", "noopener,noreferrer");

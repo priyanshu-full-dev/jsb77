@@ -238,7 +238,7 @@ const Header = ({
             className="hidden lg:flex items-center justify-center gap-1.5"
           >
             <button
-              onClick={onOpenDeposit}
+              onClick={() => navigate("/deposit")}
               className="inline-block leading-normal relative overflow-hidden transition duration-150 ease-in-out bg-none border-none shadow-none cursor-pointer active:scale-95"
               type="button"
             >
@@ -508,7 +508,7 @@ const Header = ({
 
               {/* Mobile Deposit Button with Shimmer */}
               <button
-                onClick={onOpenDeposit}
+                onClick={() => navigate("/deposit")}
                 type="button"
                 className="leading-normal transition duration-150 ease-in-out overflow-hidden relative active:scale-95 flex items-center h-fit justify-center rounded-full px-2.5 py-1 sm:px-4 sm:py-1.5 text-white text-sm text-center cursor-pointer"
               >

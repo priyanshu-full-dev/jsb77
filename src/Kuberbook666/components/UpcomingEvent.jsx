@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { socket } from "../../socketClient";
@@ -342,12 +342,54 @@ export default function UpcomingEvent({
 
     const parseUpcoming = (list, sportName, sportId) => {
       const arr = Array.isArray(list) ? list : [];
-      // Filter ONLY upcoming matches (not in-play)
-      const upcomingList = arr.filter((m) => m && !m.inplay && !m.inPlay);
+      
+      const now = new Date();
+      const startOfToday = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        0,
+        0,
+        0,
+        0
+      ).getTime();
+      const endOfTomorrow = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + 2,
+        23,
+        59,
+        59,
+        999
+      ).getTime();
+
+      // Filter ONLY upcoming matches (not in-play) scheduled for Today or Tomorrow
+      const upcomingList = arr.filter((m) => {
+        if (!m || m.inplay || m.inPlay) return false;
+        const dateVal = m.openDate || m.eventDate || m.startTime || m.matchDate;
+        if (dateVal) {
+          const matchTime = new Date(dateVal).getTime();
+          if (!isNaN(matchTime)) {
+            // Strict filter: Only matches from Today 00:00 to Tomorrow 23:59
+            return matchTime >= startOfToday && matchTime <= endOfTomorrow;
+          }
+        }
+        return true;
+      });
 
       if (upcomingList.length === 0) return null;
 
-      const matches = upcomingList.map((m, mIdx) => {
+      // Sort chronologically by start time
+      upcomingList.sort((a, b) => {
+        const timeA = new Date(a.openDate || a.eventDate || 0).getTime() || 0;
+        const timeB = new Date(b.openDate || b.eventDate || 0).getTime() || 0;
+        return timeA - timeB;
+      });
+
+      // Limit to 8 matches max per sport category so Home page stays sleek and easy to scroll
+      const limitedMatches = upcomingList.slice(0, 8);
+
+      const matches = limitedMatches.map((m, mIdx) => {
         const market =
           m?.matchOdds?.find((mo) =>
             (mo?.marketName || "").toLowerCase().includes("match odds"),
@@ -386,12 +428,18 @@ export default function UpcomingEvent({
             const d = new Date(dateStr);
             if (isNaN(d.getTime())) return "Upcoming";
             const today = new Date();
+            const tomorrow = new Date();
+            tomorrow.setDate(today.getDate() + 1);
+
             const isToday = d.toDateString() === today.toDateString();
+            const isTomorrow = d.toDateString() === tomorrow.toDateString();
             const timeStr = d.toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
             });
-            return isToday ? `Today at ${timeStr}` : `Tomorrow at ${timeStr}`;
+            if (isToday) return `Today at ${timeStr}`;
+            if (isTomorrow) return `Tomorrow at ${timeStr}`;
+            return `${d.toLocaleDateString([], { day: "numeric", month: "short" })} ${timeStr}`;
           } catch {
             return "Upcoming";
           }

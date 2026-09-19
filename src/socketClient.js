@@ -13,7 +13,6 @@ import {
 } from "./redux/slices/fullmarketSlice";
 import {
   setBookmakerData,
-  setBookmakerError,
   setBookmakerLoading,
 } from "./redux/slices/bookmakerSlice";
 import { setUserData } from "./redux/slices/userSlice";
@@ -24,7 +23,6 @@ import {
 } from "./redux/slices/accountSlice";
 import {
   setFancyOddsData,
-  setFancyOddsError,
   setFancyOddsLoading,
 } from "./redux/slices/fancySlice";
 import {
@@ -717,17 +715,59 @@ export const setUserOffline = (userId) =>
 
 export const placeBet = async (betData) => {
   const state = store?.getState();
-  const {
-    minBet: globalMin,
-    maxBet: globalMax,
-    sports,
-  } = state?.betSettingsSlice?.betSettings || {};
-  const { ip, isp } = state?.network || {};
-  const siteId = state?.site?.siteDetails?._id || "";
-  const layout = state?.site?.siteDetails?.layout || "";
-  const UserAvailableBalance = state?.user?.userData?.availableBalance;
-  let minBet = globalMin || 50;
-  let maxBet = globalMax || 50000;
+  const token = state?.user?.token || localStorage.getItem("token");
+  const userId = localStorage.getItem("userId") || state?.user?.userData?._id;
+  const user = state?.user?.userData;
+
+  // 1. Auth check
+  if (!token || !userId) {
+    toast.error("Please login to place a bet");
+    return Promise.reject(new Error("Not logged in"));
+  }
+
+  // 2. Available Balance & Required Amount Calculation
+  const availableBalance = Number(user?.availableBalance ?? 0);
+  const stake = Number(betData?.stake ?? 0);
+  const odds = Number(betData?.oddsReq ?? betData?.price ?? 1);
+  const isLay = betData?.type?.toLowerCase() === "lay";
+
+  // Calculate actual required amount (Liability for Lay, Stake for Back)
+  const requiredAmount = isLay ? (odds - 1) * stake : stake;
+
+  // 3. Strict Balance Validation
+  if (availableBalance <= 0) {
+    toast.error("Insufficient Balance. Please deposit funds to play.");
+    return Promise.reject(new Error("Zero or negative balance"));
+  }
+  if (availableBalance < requiredAmount) {
+    toast.error(
+      `Insufficient Balance! Required: ₹${requiredAmount.toFixed(2)}, Available: ₹${availableBalance.toFixed(2)}`
+    );
+    return Promise.reject(new Error("Insufficient funds for liability/stake"));
+  }
+
+  // 4. Odds Limits
+  const oddsLimits = {
+    cricket: 20,
+    Cricket: 20,
+    soccer: 15,
+    Soccer: 15,
+    tennis: 10,
+    Tennis: 10,
+    "Horse Racing": 10,
+    "Greyhound Racing": 10,
+  };
+  const limit = oddsLimits[betData.sportsName];
+  if (limit && (betData.markettype === "Match Odds" || betData.market === "Match Odds") && odds > limit) {
+    toast.error(`Max odds allowed for ${betData.sportsName} is ${limit}`);
+    return Promise.reject(new Error("Odds limit exceeded"));
+  }
+
+  // 5. Min / Max Stake Limits
+  const { minBet: globalMin = 50, maxBet: globalMax = 500000, sports } =
+    state?.betSettingsSlice?.betSettings || {};
+  let minBet = globalMin;
+  let maxBet = globalMax;
 
   if (betData.sportsName && betData.market) {
     const sport = sports?.find((s) => s.sportName === betData.sportsName);
@@ -741,30 +781,46 @@ export const placeBet = async (betData) => {
       }
     }
   }
+
   if (!betData?.isCashout) {
-    if (minBet !== undefined && betData?.stake < minBet) {
-      toast.error(`Bet amount must be at least ${minBet}`);
-      return Promise.reject();
+    if (stake < minBet) {
+      toast.error(`Bet amount must be at least ₹${minBet}`);
+      return Promise.reject(new Error(`Bet amount must be at least ₹${minBet}`));
     }
-    if (maxBet !== undefined && betData?.stake > maxBet) {
-      toast.error(`Bet amount cannot exceed ${maxBet}`);
-      return Promise.reject();
+    if (stake > maxBet) {
+      toast.error(`Bet amount cannot exceed ₹${maxBet}`);
+      return Promise.reject(new Error(`Bet amount cannot exceed ₹${maxBet}`));
     }
   }
 
-  if (UserAvailableBalance < 0) {
-    toast.error("Your balance is negative. Please deposit funds.");
-    return Promise.reject();
-  }
-  const _id = localStorage?.getItem("userId") || "";
+  // Socket Emit Payload
+  const siteId = state?.site?.siteDetails?._id || "";
+  const layout = state?.site?.siteDetails?.layout || "asianexchange";
+  const { ip = "0.0.0.0", isp = "ISP" } = state?.network || {};
 
   return new Promise((resolve) => {
+    let resolved = false;
+
+    // 8-second safety timeout so UI does not stay in infinite loading
+    const timeoutTimer = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        console.warn("⚠️ [PLACE BET] Socket response timeout after 8s");
+        resolve({
+          success: false,
+          statusCode: 504,
+          message: "Request timed out. Please check your internet or Open Bets tab.",
+        });
+      }
+    }, 8000);
+
     socket.emit(
       "placeBet",
       {
         ...betData,
-        type: betData?.type?.toLowerCase()?.trim() === "lay" ? "Lay" : "Back",
-        userId: _id,
+        type: isLay ? "Lay" : "Back",
+        userId,
+        stake: String(stake),
         layout,
         siteId,
         network: {
@@ -773,10 +829,14 @@ export const placeBet = async (betData) => {
         },
       },
       (response) => {
-        if (response?.statusCode === 200) {
-          store.dispatch(addLatestBet(betData));
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(timeoutTimer);
+          if (response?.statusCode === 200 || response?.success || response?.status === "success") {
+            store.dispatch(addLatestBet(betData));
+          }
+          resolve(response);
         }
-        resolve(response);
       }
     );
   });

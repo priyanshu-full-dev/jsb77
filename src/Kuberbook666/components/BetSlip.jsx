@@ -5,6 +5,64 @@ import { toast } from "react-toastify";
 import { placeBet } from "../../socketClient";
 import { handleCancelPlaceBet } from "../../redux/slices/placeBetSlice";
 import { updateAvailableBalance, updateExposureBalance } from "../../redux/slices/userSlice";
+import { fetchBets } from "../../redux/slices/betsSlice";
+
+export function calculateMargins(markettype, betType, selectedOdds, betStake, betSize = 100) {
+  const stake = Number(betStake);
+  const odds = Number(selectedOdds);
+  let favourMargin = 0;
+  let againstMargin = 0;
+  const isBack = String(betType || "").toLowerCase() === "back";
+
+  if (
+    markettype === "Match Odds" ||
+    markettype === "Horse Race" ||
+    markettype === "Greyhound Race" ||
+    markettype === "Winner"
+  ) {
+    if (isBack) {
+      favourMargin = Number(((odds - 1) * stake).toFixed(2));
+      againstMargin = -stake;
+    } else {
+      favourMargin = stake;
+      againstMargin = Number((-((odds - 1) * stake)).toFixed(2));
+    }
+  } else if (markettype === "Bookmaker") {
+    if (isBack) {
+      favourMargin = Number(((odds * stake) / 100).toFixed(2));
+      againstMargin = -stake;
+    } else {
+      favourMargin = stake;
+      againstMargin = Number((-((odds * stake) / 100)).toFixed(2));
+    }
+  } else if (markettype === "Fancy") {
+    const pl = (parseFloat(betSize) / 100) * stake;
+    if (isBack) {
+      favourMargin = Number(pl.toFixed(2));
+      againstMargin = -stake;
+    } else {
+      favourMargin = stake;
+      againstMargin = Number((-pl).toFixed(2));
+    }
+  } else if (markettype === "Casino") {
+    if (isBack) {
+      favourMargin = Number(((odds - 1) * stake).toFixed(2));
+      againstMargin = -stake;
+    } else {
+      favourMargin = stake;
+      againstMargin = Number((-((odds - 1) * stake)).toFixed(2));
+    }
+  } else {
+    if (isBack) {
+      favourMargin = Number(((odds - 1) * stake).toFixed(2));
+      againstMargin = -stake;
+    } else {
+      favourMargin = stake;
+      againstMargin = Number((-((odds - 1) * stake)).toFixed(2));
+    }
+  }
+  return { favourMargin, againstMargin };
+}
 
 const DEFAULT_STAKE_PRESETS = [50, 200, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000];
 
@@ -33,6 +91,7 @@ const BetSlip = ({
   min = 100,
   max = 100000,
   sportId,
+  competitionId,
   eventId,
   eventName,
   currentSport = "cricket",
@@ -156,29 +215,26 @@ const BetSlip = ({
   const handleMax = useCallback(() => updateStake(String(activeBet?.max || max || 100000)), [activeBet?.max, max, updateStake]);
   const handleClear = useCallback(() => updateStake(""), [updateStake]);
 
-  // Live Profit and Liability Calculation (Back & Lay, Fancy, Bookmaker)
-  const { profit, liability } = useMemo(() => {
+  // Live Profit and Liability Calculation (Back & Lay, Fancy, Bookmaker, Casino, Racing)
+  const { profit, liability, favourMargin, againstMargin } = useMemo(() => {
     const numStake = Number(stake) || 0;
     const numOdds = parseFloat(odds) || 0;
-    if (numStake <= 0 || numOdds <= 0) return { profit: 0, liability: 0 };
-
-    const mType = activeBet?.marketType || "Match Odds";
-    if (mType === "Bookmaker") {
-      const calcProfit = isBack ? (numOdds * numStake) / 100 : numStake;
-      const calcLiability = isBack ? numStake : (numOdds * numStake) / 100;
-      return { profit: calcProfit, liability: calcLiability };
-    } else if (mType === "Fancy") {
-      const sizeVal = parseFloat(activeBet?.size) || 100;
-      const calcProfit = isBack ? (sizeVal / 100) * numStake : numStake;
-      const calcLiability = isBack ? numStake : (sizeVal / 100) * numStake;
-      return { profit: calcProfit, liability: calcLiability };
-    } else {
-      // Match Odds / Toss
-      const calcProfit = isBack ? (numOdds - 1) * numStake : numStake;
-      const calcLiability = isBack ? numStake : (numOdds - 1) * numStake;
-      return { profit: calcProfit, liability: calcLiability };
+    if (numStake <= 0 || numOdds <= 0) {
+      return { profit: 0, liability: 0, favourMargin: 0, againstMargin: 0 };
     }
-  }, [stake, odds, isBack, activeBet?.marketType, activeBet?.size]);
+
+    const mType = activeBet?.marketType || activeBet?.markettype || activeBet?.market || "Match Odds";
+    const bType = isBack ? "Back" : "Lay";
+    const bSize = parseFloat(activeBet?.size) || 100;
+
+    const margins = calculateMargins(mType, bType, numOdds, numStake, bSize);
+    return {
+      profit: margins.favourMargin,
+      liability: Math.abs(margins.againstMargin),
+      favourMargin: margins.favourMargin,
+      againstMargin: margins.againstMargin,
+    };
+  }, [stake, odds, isBack, activeBet?.marketType, activeBet?.markettype, activeBet?.market, activeBet?.size]);
 
   // Place Bet submission with Strict Pre-Flight Validations
   const handlePlaceBet = async () => {
@@ -216,18 +272,26 @@ const BetSlip = ({
     // 5. User Authentication Pre-flight Check
     const token = localStorage.getItem("token") || localStorage.getItem("userId");
     if (!token && !isUserLoggedInState) {
-      toast.info("Please login to place bets");
+      toast.error("Please login to place bet");
       window.dispatchEvent(new Event("kuber_open_login"));
       return;
     }
 
-    // 6. Usable Balance Pre-flight Check: (availableBalance - exposure) >= liability
+    // 6. Strict Balance & Liability Validation
     const numAvail = Number(availableBalance) || 0;
     const numExpo = Number(exposureBalance) || 0;
     const usableBalance = numAvail - numExpo;
-    const requiredMargin = liability || numStake;
-    if (usableBalance < requiredMargin && numAvail > 0) {
-      toast.error(`Insufficient balance! Usable Balance: ₹${Math.max(0, usableBalance).toLocaleString()}`);
+    const requiredAmount = isBack ? numStake : (liability || (numOdds - 1) * numStake);
+
+    if (numAvail <= 0 || usableBalance <= 0) {
+      toast.error("Insufficient Balance. Please deposit funds to play.");
+      return;
+    }
+
+    if (usableBalance < requiredAmount) {
+      toast.error(
+        `Insufficient Balance! Required: ₹${requiredAmount.toFixed(2)}, Available: ₹${Math.max(0, usableBalance).toFixed(2)}`
+      );
       return;
     }
 
@@ -241,26 +305,31 @@ const BetSlip = ({
 
     try {
       const betPayload = {
-        type: activeBet?.betType,
-        event: eventName || activeBet?.eventName,
-        eventId: eventId || activeBet?.eventId,
-        eventType: sportId || activeBet?.sportId || "4",
-        sportsName: currentSport || "cricket",
-        market: activeBet?.marketType || "Match Odds",
-        markettype: activeBet?.marketType || "Match Odds",
-        marketId: activeBet?.marketId || `${sportId}-${eventId}`,
-        selectionId: activeBet?.selectionId,
-        selection: activeBet?.runnerName,
-        price: odds,
-        oddsReq: odds,
+        type: isBack ? "Back" : "Lay",
+        event: eventName || activeBet?.eventName || activeBet?.event,
+        eventId: String(eventId || activeBet?.eventId || ""),
+        matchId: String(eventId || activeBet?.eventId || ""),
+        eventType: String(sportId || activeBet?.sportId || activeBet?.eventType || "4"),
+        sportsName: currentSport || activeBet?.sportsName || "cricket",
+        market: activeBet?.marketType || activeBet?.market || "Match Odds",
+        markettype: activeBet?.marketType || activeBet?.markettype || "Match Odds",
+        marketId: String(activeBet?.marketId || `${sportId}-${eventId}`),
+        legueId: String(activeBet?.competitionId || competitionId || activeBet?.legueId || "0"),
+        selectionId: String(activeBet?.selectionId ?? ""),
+        selection: activeBet?.runnerName || activeBet?.selection || "",
+        price: String(odds),
+        oddsReq: String(odds),
         stake: String(numStake),
-        againstMargin: liability || numStake,
-        favourMargin: profit,
+        againstMargin: String(Math.abs(againstMargin)),
+        favourMargin: String(favourMargin),
+        roundId: activeBet?.roundId || activeBet?.mid || "",
+        runners: activeBet?.runners || [],
+        runnersCount: activeBet?.runnersCount || 0,
         placeTime: new Date().toISOString(),
       };
 
       const res = await placeBet(betPayload);
-      if (res?.success) {
+      if (res?.success || res?.statusCode === 200 || res?.status === "success") {
         toast.success(res?.message || "Bet placed successfully!");
         if (res?.userData?.availableBalance !== undefined) {
           dispatch(updateAvailableBalance(res.userData.availableBalance));
@@ -268,14 +337,17 @@ const BetSlip = ({
         if (res?.exposure !== undefined) {
           dispatch(updateExposureBalance(res.exposure));
         }
+        
+        // Refresh open bets list immediately so open bets count updates from 0 to 1, 2, etc.
+        dispatch(fetchBets());
+
         dispatch(handleCancelPlaceBet());
         if (onClose) onClose();
       } else {
-        toast.error(res?.message || "Failed to place bet. Please try again.");
+        toast.warning(res?.message || "Failed to place bet. Please try again.");
       }
     } catch (err) {
       console.warn("Place bet error:", err);
-      // If socket failed, give feedback
       toast.error(err?.message || "Bet could not be placed. Check connection or balance.");
     } finally {
       setLoading(false);

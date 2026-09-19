@@ -105,6 +105,7 @@ const TransferStatementPage = loadable(() => import(/* webpackPrefetch: true */ 
 const TimeSettingPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Account/TimeSettingPage"));
 const SettingsPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Account/SettingsPage"));
 const WithdrawalPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Account/WithdrawalPage"));
+const DepositPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Account/DepositPage"));
 const ChangePasswordPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Account/ChangePasswordPage"));
 
 export const preloadRoute = (name) => {
@@ -395,6 +396,18 @@ export const Kuberbook666Router = createBrowserRouter([
       {
         path: "withdraw_funds",
         element: <WithdrawalPage.Element />,
+      },
+      {
+        path: "deposit",
+        element: <DepositPage.Element />,
+      },
+      {
+        path: "deposit-funds",
+        element: <DepositPage.Element />,
+      },
+      {
+        path: "deposit_funds",
+        element: <DepositPage.Element />,
       },
       {
         path: "change-password",

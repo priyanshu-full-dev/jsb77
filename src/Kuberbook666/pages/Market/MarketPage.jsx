@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import PropTypes from "prop-types";
 import { useSearchParams, useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
@@ -30,7 +31,7 @@ export function formatSize(value) {
 }
 
 // Interactive Odds Button with 0.2s yellow flash on price change
-const OddsButton = React.memo(({ price, size, isBack, disabled = false, onClick }) => {
+const OddsButton = React.memo(function OddsButton({ price, size, isBack, disabled = false, onClick }) {
   const [flash, setFlash] = useState(false);
   const prevPrice = useRef(price);
 
@@ -59,26 +60,19 @@ const OddsButton = React.memo(({ price, size, isBack, disabled = false, onClick 
         >
           -
         </span>
-        <span
-          id="oddBtnSize"
-          className="relative z-10 transition-all ease-in-out duration-300 origin-center flex items-center justify-center w-full text-[10px] text-text_OddValue leading-3 text-center whitespace-normal font-normal"
-        >
-          <span className="w-max break-all truncate">-</span>
-        </span>
       </div>
     );
   }
 
   return (
-    <div
+    <button
+      type="button"
       onClick={onClick}
-      className={`overflow-hidden relative opacity-100 cursor-pointer active:scale-95 w-full h-full px-1 py-[1px] rounded-sm flex flex-col items-center justify-center transition-all duration-100 ${
-        flash
-          ? "odds-flash-yellow"
-          : isBack
-          ? "bg-bg_BackBtnBg border border-backBtn"
-          : "bg-bg_LayBtnBg border border-layBtn"
-      }`}
+      className={`overflow-hidden relative w-full h-full px-1 py-[1px] rounded-sm flex flex-col items-center justify-center transition-colors active:scale-95 duration-150 ${
+        isBack
+          ? "bg-bg_BackBtnBg border border-backBtn hover:brightness-95"
+          : "bg-bg_LayBtnBg border border-layBtn hover:brightness-95"
+      } ${flash ? "ring-2 ring-yellow-400 brightness-110" : ""}`}
     >
       <span
         id="oddBtnPrice"
@@ -86,17 +80,27 @@ const OddsButton = React.memo(({ price, size, isBack, disabled = false, onClick 
       >
         {price}
       </span>
-      <span
-        id="oddBtnSize"
-        className="relative z-10 transition-all ease-in-out duration-300 origin-center flex items-center justify-center w-full text-[10px] text-text_OddValue leading-3 text-center whitespace-normal font-normal"
-      >
-        <span className="w-max break-all truncate">
-          <div className="odd-button__volume">{formatSize(size)}</div>
+      {size !== undefined && size !== null && size !== "" && size !== "-" && (
+        <span
+          id="oddBtnSize"
+          className="text-text_Ternary-new dark:text-gray-300 text-[9px] md:text-[10px] leading-tight opacity-80"
+        >
+          {formatSize(size)}
         </span>
-      </span>
-    </div>
+      )}
+    </button>
   );
 });
+
+OddsButton.displayName = "OddsButton";
+
+OddsButton.propTypes = {
+  price: PropTypes.any,
+  size: PropTypes.any,
+  isBack: PropTypes.bool,
+  disabled: PropTypes.bool,
+  onClick: PropTypes.func,
+};
 
 const MarketPage = () => {
   const [searchParams] = useSearchParams();
@@ -128,7 +132,6 @@ const MarketPage = () => {
   const competitionId = searchParams.get("competitionId") || "";
   const marketId = searchParams.get("marketId") || "";
   const queryEventName = searchParams.get("eventName") || "";
-  const openDate = searchParams.get("openDate") || "";
   const hasBmQuery = searchParams.get("bm") === "true";
   const hasFancyQuery = searchParams.get("fancy") === "true";
 
@@ -156,12 +159,10 @@ const MarketPage = () => {
 
   const rawMatch = matchFromStore?.raw || matchFromStore || {};
   const eventName = queryEventName || rawMatch?.eventName || "Live Match";
-  const isInPlay = rawMatch?.inplay || rawMatch?.inPlay || false;
   const currentSport = (rawMatch?.sport || sportsMapping[sportId] || "cricket").toLowerCase();
 
   const isCricket = String(sportId) === "4";
   const isFootball = String(sportId) === "1";
-  const isTennis = String(sportId) === "2";
 
   // Initial REST fetch for market odds & fancy
   useEffect(() => {
@@ -177,7 +178,6 @@ const MarketPage = () => {
 
   // Mahadev Redux Slices Integration
   const reduxMarketOdds = useSelector((state) => state?.marketOdds?.data?.data?.data || state?.marketOdds?.data?.data);
-  const reduxMarkets = useSelector((state) => state?.marketOdds?.marketName || []);
   const reduxRunningData = useSelector((state) => state?.marketOdds?.runningData || []);
   const { bookMakerData: BmakerData } = useSelector((state) => state?.bookmakerOdds || {});
   const { fancyData: FData } = useSelector((state) => state?.fancyOdds || {});
@@ -357,7 +357,7 @@ const MarketPage = () => {
 
   // Bet Click Handler
   const handleBetClick = useCallback(
-    (runnerName, selectionId, type, price, marketTitle = "Match Odds", size = "", min = 100, max = 100000, betKey = "") => {
+    (runnerName, selectionId, type, price, marketTitle = "Match Odds", size = "", min = 100, max = 100000, betKey = "", runnersList = []) => {
       if (!price || price === "-") return;
 
       const resolvedBetKey = betKey || `${marketTitle}_${selectionId || runnerName}`;
@@ -373,6 +373,22 @@ const MarketPage = () => {
         return;
       }
 
+      const resolvedMarketId =
+        marketTitle === "Match Odds"
+          ? (marketId || liveMatchOdds?.[0]?.marketId || rawMatch?.marketId || urlEventId)
+          : marketTitle === "Bookmaker"
+          ? (liveBookmaker?.marketId || liveBookmaker?.[0]?.marketId || urlEventId)
+          : marketTitle === "Fancy"
+          ? (selectionId || urlEventId)
+          : (marketId || urlEventId);
+
+      const resolvedRunners = Array.isArray(runnersList) && runnersList.length > 0
+        ? runnersList.map((r) => ({
+            runnerName: r?.runnerName || r?.name || "",
+            selectionId: r?.selectionId,
+          }))
+        : [];
+
       const betInfo = {
         betKey: resolvedBetKey,
         runnerName,
@@ -383,12 +399,14 @@ const MarketPage = () => {
         size,
         min,
         max,
-        marketId: `${sportId}-${competitionId}-${urlEventId}`,
+        marketId: String(resolvedMarketId),
         sportId,
         competitionId,
         eventId: urlEventId,
         eventName,
         currentSport,
+        runners: resolvedRunners,
+        runnersCount: resolvedRunners.length,
       };
 
       setActiveBet(betInfo);
@@ -401,16 +419,18 @@ const MarketPage = () => {
           eventId: urlEventId,
           market: marketTitle,
           markettype: marketTitle,
-          marketId: `${sportId}-${competitionId}-${urlEventId}`,
+          marketId: String(resolvedMarketId),
           selectionId: selectionId || resolvedBetKey,
           teamName: runnerName,
           odds: price,
           betType: type,
           betBoxBgColor: type === "Back" ? "#72bbef" : "#faa9ba",
+          runners: resolvedRunners,
+          runnersCount: resolvedRunners.length,
         })
       );
     },
-    [activeBet, currentSport, sportId, competitionId, urlEventId, eventName, dispatch]
+    [activeBet, currentSport, sportId, competitionId, urlEventId, eventName, marketId, liveMatchOdds, rawMatch?.marketId, liveBookmaker, dispatch]
   );
 
   // Parse team names from eventName
@@ -433,15 +453,29 @@ const MarketPage = () => {
     return { team1Name: t1, team2Name: t2 };
   }, [eventName]);
 
+  // Load bets on mount
+  useEffect(() => {
+    dispatch(fetchBets());
+  }, [dispatch]);
+
   // Open Bets for this match from Redux store (used for badge count & cashout)
-  const accountBets = useSelector((state) => state?.account?.bets || state?.bets?.bets || []);
+  const accountBets = useSelector((state) => state?.account?.bets || []);
+  const sliceBets = useSelector((state) => state?.bets?.bets || []);
+
   const openBetsInMatch = useMemo(() => {
-    if (!Array.isArray(accountBets)) return [];
-    return accountBets.filter((b) => {
-      const bMatchId = b?.matchId || b?.eventId;
-      return String(bMatchId) === String(urlEventId);
+    const allBets = Array.isArray(accountBets) && accountBets.length > 0 ? accountBets : sliceBets;
+    if (!Array.isArray(allBets)) return [];
+    return allBets.filter((b) => {
+      const bMatchId = String(b?.matchId || b?.eventId || "");
+      const currentEid = String(urlEventId || "");
+      const bEventName = String(b?.event || b?.eventName || "").trim().toLowerCase();
+      const currentEvName = String(eventName || "").trim().toLowerCase();
+      return (
+        (bMatchId && currentEid && bMatchId === currentEid) ||
+        (bEventName && currentEvName && bEventName === currentEvName)
+      );
     });
-  }, [accountBets, urlEventId]);
+  }, [accountBets, sliceBets, urlEventId, eventName]);
 
   const openBetsCount = openBetsInMatch.length;
 
@@ -858,10 +892,100 @@ const MarketPage = () => {
         </div>
 
         {/* ================================================================= */}
-        {/* MARKETS CONTAINER                                                 */}
+        {/* OPEN BETS TAB VIEW OR MARKETS CONTAINER                           */}
         {/* ================================================================= */}
-        <div className="w-full text-selection-none pb-3 lg:pb-0 mt-1">
-          <div className="px-2 font-helvetica-neue">
+        {mobileTab === "openBets" ? (
+          <div className="w-full px-2 py-2">
+            <div className="bg-white dark:bg-[#1a1d29] rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
+              <div className="px-3 py-2.5 bg-gray-100 dark:bg-[#232736] border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-text_Primary dark:text-gray-200">
+                  Open Bets ({openBetsCount})
+                </span>
+                <span className="text-[11px] text-gray-500 truncate max-w-[180px]">{eventName}</span>
+              </div>
+
+              {openBetsInMatch.length === 0 ? (
+                <div className="py-8 flex flex-col items-center justify-center text-center px-4">
+                  <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-2 text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                  </div>
+                  <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">No open bets found for this match</p>
+                  <button
+                    onClick={() => setMobileTab("live")}
+                    className="mt-3 px-3 py-1.5 rounded text-xs font-bold text-white bg-bg_Primary hover:opacity-90 transition"
+                  >
+                    Go to Live Odds
+                  </button>
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {openBetsInMatch.map((bet, idx) => {
+                    const isBackSide = (bet?.type || bet?.side || "Back").toLowerCase() === "back";
+                    const bOdds = bet?.price || bet?.oddsReq || bet?.odds || "-";
+                    const bStake = Number(bet?.stake || bet?.amount || 0);
+                    const bProfit = isBackSide
+                      ? (bet?.favourMargin || (Number(bOdds || 1) - 1) * bStake)
+                      : (bet?.againstMargin || bet?.liability || bStake);
+
+                    return (
+                      <div
+                        key={bet?._id || bet?.id || idx}
+                        className={`p-3 border-l-4 ${
+                          isBackSide ? "border-l-backBtn bg-blue-50/20 dark:bg-blue-900/10" : "border-l-layBtn bg-pink-50/20 dark:bg-pink-900/10"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-bold text-gray-900 dark:text-white">
+                            {bet?.selection || bet?.runnerName || bet?.teamName || "Runner"}
+                          </span>
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                              isBackSide ? "bg-backBtn/20 text-blue-700 dark:text-blue-300" : "bg-layBtn/20 text-pink-700 dark:text-pink-300"
+                            }`}
+                          >
+                            {isBackSide ? "Back" : "Lay"}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-gray-500 dark:text-gray-400 mb-2">
+                          {bet?.market || bet?.marketType || bet?.markettype || "Match Odds"}
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 bg-gray-50 dark:bg-[#151722] p-2 rounded text-[11px]">
+                          <div>
+                            <span className="text-gray-400 text-[10px] block">Odds</span>
+                            <span className="font-bold text-gray-800 dark:text-gray-200">{bOdds}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-400 text-[10px] block">Stake</span>
+                            <span className="font-bold text-gray-800 dark:text-gray-200">₹{bStake.toLocaleString()}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-400 text-[10px] block">
+                              {isBackSide ? "Profit" : "Liability"}
+                            </span>
+                            <span className={`font-bold ${isBackSide ? "text-green-600" : "text-red-500"}`}>
+                              ₹{Number(bProfit || 0).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                        {bet?.placeTime && (
+                          <div className="text-[10px] text-gray-400 mt-1.5 text-right">
+                            {new Date(bet.placeTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="w-full text-selection-none pb-3 lg:pb-0 mt-1">
+            <div className="px-2 font-helvetica-neue">
             {/* 1. MATCH ODDS SECTION */}
             {matchOddsRunners.length > 0 && (
               <div>
@@ -1586,6 +1710,7 @@ const MarketPage = () => {
             )}
           </div>
         </div>
+        )}
       </div>
 
       {/* Cashout Confirmation Modal */}

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -15,7 +15,6 @@ import CasinoPointNoticeModal from "../../components/CasinoPointNoticeModal";
 import KuberScreenLoader from "../../components/Loader/KuberScreenLoader";
 import { getCache, setCache } from "../../utils/cache";
 
-import { selectDomainID } from "../../../utils/helper/commonSelectors";
 import { updateCasinoSlice } from "../../../redux/slices/casinoSlice";
 import { launcherUrl, updateCasinoBalance } from "../../../api";
 import {
@@ -29,15 +28,11 @@ const Home = () => {
   const navigate = useNavigate();
 
   // Granular Narrow Selectors
-  const domainId = useSelector(selectDomainID());
   const casinoApiData = useSelector((state) => state.casino?.casinoApiData);
 
   const isLoggedIn = useSelector((state) => state.user?.isLoggedIn);
   const loginType = useSelector((state) => state.user?.loggedInType);
   const userData = useSelector((state) => state?.user?.userData);
-  const userToken = useSelector((state) => state?.user?.userData?.token);
-  const availableBalance = useSelector((state) => state?.user?.userData?.availableBalance);
-  const exposureBalance = useSelector((state) => state?.user?.exposureBalance);
   const siteCasinoData = useSelector((state) => state?.siteCasino);
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -423,55 +418,48 @@ const Home = () => {
     if (!game || isProcessing) return;
 
     setIsProcessing(true);
-    const gameId = game.id || game.gameId || game._id;
-    const isRealUser = isLoggedIn && loginType === "real";
 
-    // Demo user check
+    const gameId = game?.id || game?.gameId;
+
     if (loginType === "" || loginType === "demo") {
-      toast.error("Please login with real ID to play casino games");
+      toast.error("login with real id");
       setIsProcessing(false);
       setSelectedGameForNotice(null);
       return;
     }
 
-    // Real users balance deduction
-    if (isRealUser) {
-      let amount = (userData?.availableBalance || 0) - (userData?.exposure || 0);
-      let siteCasinoBalance = siteCasinoData?.casinoBalance || 0;
-      let finalAmountToDeduct = Math.min(Math.max(amount, 0), siteCasinoBalance);
+    let amount = (userData?.availableBalance || 0) - (userData?.exposure || 0);
+    let siteCasinoBalance = siteCasinoData?.casinoBalance || 0;
 
-      if (
-        finalAmountToDeduct === 0 &&
-        (!userData?.casinoBalance || userData?.casinoBalance <= 0)
-      ) {
-        toast.warning("Insufficient balance");
-        setIsProcessing(false);
-        setSelectedGameForNotice(null);
-        return;
+    let finalAmountToDeduct = Math.min(amount, siteCasinoBalance);
+
+    if (
+      finalAmountToDeduct === 0 &&
+      (!userData?.casinoBalance || userData?.casinoBalance <= 0)
+    ) {
+      toast.warning("Insufficient balance");
+      setIsProcessing(false);
+      setSelectedGameForNotice(null);
+      return;
+    }
+
+    try {
+      const response = await updateCasinoBalance({
+        CasinoBalance: finalAmountToDeduct,
+      });
+
+      if (response?.data?.user) {
+        dispatch(updateAvailableBalance(response.data.user.availableBalance));
+        dispatch(updateUserCasinoBalance(response.data.user.casinoBalance));
       }
-
-      try {
-        const response = await updateCasinoBalance({
-          CasinoBalance: finalAmountToDeduct,
-        });
-
-        if (response?.data?.user) {
-          dispatch(updateAvailableBalance(response.data.user.availableBalance));
-          dispatch(updateUserCasinoBalance(response.data.user.casinoBalance));
-        }
-      } catch (error) {
-        console.error(
-          "Balance update info:",
-          error.response?.data?.message || error.message,
-        );
-      }
+    } catch (error) {
+      console.error("error", error.response?.data?.message);
     }
 
     const data = {
       gameId: gameId,
       playerId: userData?._id || "",
-      displayName:
-        userData?.casinoDisplayName || userData?.userName || "",
+      displayName: userData?.casinoDisplayName || "",
       currency: "INR",
       country: "IN",
       gender: "M",
@@ -479,26 +467,18 @@ const Home = () => {
       mode: isLoggedIn ? "real" : "demo",
       device: isMobile ? "mobile" : "desktop",
       returnUrl: window.location.href,
-      walletSessionId: userData?.sessionToken || localStorage.getItem("token") || "",
+      walletSessionId: userData?.sessionToken || "",
     };
 
     try {
       const res = await launcherUrl(data);
+
       if (res?.success && res?.data?.url) {
         const gameUrl = encodeURIComponent(res.data.url);
-        setSelectedGameForNotice(null);
         navigate(`/game-lobby?gameId=${gameUrl}`);
-      } else {
-        toast.error(res?.message || "Failed to launch game.");
       }
-    } catch (err) {
-      console.error("Backend launcher error:", err);
-      const errMsg =
-        err?.response?.data?.message ||
-        (err?.response?.data?.code === "ACCOUNT_LOCKED"
-          ? "Please login with real ID to play casino games"
-          : "Game launch failed. Please try again.");
-      toast.error(errMsg);
+    } catch (error) {
+      console.error("Game launch error:", error);
     } finally {
       setSelectedGameForNotice(null);
       setIsProcessing(false);
