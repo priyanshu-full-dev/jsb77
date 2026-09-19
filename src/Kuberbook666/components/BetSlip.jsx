@@ -137,21 +137,27 @@ const BetSlip = ({
   const handleMax = useCallback(() => updateStake(String(activeBet?.max || max || 100000)), [activeBet?.max, max, updateStake]);
   const handleClear = useCallback(() => updateStake(""), [updateStake]);
 
-  // Profit / Exposure Calculation
-  const profit = useMemo(() => {
+  // Live Profit and Liability Calculation (Back & Lay, Fancy, Bookmaker)
+  const { profit, liability } = useMemo(() => {
     const numStake = Number(stake) || 0;
     const numOdds = parseFloat(odds) || 0;
-    if (numStake <= 0 || numOdds <= 0) return 0;
+    if (numStake <= 0 || numOdds <= 0) return { profit: 0, liability: 0 };
 
     const mType = activeBet?.marketType || "Match Odds";
     if (mType === "Bookmaker") {
-      return isBack ? (numOdds * numStake) / 100 : numStake;
+      const calcProfit = isBack ? (numOdds * numStake) / 100 : numStake;
+      const calcLiability = isBack ? numStake : (numOdds * numStake) / 100;
+      return { profit: calcProfit, liability: calcLiability };
     } else if (mType === "Fancy") {
       const sizeVal = parseFloat(activeBet?.size) || 100;
-      return isBack ? (sizeVal / 100) * numStake : numStake;
+      const calcProfit = isBack ? (sizeVal / 100) * numStake : numStake;
+      const calcLiability = isBack ? numStake : (sizeVal / 100) * numStake;
+      return { profit: calcProfit, liability: calcLiability };
     } else {
       // Match Odds / Toss
-      return isBack ? (numOdds - 1) * numStake : numStake;
+      const calcProfit = isBack ? (numOdds - 1) * numStake : numStake;
+      const calcLiability = isBack ? numStake : (numOdds - 1) * numStake;
+      return { profit: calcProfit, liability: calcLiability };
     }
   }, [stake, odds, isBack, activeBet?.marketType, activeBet?.size]);
 
@@ -164,6 +170,7 @@ const BetSlip = ({
     }
 
     const numStake = Number(stake) || 0;
+    const numOdds = parseFloat(odds) || 0;
     const minVal = Number(activeBet?.min || min || 100);
     const maxVal = Number(activeBet?.max || max || 100000);
 
@@ -179,7 +186,15 @@ const BetSlip = ({
       return;
     }
 
-    // 4. User Authentication Pre-flight Check
+    // 4. Sport-wise Max Odds Limits (Cricket: 20, Soccer: 15, Tennis: 10)
+    const sType = String(sportId || activeBet?.sportId || "4");
+    const maxAllowedOdds = sType === "4" ? 20 : sType === "1" ? 15 : sType === "2" ? 10 : 50;
+    if (numOdds > maxAllowedOdds && activeBet?.marketType === "Match Odds") {
+      toast.warning(`Maximum odds allowed for this sport is ${maxAllowedOdds}`);
+      return;
+    }
+
+    // 5. User Authentication Pre-flight Check
     const token = localStorage.getItem("token") || localStorage.getItem("userId");
     if (!token && !isUserLoggedInState) {
       toast.info("Please login to place bets");
@@ -187,11 +202,12 @@ const BetSlip = ({
       return;
     }
 
-    // 5. Usable Balance Pre-flight Check: (availableBalance - exposure) >= stake
+    // 6. Usable Balance Pre-flight Check: (availableBalance - exposure) >= liability
     const numAvail = Number(availableBalance) || 0;
     const numExpo = Number(exposureBalance) || 0;
     const usableBalance = numAvail - numExpo;
-    if (usableBalance < numStake && numAvail > 0) {
+    const requiredMargin = liability || numStake;
+    if (usableBalance < requiredMargin && numAvail > 0) {
       toast.error(`Insufficient balance! Usable Balance: ₹${Math.max(0, usableBalance).toLocaleString()}`);
       return;
     }
@@ -219,6 +235,8 @@ const BetSlip = ({
         price: odds,
         oddsReq: odds,
         stake: String(numStake),
+        againstMargin: liability || numStake,
+        favourMargin: profit,
         placeTime: new Date().toISOString(),
       };
 

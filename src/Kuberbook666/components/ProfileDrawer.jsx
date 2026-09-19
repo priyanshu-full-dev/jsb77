@@ -7,6 +7,7 @@ const ProfileDrawer = ({ isOpen, onClose, onOpenDeposit, onOpenWithdraw }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const userData = useSelector((state) => state?.user?.userData);
+  const exposureBalance = useSelector((state) => state?.user?.exposureBalance);
 
   const username = userData?.username || userData?.name || "wasimkhan";
   const phone = userData?.mobile || userData?.phone || "+91-8292463648";
@@ -17,7 +18,11 @@ const ProfileDrawer = ({ isOpen, onClose, onOpenDeposit, onOpenWithdraw }) => {
         ? userData.balance
         : 0.0;
   const exposure =
-    typeof userData?.exposure === "number" ? userData.exposure : 0.0;
+    typeof exposureBalance === "number"
+      ? exposureBalance
+      : typeof userData?.exposure === "number"
+        ? userData.exposure
+        : 0.0;
 
   // Close drawer on ESC key
   useEffect(() => {

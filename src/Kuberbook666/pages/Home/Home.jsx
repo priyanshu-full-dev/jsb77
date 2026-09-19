@@ -34,6 +34,7 @@ const Home = () => {
 
   const isLoggedIn = useSelector((state) => state.user?.isLoggedIn);
   const loginType = useSelector((state) => state.user?.loggedInType);
+  const userData = useSelector((state) => state?.user?.userData);
   const userToken = useSelector((state) => state?.user?.userData?.token);
   const availableBalance = useSelector((state) => state?.user?.userData?.availableBalance);
   const exposureBalance = useSelector((state) => state?.user?.exposureBalance);
@@ -44,34 +45,32 @@ const Home = () => {
 
   /* ---------------- FETCH CASINO API DATA (SMART CACHING) ---------------- */
   useEffect(() => {
-    const cacheKey = `casino_data_${domainId || "default"}`;
-    const cached = getCache(cacheKey);
+    const cacheKey = "casino_data_all";
+    const cached = getCache(cacheKey, 24 * 60 * 60 * 1000);
     if (cached && Array.isArray(cached) && cached.length > 0) {
       if (!casinoApiData || casinoApiData.length === 0) {
         dispatch(updateCasinoSlice({ casinoApiData: cached }));
       }
-      return;
     }
 
     const fetchCasinoData = async () => {
       try {
         const res = await axios.get(
-          `https://api.professor.monster/api/int/getIntCasinos?domainId=${domainId || ""}`,
+          "https://api.professor.monster/api/int/getIntCasinos",
+          { timeout: 15000 }
         );
         const data = res?.data || [];
         if (Array.isArray(data) && data.length > 0) {
           setCache(cacheKey, data);
+          dispatch(updateCasinoSlice({ casinoApiData: data }));
         }
-        dispatch(updateCasinoSlice({ casinoApiData: data }));
       } catch (error) {
         console.error("Error fetching casino list for Kuber Home:", error);
       }
     };
 
-    if (!casinoApiData || casinoApiData.length === 0) {
-      fetchCasinoData();
-    }
-  }, [domainId, casinoApiData, dispatch]);
+    fetchCasinoData();
+  }, [dispatch]);
 
   /* ---------------- EXTRACT ALL UNIQUE GAMES ---------------- */
   const allUniqueGames = useMemo(() => {

@@ -100,9 +100,7 @@ const OddsButton = React.memo(({ price, size, isLay }) => {
     <span className="col-span-4">
       <span className="flex items-center justify-center w-full h-full p-[1px] md:p-[2px] overflow-hidden">
         <div
-          className={`overflow-hidden relative ${
-            isDash ? "opacity-50 cursor-not-allowed" : "opacity-100 cursor-pointer"
-          } w-full h-full px-1 py-[1px] rounded-sm flex flex-col items-center justify-center ${bgClass} undefined`}
+          className={`overflow-hidden relative opacity-50 cursor-not-allowed w-full h-full px-1 py-[1px] rounded-sm flex flex-col items-center justify-center ${bgClass} undefined`}
         >
           <span
             id="oddBtnPrice"

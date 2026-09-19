@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import { preloadRoute } from "../Kuberbook666Routes";
 
 export default function TopNavChips() {
   const location = useLocation();
@@ -8,7 +9,7 @@ export default function TopNavChips() {
     <div className="relative">
       <div className="flex overflow-x-auto no-scrollbar w-full bg-bg_Quaternary p-1 items-start md:items-center md:justify-center">
         {/* Home */}
-        <Link to="/">
+        <Link to="/" onMouseEnter={() => preloadRoute("home")} onTouchStart={() => preloadRoute("home")}>
           <button
             className={`text-xs cursor-pointer uppercase hide-border-in-dark mr-1 active:border-primary rounded-full text-nowrap whitespace-nowrap font-semibold bg-bg_Ternary8 hover:bg-bg_Ternary9 border w-max px-3 py-1 text-text_HeaderDeskNavMenu md:hidden ${
               path === "/" ? "border-primary border-[#c10831]" : "border-transparent"
@@ -24,7 +25,7 @@ export default function TopNavChips() {
         </Link>
 
         {/* SPORTS */}
-        <Link to="/sports">
+        <Link to="/sports" onMouseEnter={() => preloadRoute("sports")} onTouchStart={() => preloadRoute("sports")}>
           <button
             className={`text-xs cursor-pointer uppercase border mr-1 hide-border-in-dark active:border-primary rounded-full text-nowrap whitespace-nowrap font-semibold bg-bg_Ternary8 hover:bg-bg_Ternary9 w-max px-3 py-1 text-text_HeaderDeskNavMenu md:hidden ${
               path.startsWith("/sports") ? "border-primary border-[#c10831]" : "border-transparent"
@@ -42,7 +43,7 @@ export default function TopNavChips() {
         </Link>
 
         {/* Cricket */}
-        <Link to="/sports">
+        <Link to="/sports" onMouseEnter={() => preloadRoute("sports")} onTouchStart={() => preloadRoute("sports")}>
           <button className="text-xs gap-1 cursor-pointer uppercase mr-1 active:border-primary hide-border-in-dark rounded-full text-nowrap whitespace-nowrap font-semibold bg-bg_Ternary8 hover:bg-bg_Ternary9 border w-max px-2 py-1 text-text_HeaderDeskNavMenu hidden md:flex">
             <svg width="16" height="16" viewBox="0 0 19 18" xmlns="http://www.w3.org/2000/svg" fill="var(--cricket-icon-color)">
               <circle cx="9.5" cy="9" r="8.5" fill="#ffffff" />
@@ -53,7 +54,7 @@ export default function TopNavChips() {
         </Link>
 
         {/* Aura */}
-        <Link to="/aura">
+        <Link to="/aura" onMouseEnter={() => preloadRoute("casino")} onTouchStart={() => preloadRoute("casino")}>
           <button
             className={`text-xs cursor-pointer uppercase border mr-1 active:border-primary hide-border-in-dark rounded-full text-nowrap whitespace-nowrap font-semibold bg-bg_Ternary8 hover:bg-bg_Ternary9 w-max px-3 py-1 text-text_HeaderDeskNavMenu ${
               path.startsWith("/aura") ? "border-primary border-[#c10831]" : "border-transparent"
@@ -71,7 +72,7 @@ export default function TopNavChips() {
         </Link>
 
         {/* MAC88 */}
-        <Link to="/mac88">
+        <Link to="/mac88" onMouseEnter={() => preloadRoute("casino")} onTouchStart={() => preloadRoute("casino")}>
           <button
             className={`text-xs cursor-pointer uppercase border mr-1 active:border-primary hide-border-in-dark rounded-full text-nowrap whitespace-nowrap font-semibold bg-bg_Ternary8 hover:bg-bg_Ternary9 w-max px-3 py-1 text-text_HeaderDeskNavMenu ${
               path.startsWith("/mac88") ? "border-primary border-[#c10831]" : "border-transparent"
@@ -91,7 +92,7 @@ export default function TopNavChips() {
         </Link>
 
         {/* Live Casino */}
-        <Link to="/live-casino">
+        <Link to="/live-casino" onMouseEnter={() => preloadRoute("live-casino")} onTouchStart={() => preloadRoute("live-casino")}>
           <button
             className={`text-xs cursor-pointer uppercase border mr-1 active:border-primary hide-border-in-dark rounded-full text-nowrap whitespace-nowrap font-semibold bg-bg_Ternary8 hover:bg-bg_Ternary9 w-max px-3 py-1 text-text_HeaderDeskNavMenu ${
               path.startsWith("/live-casino") ? "border-primary border-[#c10831]" : "border-transparent"
@@ -101,6 +102,7 @@ export default function TopNavChips() {
               <span className="flex flex-row items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 48 48">
                   <path fill="#333" d="M43.8 31.1 25.4 1.4c-.2-.3-.5-.6-.9-.7-.4-.1-.8 0-1.1.2L.8 14.8c-.3.2-.6.5-.7.9-.1.4 0 .8.2 1.1l18.3 29.8c.3.5.8.7 1.3.7.3 0 .5-.1.8-.2l22.6-13.9c.3-.2.6-.5.7-.9.1-.4 0-.8-.2-1.2z"></path>
+                  <path fill="#d2d2d2" d="M8.7 6.5h26.6v35H8.7z" transform="rotate(-31.647 22.023 23.998)"></path>
                   <path fill="#e44b4b" d="M39.3 26.4c0 3.7-6.2 7.3-6.2 7.3S27 30.1 27 26.4c0-1.8 1.5-3.3 3.3-3.3 1.3 0 2.3.7 2.9 1.8.5-1 1.6-1.8 2.9-1.8 1.8 0 3.2 1.4 3.2 3.3z"></path>
                 </svg>
                 <span className="font font-lato text-[12px] ml-[4px]">Live Casino</span>
@@ -110,7 +112,7 @@ export default function TopNavChips() {
         </Link>
 
         {/* Aviator / Crash */}
-        <Link to="/crash">
+        <Link to="/crash" onMouseEnter={() => preloadRoute("casino")} onTouchStart={() => preloadRoute("casino")}>
           <button
             className={`text-xs cursor-pointer uppercase border mr-1 active:border-primary hide-border-in-dark rounded-full text-nowrap whitespace-nowrap font-semibold bg-bg_Ternary8 hover:bg-bg_Ternary9 w-max px-3 py-1 text-text_HeaderDeskNavMenu ${
               path.startsWith("/crash") || path.startsWith("/aviator") ? "border-primary border-[#c10831]" : "border-transparent"
@@ -128,7 +130,7 @@ export default function TopNavChips() {
         </Link>
 
         {/* SLOTS */}
-        <Link to="/slots">
+        <Link to="/slots" onMouseEnter={() => preloadRoute("casino")} onTouchStart={() => preloadRoute("casino")}>
           <button
             className={`text-xs cursor-pointer uppercase border mr-1 active:border-primary hide-border-in-dark rounded-full text-nowrap whitespace-nowrap font-semibold bg-bg_Ternary8 hover:bg-bg_Ternary9 w-max px-3 py-1 text-text_HeaderDeskNavMenu ${
               path.startsWith("/slots") ? "border-primary border-[#c10831]" : "border-transparent"

@@ -115,11 +115,20 @@ const LiveCasinoPage = ({ tab }) => {
 
     const fetchCasino = async () => {
       try {
-        const res = await axios.get(
-          `https://api.professor.monster/api/int/getIntCasinos?domainId=${domainId}`,
+        setIsLoading(true);
+        let res = await axios.get(
+          `https://api.professor.monster/api/int/getIntCasinos${domainId ? `?domainId=${domainId}` : ""}`,
         );
 
-        const data = (res.data || [])
+        let rawList = res.data || [];
+        if (!Array.isArray(rawList) || rawList.length === 0) {
+          res = await axios.get(
+            `https://api.professor.monster/api/int/getIntCasinos`
+          );
+          rawList = res.data || [];
+        }
+
+        const data = rawList
           .filter((item) => item?.provider?.isAllowed)
           .filter(
             (item) => !lockedProviders.has(item?.provider?.name?.toLowerCase()),

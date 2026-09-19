@@ -34,7 +34,13 @@ const App = () => {
   });
   const [SelectedRouter, setSelectedRouter] = useState(null);
 
-  const domainName = useMemo(() => window.location.host, []);
+  const domainName = useMemo(() => {
+    const host = window.location.host;
+    if (host.includes("localhost") || host.includes("127.0.0.1")) {
+      return "asianexchange.club";
+    }
+    return host;
+  }, []);
 
   // --- Load router instantly if cached ---
   useEffect(() => {
@@ -73,12 +79,22 @@ const App = () => {
     const fetchInitial = async () => {
       try {
         const response = await getSitesByDomain(domainName);
-        const details = response?.data?.siteDetails;
+        const rawData = response?.data;
+        const details = rawData?.siteDetails
+          ? {
+              ...rawData.siteDetails,
+              createdBy: rawData.createdBy || rawData.siteDetails?.createdBy,
+              userRoleId: rawData.userRoleId || rawData.siteDetails?.userRoleId,
+              domainDetails: rawData.siteDetails?.domainDetails || rawData.domainDetails,
+              admindomainName: rawData.siteDetails?.admindomainName || rawData.admindomainName,
+              siteDetails: rawData.siteDetails,
+            }
+          : rawData;
+
         if (details && mountedRef.current) {
           dispatch(setSiteDetails(details));
           setSiteDetailsState(details);
           localStorage.setItem("siteDetails", JSON.stringify(details));
-
 
           await fetchSiteMetaData(details?._id);
           if (details?.meta_data?.metaPixelId) {
@@ -107,7 +123,17 @@ const App = () => {
       const refresh = async () => {
         try {
           const response = await getRefreshSitesByDomain(domainName);
-          const details = response?.data?.siteDetails;
+          const rawData = response?.data;
+          const details = rawData?.siteDetails
+            ? {
+                ...rawData.siteDetails,
+                createdBy: rawData.createdBy || rawData.siteDetails?.createdBy,
+                userRoleId: rawData.userRoleId || rawData.siteDetails?.userRoleId,
+                domainDetails: rawData.siteDetails?.domainDetails || rawData.domainDetails,
+                admindomainName: rawData.siteDetails?.admindomainName || rawData.admindomainName,
+                siteDetails: rawData.siteDetails,
+              }
+            : rawData;
 
           if (details && active) {
             dispatch(setSiteDetails(details));

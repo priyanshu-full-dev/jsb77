@@ -255,43 +255,56 @@ const GameSectionCarousel = ({
             WebkitOverflowScrolling: "touch",
           }}
         >
-          <div className="grid grid-rows-1 grid-flow-col gap-1 w-max md:w-full min-w-full no-scrollbar">
-            {displayGames.map((game, idx) => {
-              const isPrompted = promptedGameId === game.id;
-
-              return (
+          {displayGames.length === 0 ? (
+            <div className="flex gap-2.5 w-full overflow-hidden py-1">
+              {[1, 2, 3, 4, 5, 6].map((idx) => (
                 <div
-                  key={game.id || idx}
-                  onClick={(e) => handleGameCardClick(e, game)}
-                  className="min-w-[117px] w-[117px] sm:min-w-[140px] sm:w-[140px] md:min-w-[160px] md:w-[160px] max-h-[192px] aspect-[0.83] object-cover relative cursor-pointer"
+                  key={idx}
+                  className="min-w-[117px] w-[117px] sm:min-w-[140px] sm:w-[140px] md:min-w-[160px] md:w-[160px] aspect-[0.75] rounded-[8px] bg-gray-200 dark:bg-gray-800/60 animate-pulse relative overflow-hidden flex-shrink-0 flex items-center justify-center border border-gray-100 dark:border-gray-800"
                 >
-                  <div className="min-w-[117px] w-[117px] sm:min-w-[140px] sm:w-[140px] md:min-w-[160px] md:w-[160px] flex flex-col bg-bg_Quaternary1 items-start justify-center shadow-GameShadow rounded-[6px]">
-                    <div className="relative rounded-[8px] w-full max-h-[192px] aspect-[0.75] overflow-hidden cursor-pointer shadow-sm md:hover:shadow-md">
-                      <img
-                        src={game.image || game.img || "/placeholder.svg"}
-                        width="auto"
-                        height="auto"
-                        className={`w-full h-full object-cover transform transition-transform duration-500 ease-in-out pointer-events-none ${
-                          isPrompted
-                            ? "blur-[3px] scale-105"
-                            : "hover:scale-105"
-                        }`}
-                        alt={game.name || "Game"}
-                        loading="lazy"
-                        title={game.name || ""}
-                        onError={(e) => {
-                          if (!e.currentTarget.dataset.failed) {
-                            e.currentTarget.dataset.failed = "true";
-                            e.currentTarget.src = "/placeholder.svg";
-                          }
-                        }}
-                      />
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent animate-[shimmer_1.5s_infinite]" />
+                  <div className="w-6 h-6 rounded-full border-2 border-red-600/30 border-t-red-600 animate-spin" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-rows-1 grid-flow-col gap-1 w-max md:w-full min-w-full no-scrollbar">
+              {displayGames.map((game, idx) => {
+                const isPrompted = promptedGameId === game.id;
 
-                      {/* Image 2 Login Prompt Overlay */}
-                      {isPrompted && (
-                        <div className="absolute inset-0 bg-black/25 backdrop-blur-[1px] flex items-center justify-center z-20 animate-in fade-in duration-150">
-                          <button
-                            onClick={(e) => {
+                return (
+                  <div
+                    key={game.id || idx}
+                    onClick={(e) => handleGameCardClick(e, game)}
+                    className="min-w-[117px] w-[117px] sm:min-w-[140px] sm:w-[140px] md:min-w-[160px] md:w-[160px] max-h-[192px] aspect-[0.83] object-cover relative cursor-pointer"
+                  >
+                    <div className="min-w-[117px] w-[117px] sm:min-w-[140px] sm:w-[140px] md:min-w-[160px] md:w-[160px] flex flex-col bg-bg_Quaternary1 items-start justify-center shadow-GameShadow rounded-[6px]">
+                      <div className="relative rounded-[8px] w-full max-h-[192px] aspect-[0.75] overflow-hidden cursor-pointer shadow-sm md:hover:shadow-md">
+                        <img
+                          src={game.image || game.img || "/placeholder.svg"}
+                          width="auto"
+                          height="auto"
+                          className={`w-full h-full object-cover transform transition-transform duration-500 ease-in-out pointer-events-none ${
+                            isPrompted
+                              ? "blur-[3px] scale-105"
+                              : "hover:scale-105"
+                          }`}
+                          alt={game.name || "Game"}
+                          loading="lazy"
+                          title={game.name || ""}
+                          onError={(e) => {
+                            if (!e.currentTarget.dataset.failed) {
+                              e.currentTarget.dataset.failed = "true";
+                              e.currentTarget.src = "/placeholder.svg";
+                            }
+                          }}
+                        />
+
+                        {/* Image 2 Login Prompt Overlay */}
+                        {isPrompted && (
+                          <div className="absolute inset-0 bg-black/25 backdrop-blur-[1px] flex items-center justify-center z-20 animate-in fade-in duration-150">
+                            <button
+                              onClick={(e) => {
                               e.stopPropagation();
                               openLoginModal();
                             }}
@@ -308,6 +321,7 @@ const GameSectionCarousel = ({
               );
             })}
           </div>
+        )}
         </div>
       </div>
     </div>

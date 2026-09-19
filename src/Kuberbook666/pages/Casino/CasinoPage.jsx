@@ -129,13 +129,21 @@ export default function CasinoPage({ tab }) {
     const fetchCasino = async () => {
       try {
         setIsLoading(true);
-        const res = await axios.get(
-          `https://api.professor.monster/api/int/getIntCasinos?domainId=${domainId || ""}`
+        let res = await axios.get(
+          `https://api.professor.monster/api/int/getIntCasinos${domainId ? `?domainId=${domainId}` : ""}`
         );
+
+        let rawList = res.data || [];
+        if (!Array.isArray(rawList) || rawList.length === 0) {
+          res = await axios.get(
+            `https://api.professor.monster/api/int/getIntCasinos`
+          );
+          rawList = res.data || [];
+        }
 
         if (!isMounted) return;
 
-        const data = (res.data || [])
+        const data = rawList
           .filter((item) => item?.provider?.isAllowed !== false)
           .filter(
             (item) => !lockedProviders.has(item?.provider?.name?.toLowerCase())

@@ -165,11 +165,17 @@ const Home = () => {
 
   const fetchEzugiGameList = async () => {
     try {
-      const res = await axios.get(
-        `https://api.professor.monster/api/int/getIntCasinos?domainId=${domainId}`,
+      let res = await axios.get(
+        `https://api.professor.monster/api/int/getIntCasinos${domainId ? `?domainId=${domainId}` : ""}`,
       );
 
-      const data = res?.data || [];
+      let data = res?.data || [];
+      if (!Array.isArray(data) || data.length === 0) {
+        res = await axios.get(
+          `https://api.professor.monster/api/int/getIntCasinos`,
+        );
+        data = res?.data || [];
+      }
 
       dispatch(updateCasinoSlice({ casinoApiData: data }));
     } catch (error) {
@@ -178,7 +184,7 @@ const Home = () => {
   };
 
   useEffect(() => {
-    if (domainId) fetchEzugiGameList();
+    fetchEzugiGameList();
   }, [domainId]);
 
   /* ---------------- UNIQUE GAME EXTRACT ---------------- */

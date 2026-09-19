@@ -49,7 +49,11 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
   useEffect(() => {
     const fetchSiteDetails = async () => {
       try {
-        const domainName = window.location.host;
+        const domainName =
+          window.location.host.includes("localhost") ||
+          window.location.host.includes("127.0.0.1")
+            ? "asianexchange.club"
+            : window.location.host;
         const response = await getSitesByDomain(domainName);
         if (response?.data) {
           setApiSiteData(response.data);
@@ -87,14 +91,10 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
   // Submit Registration To Real Database (No OTP - Exact Mahadev Real Flow)
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const cleanPhone = phone.replace(/\D/g, "");
+    const cleanPhone = phone.replace(/\D/g, "").slice(-10);
 
     if (!cleanPhone || cleanPhone.length < 10) {
       setError("Phone No is mandatory (10 digits)");
-      return;
-    }
-    if (!username.trim()) {
-      setError("User Name is mandatory");
       return;
     }
     if (!password.trim()) {
@@ -130,42 +130,51 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
         apiSiteData?.siteDetails?.createrId ||
         siteDetails?.createdBy?._id ||
         siteDetails?.createrId ||
+        siteDetails?.siteDetails?.createrId ||
         cachedSite?.createdBy?._id ||
         cachedSite?.createrId ||
-        "";
+        "6a8d85907a10e78fbbcd5cee";
 
       const roleId =
         apiSiteData?.userRoleId ||
         siteDetails?.userRoleId ||
+        siteDetails?.siteDetails?.userRoleId ||
         cachedSite?.userRoleId ||
-        "";
+        "6a8553b2e180c5acfc1e3fc3";
 
       const domainId =
         apiSiteData?.siteDetails?.domainDetails?._id ||
+        apiSiteData?.domainDetails?._id ||
         siteDetails?.domainDetails?._id ||
+        siteDetails?.siteDetails?.domainDetails?._id ||
         cachedSite?.domainDetails?._id ||
-        "";
+        "6a85553b526a2dbeb187f070";
 
       const ownerDomainId =
         apiSiteData?.siteDetails?.admindomainName?._id ||
+        apiSiteData?.admindomainName?._id ||
         siteDetails?.admindomainName?._id ||
+        siteDetails?.siteDetails?.admindomainName?._id ||
         cachedSite?.admindomainName?._id ||
-        "";
+        "6a85553b526a2dbeb187f071";
 
       const siteId =
         apiSiteData?.siteDetails?._id ||
         apiSiteData?._id ||
+        siteDetails?.siteDetails?._id ||
         siteDetails?._id ||
+        cachedSite?.siteDetails?._id ||
         cachedSite?._id ||
-        "";
+        "6a859c4209b8c3333c187921";
 
       // Build full database payload matching Mahadev's exact structure
       const payload = {
         mobile: cleanPhone,
-        userName: username.trim(),
-        name: username.trim(),
+        userName: cleanPhone, // Backend expects 10-digit mobile number as userName
+        name: cleanPhone,
         password: password.trim(),
         confirmPassword: confirmPassword.trim(),
+        otp: "",
         x_panel_type: "user",
         commission: 0,
         openingBalance: 0,
@@ -176,17 +185,17 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
         exposureLimit: 200000,
         exposure: 0,
         createdBy: createdById,
-        referredBy: referral || "",
+        referredBy: promoCode.trim() || referral || "",
         deviceIp: "0.0.0",
         role: roleId,
         domain: domainId,
-        ownerDomainId: ownerDomainId,
-        otp: "",
-        isSignupUser: true,
-        layout: "asianexchange",
+        ownerDomainId: ownerDomainId || domainId,
         siteID: siteId,
-        promocode: promoCode.trim(),
+        isSignupUser: true,
+        layout: apiSiteData?.siteDetails?.layout || siteDetails?.layout || "asianexchange",
       };
+
+      console.log("Signup Payload before sending:", payload);
 
       const response = await signUp(payload);
 

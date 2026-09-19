@@ -98,7 +98,11 @@ const SignupModal = ({ onClose }) => {
   useEffect(() => {
     const fetchSiteDetails = async () => {
       try {
-        const domainName = window.location.host;
+        const domainName =
+          window.location.host.includes("localhost") ||
+          window.location.host.includes("127.0.0.1")
+            ? "asianexchange.club"
+            : window.location.host;
         const response = await getSitesByDomain(domainName);
         const siteDetails = response?.data;
 
@@ -109,10 +113,11 @@ const SignupModal = ({ onClose }) => {
           createdBy:
             siteDetails?.createdBy?._id ||
             siteDetails?.siteDetails?.createrId ||
-            "",
-          role: siteDetails?.userRoleId || "",
-          domain: siteDetails?.siteDetails?.domainDetails?._id || "",
-          ownerDomainId: siteDetails?.siteDetails?.admindomainName?._id || "",
+            "6a8d85907a10e78fbbcd5cee",
+          role: siteDetails?.userRoleId || "6a8553b2e180c5acfc1e3fc3",
+          domain: siteDetails?.siteDetails?.domainDetails?._id || "6a85553b526a2dbeb187f070",
+          ownerDomainId: siteDetails?.siteDetails?.admindomainName?._id || "6a85553b526a2dbeb187f071",
+          siteID: siteDetails?.siteDetails?._id || siteDetails?._id || "6a859c4209b8c3333c187921",
           ...(params.referral && { referredBy: params.referral }),
         }));
       } catch (error) {
@@ -242,14 +247,29 @@ const SignupModal = ({ onClose }) => {
     if (!validate()) return;
     if (passwordError) return;
 
+    const domainId = formData.domain;
+    const createdBy = formData.createdBy;
+    const role = formData.role;
+
+    if (!domainId || !createdBy || !role) {
+      toast.error("Site configuration is loading, please wait 2 seconds...");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
+      const cleanPhone = form.phone.replace(/\D/g, "").slice(-10);
       const payload = {
         ...formData,
-        password: form.password,
-        confirmPassword: form.confirmPassword,
+        mobile: cleanPhone,
+        userName: cleanPhone,
+        name: cleanPhone,
+        password: form.password.trim(),
+        confirmPassword: form.confirmPassword.trim(),
       };
+
+      console.log("Signup Payload before sending:", payload);
 
       const response = await signUp(payload);
 
@@ -261,7 +281,7 @@ const SignupModal = ({ onClose }) => {
         toast.error(response?.data?.message || "Signup failed");
       }
     } catch (err) {
-      toast.error("Signup failed");
+      toast.error(err?.response?.data?.message || "Signup failed");
       console.log(err);
     }
 

@@ -88,6 +88,38 @@ const ProfilePage = loadable(() => import(/* webpackPrefetch: true */ "./pages/A
 const MarketPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Market/MarketPage"));
 const GameLobby = loadable(() => import(/* webpackPrefetch: true */ "./pages/GameLobby/GameLobby"));
 
+export const preloadRoute = (name) => {
+  try {
+    switch (name) {
+      case "home":
+        Home.Lazy.preload?.();
+        break;
+      case "sports":
+        SportsPage.Lazy.preload?.();
+        break;
+      case "casino":
+        CasinoPage.Lazy.preload?.();
+        break;
+      case "live-casino":
+        LiveCasinoPage.Lazy.preload?.();
+        break;
+      case "inplay":
+        InPlayPage.Lazy.preload?.();
+        break;
+      case "account":
+        ProfilePage.Lazy.preload?.();
+        break;
+      case "market":
+        MarketPage.Lazy.preload?.();
+        break;
+      default:
+        break;
+    }
+  } catch (e) {
+    // silent catch for preloading
+  }
+};
+
 // ==========================================================================
 // ROUTE CONFIGURATION
 // ==========================================================================
