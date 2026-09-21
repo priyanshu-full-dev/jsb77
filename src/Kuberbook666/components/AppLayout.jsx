@@ -89,6 +89,26 @@ const AppLayoutContent = () => {
     }
   }, [currentUserId]);
 
+  // Non-blocking background storage using requestIdleCallback
+  useEffect(() => {
+    const initBackgroundSettings = () => {
+      try {
+        if (!localStorage.getItem("kuber_settings")) {
+          const defaultSettings = { defaultStake: 100, oddsHighlight: true };
+          localStorage.setItem("kuber_settings", JSON.stringify(defaultSettings));
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    if ("requestIdleCallback" in window) {
+      window.requestIdleCallback(initBackgroundSettings);
+    } else {
+      setTimeout(initBackgroundSettings, 1000);
+    }
+  }, []);
+
   useEffect(() => {
     const handleOpenLogin = () => setLoginOpen(true);
     const handleOpenSignup = () => setSignupOpen(true);

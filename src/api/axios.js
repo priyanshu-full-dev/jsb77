@@ -34,7 +34,7 @@ API.interceptors.request.use(
   async (config) => {
     const state = store.getState();
 
-    const token = state.user?.token || "";
+    const token = state.user?.token || localStorage.getItem("token") || "";
     let siteObj = state.site?.siteDetails;
 
     if (!siteObj || !siteObj._id) {

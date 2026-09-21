@@ -20,7 +20,7 @@ const DepositModal = ({ isOpen, onClose }) => {
   );
 
   const fetchTransactions = async () => {
-    if (!userId) return;
+    if (!userId || userId === "undefined") return;
     try {
       setLoadingHistory(true);
       const res = await getPaymentsByUserId(userId);
@@ -42,7 +42,7 @@ const DepositModal = ({ isOpen, onClose }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
-      if (userId) {
+      if (userId && activeView === "history") {
         fetchTransactions();
       }
     } else {
@@ -53,7 +53,7 @@ const DepositModal = ({ isOpen, onClose }) => {
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isOpen, userId]);
+  }, [isOpen, userId, activeView]);
 
   if (!isOpen) return null;
 
@@ -167,6 +167,7 @@ const DepositModal = ({ isOpen, onClose }) => {
             /* Step 2: Payment Gateway Screen */
             <PaymentGateway
               amount={amount}
+              open={openGateway}
               toggle={() => setOpenGateway(false)}
               fetchTransactions={fetchTransactions}
               onClose={onClose}

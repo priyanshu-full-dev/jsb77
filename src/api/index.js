@@ -164,17 +164,9 @@ export const ReCallCasinoBalance = (body) =>
   apiPOST(API_URL.ReCallCasinoBalance, body);
 export const createPayment = (body) => apiPOST(API_URL.createPayment, body);
 export const uploadMedia = (body) => apiPOST(API_URL.upload_media, body);
-export const getPaymentsByUserId = async (userID) => {
-  if (!userID) return { data: [] };
-  try {
-    return await apiGET(`/api/v1/getPaymentsByUserId/${userID}`);
-  } catch {
-    try {
-      return await apiGET(`/api/getPaymentsByUserId/${userID}`);
-    } catch {
-      return { data: [] };
-    }
-  }
+export const getPaymentsByUserId = (userID) => {
+  if (!userID || userID === "undefined") return Promise.resolve({ data: [], success: true });
+  return apiGET(API_URL.getPaymentsByUserId(userID));
 };
 export const getCasinoList = () => apiGET(API_URL.getListUrl("casino"));
 export const getCasinoData = (casinoType, eventID) =>

@@ -1,6 +1,5 @@
 import io from "socket.io-client";
 import { baseUrl } from "./api/axios";
-import store from "./redux/store";
 import {
   setMatchesLoading,
   updateMatches,
@@ -45,6 +44,15 @@ import {
   setDiamondCasinoOddsLoading,
 } from "./redux/slices/diamondCasinoOddsSlice";
 
+// Dynamic Store Injection to prevent Circular Dependency & TDZ ReferenceError
+let reduxStore = null;
+export const injectStore = (_store) => {
+  reduxStore = _store;
+};
+export const getStore = () => reduxStore;
+const getReduxState = () => reduxStore?.getState?.() || {};
+const dispatch = (action) => reduxStore?.dispatch?.(action);
+
 const activeSubscriptions = {
   matches: new Map(), // key: `${eventId}-${eventType}`
   marketOdds: new Map(), // key: `${eventId}-${marketId}`
@@ -66,8 +74,12 @@ const activeSubscriptions = {
 let isResubscribing = false;
 
 export const socket = io(baseUrl, {
-  auth: {
-    token: store.getState()?.user?.token || "",
+  auth: (cb) => {
+    const token =
+      reduxStore?.getState()?.user?.token ||
+      localStorage.getItem("token") ||
+      "";
+    cb({ token });
   },
   reconnection: true,
   reconnectionDelay: 1000,
@@ -129,8 +141,8 @@ socket.on("disconnect", (reason) => {
 
 socket.on("connect_error", (error) => {
   console.error("⚠️ [SOCKET CONNECT ERROR]:", error.message);
-  store.dispatch(setMatchesError({ sport: "all", error: error.message }));
-  store.dispatch(setMarketOddsError(error.message));
+  dispatch(setMatchesError({ sport: "all", error: error.message }));
+  dispatch(setMarketOddsError(error.message));
 });
 
 // Match Updates
@@ -143,7 +155,7 @@ socket.on("matchUpdate", (data) => {
   // 🔥 CASE 1: Sports list (NO eventId)
   if (data?.matches && data?.sport) {
     const sportKey = data.sport.toLowerCase();
-    store.dispatch(
+    dispatch(
       updateMatches({
         sport: sportKey,
         data: { data: data.matches },
@@ -172,7 +184,7 @@ socket.on("matchUpdate", (data) => {
     const sport = rawSport ? String(rawSport).toLowerCase() : "";
 
     if (data.matches && sport && sport !== "unknown") {
-      store.dispatch(
+      dispatch(
         updateMatches({
           sport,
           data: { data: data.matches },
@@ -187,7 +199,7 @@ socket.on("marketOddsUpdate", (data) => {
   console.log("📈 [SOCKET: marketOddsUpdate]", data);
   if (data.marketOdds) {
     const sport = data.sport || "unknown";
-    store.dispatch(
+    dispatch(
       setMarketOddsData({ data: { data: data.marketOdds }, sport })
     );
   }
@@ -197,7 +209,7 @@ socket.on("auramarketOddsUpdate", (data) => {
   console.log("📈 [SOCKET: auramarketOddsUpdate]", data);
   if (data.auraMarketOdds) {
     const sport = data.sport || "unknown";
-    store.dispatch(
+    dispatch(
       setMarketOddsData({ data: { data: data.auraMarketOdds }, sport })
     );
   }
@@ -208,7 +220,7 @@ socket.on("bookmakerUpdate", (data) => {
   console.log("📖 [SOCKET: bookmakerUpdate]", data);
   if (data.bookmakerOdds) {
     const sport = data.sport || "unknown";
-    store.dispatch(
+    dispatch(
       setBookmakerData({
         data: data.bookmakerOdds,
         sport,
@@ -222,7 +234,7 @@ socket.on("auraBookmakerUpdate", (data) => {
   console.log("📖 [SOCKET: auraBookmakerUpdate]", data);
   if (data.auraBookmakerOdds) {
     const sport = data.sport || "unknown";
-    store.dispatch(
+    dispatch(
       setBookmakerData({
         data: data.auraBookmakerOdds,
         sport,
@@ -237,7 +249,7 @@ socket.on("fancyOddsUpdate", (data) => {
   console.log("🎯 [SOCKET: fancyOddsUpdate]", data);
   if (data.fancyOdds) {
     const sport = data.sport || "unknown";
-    store.dispatch(
+    dispatch(
       setFancyOddsData({
         data: data.fancyOdds,
         sport,
@@ -251,7 +263,7 @@ socket.on("fancyOddsUpdate", (data) => {
 socket.on("horseMatchesUpdate", (data) => {
   console.log("🏇 [SOCKET: horseMatchesUpdate]", data);
   if (activeSubscriptions.horseMatches && data.status && data.data) {
-    store.dispatch(updateHorseSlice({ horseRaceList: data?.data?.t1 }));
+    dispatch(updateHorseSlice({ horseRaceList: data?.data?.t1 }));
   }
 });
 
@@ -260,7 +272,7 @@ socket.on("horseOddsUpdate", (data) => {
   if (data.horseOdds?.data?.length > 0) {
     const gmid = data.horseOdds.data[0].gmid;
     if (activeSubscriptions.horseOdds.has(gmid.toString())) {
-      store.dispatch(updateHorseMarket({ gmid, odds: data.horseOdds.data }));
+      dispatch(updateHorseMarket({ gmid, odds: data.horseOdds.data }));
     }
   }
 });
@@ -269,7 +281,7 @@ socket.on("horseOddsUpdate", (data) => {
 socket.on("greyhoundMatchesUpdate", (data) => {
   console.log("🐕 [SOCKET: greyhoundMatchesUpdate]", data);
   if (activeSubscriptions.greyhoundMatches && data.status && data.data) {
-    store.dispatch(updateGreyhoundSlice({ greyhoundRaceList: data?.data?.t1 }));
+    dispatch(updateGreyhoundSlice({ greyhoundRaceList: data?.data?.t1 }));
   }
 });
 
@@ -278,7 +290,7 @@ socket.on("greyhoundOddsUpdate", (data) => {
   if (data.greyhoundOdds?.data?.length > 0) {
     const gmid = data.greyhoundOdds.data[0].gmid;
     if (activeSubscriptions.greyhoundOdds.has(gmid.toString())) {
-      store.dispatch(
+      dispatch(
         updateGreyhoundMarket({ gmid, odds: data.greyhoundOdds.data })
       );
     }
@@ -289,7 +301,7 @@ socket.on("greyhoundOddsUpdate", (data) => {
 socket.on("kabaddiMatchesUpdate", (data) => {
   console.log("🤼 [SOCKET: kabaddiMatchesUpdate]", data);
   if (activeSubscriptions.kabaddiMatches && data?.kabaddiMatches) {
-    store.dispatch(updatekabaddiSlice({ kabaddiList: data.kabaddiMatches }));
+    dispatch(updatekabaddiSlice({ kabaddiList: data.kabaddiMatches }));
   }
 });
 
@@ -298,7 +310,7 @@ socket.on("kabaddiOddsUpdate", (data) => {
   if (data?.kabaddiOdds?.length > 0) {
     const gmid = data.kabaddiOdds[0].gmid;
     if (activeSubscriptions.kabaddiOdds.has(gmid.toString())) {
-      store.dispatch(updateKabaddiMarket({ gmid, odds: data.kabaddiOdds }));
+      dispatch(updateKabaddiMarket({ gmid, odds: data.kabaddiOdds }));
     }
   }
 });
@@ -307,17 +319,17 @@ socket.on("kabaddiOddsUpdate", (data) => {
 socket.on("diamondCasinoOddsUpdate", (data) => {
   console.log("💎 [SOCKET: diamondCasinoOddsUpdate]", data);
   if (data.diamondCasinoOdds) {
-    store.dispatch(setDiamondCasinoOddsData({ data: data.diamondCasinoOdds }));
+    dispatch(setDiamondCasinoOddsData({ data: data.diamondCasinoOdds }));
   } else if (data.message) {
-    store.dispatch(setDiamondCasinoOddsError(data.message));
+    dispatch(setDiamondCasinoOddsError(data.message));
   }
 });
 
 // Profile & My Bets
 socket.on("ProfileUpdated", (data) => {
   if (activeSubscriptions.profileRoom && data) {
-    store.dispatch(setUserData(data));
-    store.dispatch(updateProfileData(data));
+    dispatch(setUserData(data));
+    dispatch(updateProfileData(data));
   }
 });
 
@@ -326,8 +338,8 @@ socket.on("myBetsUpdate", (data) => {
     const reversedData = Array.isArray(data?.data)
       ? [...data.data].reverse()
       : [];
-    store.dispatch(addMatchBetsData(reversedData));
-    store.dispatch(addBet(reversedData));
+    dispatch(addMatchBetsData(reversedData));
+    dispatch(addBet(reversedData));
   }
 });
 
@@ -422,7 +434,7 @@ export const subscribeToMatchData = ({
 
   console.log(`📤 [SOCKET EMIT: subscribeToMatches] eventId: ${eventId}, eventType: ${resolvedEventType}, sport: ${resolvedSport}`);
   if (resolvedSport && resolvedSport !== "unknown") {
-    store.dispatch(setMatchesLoading({ sport: resolvedSport }));
+    dispatch(setMatchesLoading({ sport: resolvedSport }));
   }
   socket.emit("subscribeToMatches", { eventId, eventType: resolvedEventType });
 
@@ -445,7 +457,7 @@ export const subscribeToMarketOddsData = ({
   const params = { eventId, eventType, competitionId, matchId, marketId };
 
   activeSubscriptions.marketOdds.set(key, { ...params, sport });
-  store.dispatch(setMarketOddsLoading());
+  dispatch(setMarketOddsLoading());
   socket.emit("subscribeToMarketOdds", params);
 
   return () => {
@@ -466,7 +478,7 @@ export const subscribeToAuraMarketOddsData = ({
   const params = { eventId, eventType, competitionId, matchId, marketId };
 
   activeSubscriptions.auraMarketOdds.set(key, { ...params, sport });
-  store.dispatch(setMarketOddsLoading());
+  dispatch(setMarketOddsLoading());
   socket.emit("subscribeToAuraMarketOdds", params);
 
   return () => {
@@ -476,7 +488,7 @@ export const subscribeToAuraMarketOddsData = ({
 };
 
 export const subscribeToLeaveMyBets = () => {
-  const userId = store.getState()?.user?.userData?._id;
+  const userId = getReduxState()?.user?.userData?._id;
   if (!userId) return;
 
   activeSubscriptions.myBets = null;
@@ -495,7 +507,7 @@ export const subscribeToBookmakerData = ({
   const params = { eventId, eventType, competitionId };
 
   activeSubscriptions.bookmaker.set(key, { ...params, sport });
-  store.dispatch(setBookmakerLoading());
+  dispatch(setBookmakerLoading());
   socket.emit("subscribeToBookmaker", params);
 
   return () => {
@@ -514,7 +526,7 @@ export const subscribeToAuraBookmakerData = ({
   const params = { eventId, eventType, competitionId };
 
   activeSubscriptions.auraBookmaker.set(key, { ...params, sport });
-  store.dispatch(setBookmakerLoading());
+  dispatch(setBookmakerLoading());
   socket.emit("subscribeToAuraBookmaker", params);
 
   return () => {
@@ -533,7 +545,7 @@ export const subscribeToFancyOddsData = ({
   const params = { eventId, eventType, competitionId };
 
   activeSubscriptions.fancyOdds.set(key, { ...params, sport });
-  store.dispatch(setFancyOddsLoading());
+  dispatch(setFancyOddsLoading());
   socket.emit("subscribeToFancyOdds", params);
 
   return () => {
@@ -618,7 +630,7 @@ export const subscribeToDiamondCasinoOddsData = ({
 }) => {
   const key = `${gmid}`;
   activeSubscriptions.diamondCasino.set(key, { eventId, eventType, gmid });
-  store.dispatch(setDiamondCasinoOddsLoading());
+  dispatch(setDiamondCasinoOddsLoading());
   socket.emit("subscribeToDiamondCasinoOdds", { eventId, eventType, gmid });
 
   return () => {
@@ -638,7 +650,7 @@ export const subscribeToJoinProfileRoom = (currentUserId) => {
 };
 
 export const subscribeToJoinMyBets = () => {
-  const userId = store.getState()?.user?.userData?._id;
+  const userId = getReduxState()?.user?.userData?._id;
   if (!userId) return () => {};
 
   activeSubscriptions.myBets = userId;
@@ -714,7 +726,7 @@ export const setUserOffline = (userId) =>
   socket.emit("userOffline", { currentUserId: userId });
 
 export const placeBet = async (betData) => {
-  const state = store?.getState();
+  const state = getReduxState();
   const token = state?.user?.token || localStorage.getItem("token");
   const userId = localStorage.getItem("userId") || state?.user?.userData?._id;
   const user = state?.user?.userData;
@@ -833,7 +845,7 @@ export const placeBet = async (betData) => {
           resolved = true;
           clearTimeout(timeoutTimer);
           if (response?.statusCode === 200 || response?.success || response?.status === "success") {
-            store.dispatch(addLatestBet(betData));
+            dispatch(addLatestBet(betData));
           }
           resolve(response);
         }
@@ -854,7 +866,7 @@ export const generatePresignedUrlFromS3Url = (s3Url) => {
 export const subscribeToLogin = (payload) => {
   return new Promise((resolve) => {
     const domainId =
-      store.getState()?.site?.siteDetails?.domainDetails?._id || "";
+      getReduxState()?.site?.siteDetails?.domainDetails?._id || "";
     socket.emit("login", { ...payload, domainid: domainId }, (response) => {
       resolve(response);
     });

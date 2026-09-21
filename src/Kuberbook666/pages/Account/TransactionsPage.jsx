@@ -30,7 +30,7 @@ export default function TransactionsPage() {
 
   // Fetch Deposits
   const fetchDeposits = useCallback(async () => {
-    if (!userID) return;
+    if (!userID || userID === "undefined") return;
     try {
       setLoading(true);
       const res = await getPaymentsByUserId(userID);
