@@ -1,30 +1,122 @@
 import { useEffect, useState, useMemo, useRef, Suspense } from "react";
+
 import { RouterProvider } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 
 import {
   getRefreshSitesByDomain,
   getSiteMetaData,
   getSitesByDomain,
 } from "./api";
+
 import { setMetaDataSettings, setSiteDetails } from "./redux/slices/siteSlice";
+
 import { fetchNetworkDetails } from "./redux/slices/networkSlice";
 
 import "./App.css";
 
-import { getUserId } from "./utils/helper/commonSelectors";
-
-import { MahadevExchRouter } from "./MahadevExchSrc/MahadevExchRoutes";
-import { Kuberbook666Router } from "./Kuberbook666/Kuberbook666Routes";
-import Loader from "./MahadevExchSrc/components/Loader/Loader";
 import PageSkeleton from "./Kuberbook666/components/Loader/PageSkeleton";
+
+/* =========================================================
+   ROUTER LOADERS
+========================================================= */
+
+const routerLoaders = {
+  playbangla: () =>
+    import("./MahadevExchSrc/MahadevExchRoutes").then(
+      (module) => module.MahadevExchRouter,
+    ),
+
+  kuberbook666: () =>
+    import("./Kuberbook666/Kuberbook666Routes").then(
+      (module) => module.Kuberbook666Router,
+    ),
+};
+
+/* =========================================================
+   NORMALIZE SITE DETAILS
+========================================================= */
+
+const normalizeSiteDetails = (rawData) => {
+  if (!rawData) return null;
+
+  if (rawData?.siteDetails) {
+    return {
+      ...rawData.siteDetails,
+
+      createdBy: rawData.createdBy || rawData.siteDetails?.createdBy,
+
+      userRoleId: rawData.userRoleId || rawData.siteDetails?.userRoleId,
+
+      domainDetails:
+        rawData.siteDetails?.domainDetails || rawData.domainDetails,
+
+      admindomainName:
+        rawData.siteDetails?.admindomainName || rawData.admindomainName,
+
+      siteDetails: rawData.siteDetails,
+    };
+  }
+
+  return rawData;
+};
+
+/* =========================================================
+   META PIXEL
+========================================================= */
+
+const loadMetaPixel = (pixelId) => {
+  if (!pixelId) return;
+
+  if (window.fbq && window.__PIXEL_ALREADY_INIT__) {
+    return;
+  }
+
+  !(function (f, b, e, v, n, t, s) {
+    if (f.fbq) return;
+
+    n = f.fbq = function () {
+      n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+    };
+
+    if (!f._fbq) f._fbq = n;
+
+    n.push = n;
+    n.loaded = true;
+    n.version = "2.0";
+    n.queue = [];
+
+    t = b.createElement(e);
+    t.async = true;
+    t.src = v;
+
+    s = b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t, s);
+  })(
+    window,
+    document,
+    "script",
+    "https://connect.facebook.net/en_US/fbevents.js",
+  );
+
+  window.fbq("init", pixelId);
+
+  window.__PIXEL_ALREADY_INIT__ = true;
+};
+
+/* =========================================================
+   APP
+========================================================= */
 
 const App = () => {
   const dispatch = useDispatch();
+
   const mountedRef = useRef(true);
-  const currentUserId = useSelector(getUserId());
-  const accountType = useSelector((state) => state?.account?.accountType) || "";
-  // Hydrate from localStorage instantly
+
+  /* ---------------------------------------------------------
+     SITE DETAILS FROM LOCAL STORAGE
+  --------------------------------------------------------- */
+
   const [siteDetails, setSiteDetailsState] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("siteDetails")) || {};
@@ -32,93 +124,166 @@ const App = () => {
       return {};
     }
   });
+
+  /* ---------------------------------------------------------
+     SELECTED ROUTER
+  --------------------------------------------------------- */
+
   const [SelectedRouter, setSelectedRouter] = useState(null);
 
+  /* ---------------------------------------------------------
+     DOMAIN
+  --------------------------------------------------------- */
+
   const domainName = useMemo(() => {
-    const host = window.location.host;
-    if (
-      host.includes("localhost") ||
-      host.includes("127.0.0.1") ||
-      host.includes("vercel.app")
-    ) {
-      return "asianexchange.club";
-    }
-    return host;
+    return window.location.host;
   }, []);
 
-  // --- Load router instantly if cached ---
+  /* =========================================================
+     LOAD ROUTER USING siteDetails.layout
+  ========================================================= */
+
   useEffect(() => {
     let active = true;
+
     const loadRouter = async () => {
       const layout = siteDetails?.layout;
-      if (!layout) return;
+
+      if (!layout) {
+        return;
+      }
+
       try {
-        const loader = null;
-        if (!loader) return;
+        const normalizedLayout = String(layout).toLowerCase().trim();
+
+        const loader = routerLoaders[normalizedLayout];
+
+        if (!loader) {
+          console.warn("No router found for layout:", normalizedLayout);
+
+          return;
+        }
+
         const router = await loader();
-        if (active) setSelectedRouter(router);
-      } catch (err) {
-        console.error("Router preload failed:", err);
+
+        if (active && router) {
+          setSelectedRouter(router);
+        }
+      } catch (error) {
+        console.error("Router preload failed:", error);
       }
     };
+
     loadRouter();
+
     return () => {
       active = false;
     };
-  }, [siteDetails]);
+  }, [siteDetails?.layout]);
+
+  /* =========================================================
+     FETCH SITE META DATA
+  ========================================================= */
 
   const fetchSiteMetaData = async (siteID) => {
+    if (!siteID) return;
+
     try {
       const response = await getSiteMetaData(siteID);
 
-      if (response.success && response.data)
+      if (response?.success && response?.data) {
         dispatch(setMetaDataSettings(response.data));
-    } catch {
-      showToast.error("Failed to fetch site meta data.", "error", 2000);
+      }
+    } catch (error) {
+      console.error("Failed to fetch site meta data:", error);
     }
   };
-  // --- Initial site fetch (background, non-blocking) ---
+
+  /* =========================================================
+     INITIAL SITE FETCH
+  ========================================================= */
+
   useEffect(() => {
     mountedRef.current = true;
+
     const fetchInitial = async () => {
       try {
         const response = await getSitesByDomain(domainName);
+
         const rawData = response?.data;
-        const details = rawData?.siteDetails
-          ? {
-              ...rawData.siteDetails,
-              createdBy: rawData.createdBy || rawData.siteDetails?.createdBy,
-              userRoleId: rawData.userRoleId || rawData.siteDetails?.userRoleId,
-              domainDetails: rawData.siteDetails?.domainDetails || rawData.domainDetails,
-              admindomainName: rawData.siteDetails?.admindomainName || rawData.admindomainName,
-              siteDetails: rawData.siteDetails,
-            }
-          : rawData;
+
+        const details = normalizeSiteDetails(rawData);
+        console.log({details});
+        
 
         if (details && mountedRef.current) {
+          /* ---------------------------------------------
+             Redux
+          --------------------------------------------- */
+
           dispatch(setSiteDetails(details));
+
+          /* ---------------------------------------------
+             Local State
+          --------------------------------------------- */
+
           setSiteDetailsState(details);
+
+          /* ---------------------------------------------
+             Local Storage
+          --------------------------------------------- */
+
           localStorage.setItem("siteDetails", JSON.stringify(details));
 
+          /* ---------------------------------------------
+             PRELOAD ROUTER
+          --------------------------------------------- */
+
+          const layout = details?.layout?.toLowerCase()?.trim();
+
+          if (layout && routerLoaders[layout]) {
+            routerLoaders[layout]().catch((error) => {
+              console.error("Router preload error:", error);
+            });
+          }
+
+          /* ---------------------------------------------
+             META DATA
+          --------------------------------------------- */
+
           await fetchSiteMetaData(details?._id);
-          if (details?.meta_data?.metaPixelId) {
-            if (window.__LOADED_PIXEL_ID__ !== details.meta_data.metaPixelId) {
-              loadMetaPixel(details.meta_data.metaPixelId);
-              window.__LOADED_PIXEL_ID__ = details.meta_data.metaPixelId;
+
+          /* ---------------------------------------------
+             META PIXEL
+          --------------------------------------------- */
+
+          const pixelId = details?.meta_data?.metaPixelId;
+
+          if (pixelId) {
+            if (window.__LOADED_PIXEL_ID__ !== pixelId) {
+              loadMetaPixel(pixelId);
+
+              window.__LOADED_PIXEL_ID__ = pixelId;
             }
           }
         }
-      } catch (err) {
-        console.error("Site fetch failed:", err);
+      } catch (error) {
+        console.error("Site fetch failed:", error);
       }
     };
+
     fetchInitial();
+
     return () => {
       mountedRef.current = false;
     };
   }, [dispatch, domainName]);
 
-  // --- Periodic refresh (start only after full page load) ---
+  /* =========================================================
+     PERIODIC SITE REFRESH
+     EVERY 15 MINUTES
+  ========================================================= */
+
   useEffect(() => {
     let active = true;
     let intervalId;
@@ -127,88 +292,97 @@ const App = () => {
       const refresh = async () => {
         try {
           const response = await getRefreshSitesByDomain(domainName);
+
           const rawData = response?.data;
-          const details = rawData?.siteDetails
-            ? {
-                ...rawData.siteDetails,
-                createdBy: rawData.createdBy || rawData.siteDetails?.createdBy,
-                userRoleId: rawData.userRoleId || rawData.siteDetails?.userRoleId,
-                domainDetails: rawData.siteDetails?.domainDetails || rawData.domainDetails,
-                admindomainName: rawData.siteDetails?.admindomainName || rawData.admindomainName,
-                siteDetails: rawData.siteDetails,
-              }
-            : rawData;
+
+          const details = normalizeSiteDetails(rawData);
 
           if (details && active) {
             dispatch(setSiteDetails(details));
+
             setSiteDetailsState(details);
+
             localStorage.setItem("siteDetails", JSON.stringify(details));
           }
-        } catch (err) {
-          console.error("Refresh failed:", err);
+        } catch (error) {
+          console.error("Refresh failed:", error);
         }
       };
 
-      // ✅ run immediately
+      /* Run immediately */
       refresh();
 
-      // then every 15 minutes
+      /* Then every 15 minutes */
       intervalId = setInterval(refresh, 900000);
     };
 
-    // wait for full page load
+    /* Wait for complete page load */
+
     if (document.readyState === "complete") {
       startRefresh();
     } else {
-      window.addEventListener("load", startRefresh, { once: true });
+      window.addEventListener("load", startRefresh, {
+        once: true,
+      });
     }
 
     return () => {
       active = false;
-      if (intervalId) clearInterval(intervalId);
+
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+
       window.removeEventListener("load", startRefresh);
     };
   }, [dispatch, domainName]);
 
-  // --- Poll network details every 15 min ---
+  /* =========================================================
+     NETWORK DETAILS
+     EVERY 15 MINUTES
+  ========================================================= */
+
   useEffect(() => {
     dispatch(fetchNetworkDetails());
-    const id = setInterval(() => dispatch(fetchNetworkDetails()), 900000);
-    return () => clearInterval(id);
+
+    const intervalId = setInterval(() => {
+      dispatch(fetchNetworkDetails());
+    }, 900000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
   }, [dispatch]);
 
-  // --- Select Active Project Router (Mahadev vs Kuberbook666) ---
-  const activeRouter = useMemo(() => {
-    try {
-      const searchParams = new URLSearchParams(window.location.search);
-      const requested = searchParams.get("project") || searchParams.get("layout");
-      if (requested === "mahadev") {
-        localStorage.setItem("active_project", "mahadev");
-        return MahadevExchRouter;
-      }
-      if (requested === "kuber" || requested === "kuberbook666") {
-        localStorage.setItem("active_project", "kuber");
-        return Kuberbook666Router;
-      }
-      const saved = localStorage.getItem("active_project");
-      if (saved === "mahadev") {
-        return MahadevExchRouter;
-      }
-      if (domainName.includes("mahadev")) {
-        return MahadevExchRouter;
-      }
-    } catch {
-      // ignore
+  /* =========================================================
+     UI
+  ========================================================= */
+
+  if (!SelectedRouter) {
+    /*
+      Site details not available yet
+    */
+
+    if (!siteDetails || !siteDetails?.layout) {
+      return <PageSkeleton />;
     }
-    return Kuberbook666Router;
-  }, [domainName, siteDetails?.layout]);
+
+    /*
+      Site details available,
+      but router is still loading
+    */
+
+    return <PageSkeleton />;
+  }
+
+  /* =========================================================
+     FINAL ROUTER
+  ========================================================= */
 
   return (
-    <>
-      <Suspense fallback={<PageSkeleton />}>
-        <RouterProvider router={activeRouter} />
-      </Suspense>
-    </>
+    <Suspense fallback={<PageSkeleton />}>
+      <RouterProvider router={SelectedRouter} />
+    </Suspense>
   );
 };
 
