@@ -3,7 +3,7 @@ import { ChevronRight, Send } from 'lucide-react';
 
 export default function DesktopSidebar({ onSelectCategory, onAuthClick }) {
   const categories = [
-    { id: 'fav', label: 'Favourites', icon: '⭐' },
+    { id: 'favourites', label: 'Favourites', icon: '⭐' },
     { id: 'cricket', label: 'Cricket', icon: '🏏' },
     { id: 'soccer', label: 'Soccer', icon: '⚽' },
     { id: 'tennis', label: 'Tennis', icon: '🎾' },

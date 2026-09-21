@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
 // TV Monitor Icon
 const TvMonitorIcon = () => (
@@ -16,6 +17,10 @@ const TvMonitorIcon = () => (
 export default function RacingSection({ sport = 'horse' }) {
   const navigate = useNavigate();
   const isHorse = sport === 'horse';
+
+  // Redux Selectors for live socket racing data
+  const reduxHorseRaceList = useSelector((state) => state?.horse?.horseRaceList);
+  const reduxGreyhoundRaceList = useSelector((state) => state?.greyhound?.greyhoundRaceList);
 
   // Country tabs matching reference: US, ZA, GB, FR, IE
   const countries = isHorse
@@ -215,11 +220,37 @@ export default function RacingSection({ sport = 'horse' }) {
   };
 
   const currentDataset = isHorse ? horseRacingData : greyhoundRacingData;
-  const venues = currentDataset[activeCountry] || [];
 
-  const handleRaceClick = (venueName, raceTime) => {
+  const venues = useMemo(() => {
+    const rawList = isHorse ? reduxHorseRaceList : reduxGreyhoundRaceList;
+    const defaultVenues = currentDataset[activeCountry] || [];
+
+    if (Array.isArray(rawList) && rawList.length > 0) {
+      const countryMatches = rawList.filter(
+        (r) => (r?.cname || '').toUpperCase() === activeCountry.toUpperCase()
+      );
+      if (countryMatches.length > 0) {
+        const liveVenues = countryMatches.map((item, idx) => ({
+          id: item?.gmid || `live_${idx}`,
+          venue: item?.venue || item?.event_name || 'Live Venue',
+          hasTv: Boolean(item?.tv || item?.hasTv),
+          gmid: item?.gmid,
+          races: Array.isArray(item?.races)
+            ? item.races.map((rc) => rc?.time || rc)
+            : [item?.time || 'Live'],
+        }));
+        return liveVenues;
+      }
+    }
+
+    return defaultVenues;
+  }, [isHorse, activeCountry, reduxHorseRaceList, reduxGreyhoundRaceList, currentDataset]);
+
+  const handleRaceClick = (venueName, raceTime, gmid) => {
     const raceId = `race_${venueName.toLowerCase().replace(/\s+/g, '_')}_${raceTime.replace(':', '')}`;
-    navigate(`/match/${raceId}`);
+    const effectiveGmid = gmid || raceId;
+    const sportType = isHorse ? 'horse' : 'greyhound';
+    navigate(`/match/${raceId}?eventId=${effectiveGmid}&marketId=${effectiveGmid}&gmid=${effectiveGmid}&eventType=7&sport=${sportType}&eventName=${encodeURIComponent(venueName + ' - ' + raceTime)}`);
   };
 
   return (
@@ -270,7 +301,7 @@ export default function RacingSection({ sport = 'horse' }) {
                   <button
                     key={timeStr}
                     type="button"
-                    onClick={() => handleRaceClick(venueItem.venue, timeStr)}
+                    onClick={() => handleRaceClick(venueItem.venue, timeStr, venueItem.gmid)}
                     className="h-[32px] px-3.5 bg-[#5e6368] hover:bg-[#4f5358] cursor-pointer text-white rounded-[5px] text-[13.5px] font-bold flex items-center justify-center transition-all active:scale-95 shadow-2xs"
                   >
                     {timeStr}

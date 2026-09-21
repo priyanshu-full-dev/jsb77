@@ -2,12 +2,15 @@ import React from 'react';
 import { X } from 'lucide-react';
 
 export default function SideDrawer({
+  isOpen,
   menuOpen,
   onClose,
   onSelectSport,
   onAuthClick,
+  onOpenRules,
 }) {
-  if (!menuOpen) return null;
+  const visible = isOpen ?? menuOpen;
+  if (!visible) return null;
 
   const menuItems = [
     {
@@ -15,7 +18,7 @@ export default function SideDrawer({
       label: 'Multi Market',
       icon: '⭐',
       action: () => {
-        onSelectSport('multi_market');
+        if (onSelectSport) onSelectSport('multi_market');
         onClose();
       },
     },
@@ -24,7 +27,7 @@ export default function SideDrawer({
       label: 'Cricket',
       icon: '🏏',
       action: () => {
-        onSelectSport('cricket');
+        if (onSelectSport) onSelectSport('cricket');
         onClose();
       },
     },
@@ -33,7 +36,7 @@ export default function SideDrawer({
       label: 'Soccer',
       icon: '⚽',
       action: () => {
-        onSelectSport('soccer');
+        if (onSelectSport) onSelectSport('soccer');
         onClose();
       },
     },
@@ -42,7 +45,7 @@ export default function SideDrawer({
       label: 'Tennis',
       icon: '🎾',
       action: () => {
-        onSelectSport('tennis');
+        if (onSelectSport) onSelectSport('tennis');
         onClose();
       },
     },
@@ -51,7 +54,7 @@ export default function SideDrawer({
       label: 'Horse Racing',
       icon: '🏇',
       action: () => {
-        onSelectSport('horse');
+        if (onSelectSport) onSelectSport('horse');
         onClose();
       },
     },
@@ -60,7 +63,7 @@ export default function SideDrawer({
       label: 'Greyhound Racing',
       icon: '🐕',
       action: () => {
-        onSelectSport('greyhound');
+        if (onSelectSport) onSelectSport('greyhound');
         onClose();
       },
     },
@@ -69,7 +72,7 @@ export default function SideDrawer({
       label: 'MAC88',
       icon: '🎲',
       action: () => {
-        onSelectSport('mac88');
+        if (onSelectSport) onSelectSport('mac88');
         onClose();
       },
     },
@@ -78,7 +81,7 @@ export default function SideDrawer({
       label: 'Sports book',
       icon: '🏆',
       action: () => {
-        onSelectSport('sportsbook');
+        if (onSelectSport) onSelectSport('sportsbook');
         onClose();
       },
     },
@@ -87,7 +90,7 @@ export default function SideDrawer({
       label: 'Basketball',
       icon: '🏀',
       action: () => {
-        onSelectSport('basketball');
+        if (onSelectSport) onSelectSport('basketball');
         onClose();
       },
     },
@@ -96,7 +99,7 @@ export default function SideDrawer({
       label: 'Volleyball',
       icon: '🏐',
       action: () => {
-        onSelectSport('volleyball');
+        if (onSelectSport) onSelectSport('volleyball');
         onClose();
       },
     },
@@ -105,7 +108,7 @@ export default function SideDrawer({
       label: 'Table Tennis',
       icon: '🏓',
       action: () => {
-        onSelectSport('tabletennis');
+        if (onSelectSport) onSelectSport('tabletennis');
         onClose();
       },
     },
@@ -114,7 +117,7 @@ export default function SideDrawer({
       label: 'Mixed Martial Arts',
       icon: '🥋',
       action: () => {
-        onSelectSport('mma');
+        if (onSelectSport) onSelectSport('mma');
         onClose();
       },
     },
@@ -123,59 +126,62 @@ export default function SideDrawer({
       label: 'Rule',
       icon: '📜',
       action: () => {
-        alert('Rules & Regulations');
+        if (onOpenRules) {
+          onOpenRules();
+        } else {
+          alert('Rules & Regulations');
+        }
         onClose();
       },
     },
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-center pointer-events-none select-none">
+    <div className="fixed inset-0 z-50 flex justify-start pointer-events-none select-none">
       {/* Container aligned with the mobile width */}
       <div className="w-full max-w-[480px] h-full relative pointer-events-auto flex">
-        {/* Backdrop */}
+        {/* Backdrop Overlay */}
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-xs cursor-pointer z-10"
+          className="fixed inset-0 bg-black/60 cursor-pointer z-10 transition-opacity"
           onClick={onClose}
         />
 
-        {/* Drawer */}
-        <div className="relative w-[235px] sm:w-[250px] max-w-[65%] bg-[#000000] text-white h-full shadow-2xl z-20 flex flex-col animate-in slide-in-from-left duration-200 border-r border-[#222222]">
+        {/* Drawer Panel */}
+        <div className="relative w-[225px] sm:w-[230px] max-w-[62%] bg-[#000000] text-white h-full shadow-2xl z-20 flex flex-col animate-in slide-in-from-left duration-200 border-r border-[#1a1a1a]">
           {/* Header */}
-          <div className="flex items-center justify-between px-3 py-2.5 border-b border-[#222222] bg-[#000000] shrink-0 min-h-[46px]">
+          <div className="h-[57px] px-2.5 pl-4 py-4 flex items-center  border-b border-[#dddddd54] bg-[#000000] shrink-0">
             {/* Logo */}
             <div className="flex items-center">
-              <span className="font-extrabold text-[15px] sm:text-[17px] text-white tracking-tight uppercase leading-none">
-                KUBER
-              </span>
-              <div className="bg-[#df0d15] text-[#ffdf00] font-black text-[13px] sm:text-[14.5px] px-1 py-0.5 rounded-[2px] ml-1 leading-none flex items-center shadow-xs">
-                <span className="text-white">BOOK</span>
-                <span className="text-[#ffdf00] ml-0.5">333</span>
-              </div>
+              <img
+                src="/games/public.png"
+                alt="logo"
+                className="h-[55px] object-contain"
+              />
             </div>
 
             {/* Close Button */}
             <button
               onClick={onClose}
-              className="text-white hover:text-gray-300 p-1 cursor-pointer transition-colors"
+              className="text-white hover:text-gray-300 ml-0.5  cursor-pointer transition-colors flex items-center justify-center shrink-0"
               aria-label="Close Menu"
             >
-              <X size={20} strokeWidth={2.5} />
+              <X size={18} strokeWidth={2.5} />
             </button>
           </div>
 
           {/* Menu Items List */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar-dark text-white">
+          <div className="flex-1 overflow-y-auto no-scrollbar bg-[#000000] text-white">
             {menuItems.map((item) => (
               <button
                 key={item.id}
+                type="button"
                 onClick={item.action}
-                className="w-full flex items-center gap-3 px-3.5 py-3 hover:bg-neutral-900 active:bg-neutral-800 text-left transition-colors cursor-pointer border-b border-[#1c1c1c]"
+                className="w-full h-[38px] px-3.5 flex items-center  gap-1.5 border-b border-[#dddddd54] hover:bg-[#141414] active:bg-[#1f1f1f] text-left transition-colors cursor-pointer text-white"
               >
-                <span className="text-[16px] shrink-0 leading-none flex items-center justify-center w-5">
+                <span className="text-[17px] shrink-0 leading-none flex items-center justify-center w-[18px]">
                   {item.icon}
                 </span>
-                <span className="text-[13.5px] font-bold text-white tracking-wide">
+                <span className="text-[13.5px] font-semibold text-white tracking-normal leading-none">
                   {item.label}
                 </span>
               </button>

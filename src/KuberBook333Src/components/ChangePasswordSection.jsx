@@ -107,43 +107,19 @@ export default function ChangePasswordSection({ user, onToast }) {
     <button
       type="button"
       onClick={onToggle}
-      className="text-gray-400 hover:text-white transition-colors cursor-pointer p-1"
+      className="text-gray-400 hover:text-white transition-opacity cursor-pointer p-1 shrink-0 flex items-center justify-center"
       aria-label={show ? 'Hide password' : 'Show password'}
     >
-      {show ? (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="w-4 h-4"
-        >
-          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-          <circle cx="12" cy="12" r="3" />
-        </svg>
-      ) : (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="w-4 h-4"
-        >
-          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-          <line x1="1" y1="1" x2="23" y2="23" />
-        </svg>
-      )}
+      <img
+        src={show ? '/games/changepass/score-hide-icon.svg' : '/games/changepass/score-visible.svg'}
+        alt={show ? 'Hide password' : 'Show password'}
+        className="w-4 h-4 object-contain brightness-0 invert opacity-70 hover:opacity-100 transition-opacity"
+      />
     </button>
   );
 
   return (
-    <div className="w-full bg-[#f2f4f7] min-h-screen pb-24 text-neutral-900 select-none flex flex-col pt-0">
+    <div className="w-full bg-white pt-1 min-h-screen pb-24 text-neutral-900 select-none flex flex-col ">
       {/* CARD CONTAINER */}
       <div className="mx-2 mt-1 rounded-[8px] overflow-hidden shadow-md">
         {/* GOLD HEADER: Change Password */}
@@ -151,9 +127,9 @@ export default function ChangePasswordSection({ user, onToast }) {
           style={{
             background: 'transparent linear-gradient(94deg,#b6842d,#ebda8d 55%,#b7862f)',
           }}
-          className="w-full px-4 py-3 flex items-center justify-between"
+          className="w-full px-3 py-2 flex tracking-tighter items-center justify-between"
         >
-          <h2 className="text-white font-bold text-[16.5px] tracking-wide drop-shadow-xs">
+          <h2 className="text-white font-bold text-[15.5px] tracking-wide drop-shadow-xs">
             Change Password
           </h2>
         </div>
@@ -161,40 +137,40 @@ export default function ChangePasswordSection({ user, onToast }) {
         {/* DARK FORM BODY */}
         <form
           onSubmit={handleSubmit}
-          className="w-full bg-[#212529] p-4 flex flex-col gap-3.5 text-white"
+          className="w-full bg-[#202020] p-2 pt-4 pb-6 flex flex-col gap-2 text-white"
         >
           {/* Old Password */}
-          <div className="w-full bg-[#2b2f36] border border-[#424750] rounded-[6px] px-3.5 py-2.5 flex items-center justify-between focus-within:border-amber-500 transition-colors">
+          <div className="w-full bg-transparent border border-[#424750] rounded-[6px] pr-2.5 pl-3 py-1.5 flex items-center justify-between focus-within:border-amber-500 transition-colors">
             <input
               type={showOld ? 'text' : 'password'}
               placeholder="Enter Old Password*"
               value={oldPassword}
               onChange={(e) => setOldPassword(e.target.value)}
-              className="w-full bg-transparent text-[13.5px] text-white placeholder-gray-400 outline-none pr-2"
+              className="w-full bg-transparent text-[14px] text-white placeholder-gray-400 outline-none pr-2"
             />
             <EyeIcon show={showOld} onToggle={() => setShowOld(!showOld)} />
           </div>
 
           {/* New Password */}
-          <div className="w-full bg-[#2b2f36] border border-[#424750] rounded-[6px] px-3.5 py-2.5 flex items-center justify-between focus-within:border-amber-500 transition-colors">
+          <div className="w-full bg-transparent border border-[#424750] rounded-[6px] pr-2.5 pl-3 py-1.5 flex items-center justify-between focus-within:border-amber-500 transition-colors">
             <input
               type={showNew ? 'text' : 'password'}
               placeholder="Enter New Password*"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full bg-transparent text-[13.5px] text-white placeholder-gray-400 outline-none pr-2"
+              className="w-full bg-transparent text-[14px] text-white placeholder-gray-400 outline-none pr-2"
             />
             <EyeIcon show={showNew} onToggle={() => setShowNew(!showNew)} />
           </div>
 
           {/* Confirm New Password */}
-          <div className="w-full bg-[#2b2f36] border border-[#424750] rounded-[6px] px-3.5 py-2.5 flex items-center justify-between focus-within:border-amber-500 transition-colors">
+          <div className="w-full bg-transparent border border-[#424750] rounded-[6px] pr-2.5 pl-3 py-1.5 flex items-center justify-between focus-within:border-amber-500 transition-colors">
             <input
               type={showConfirm ? 'text' : 'password'}
               placeholder="Enter Confirm New Password*"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full bg-transparent text-[13.5px] text-white placeholder-gray-400 outline-none pr-2"
+              className="w-full bg-transparent text-[14px] text-white placeholder-gray-400 outline-none pr-2"
             />
             <EyeIcon show={showConfirm} onToggle={() => setShowConfirm(!showConfirm)} />
           </div>
@@ -206,7 +182,7 @@ export default function ChangePasswordSection({ user, onToast }) {
             style={{
               background: 'transparent linear-gradient(94deg,#b6842d,#ebda8d 55%,#b7862f)',
             }}
-            className="w-full mt-1 py-2.5 rounded-[6px] text-white font-bold text-[14px] tracking-wider uppercase shadow-md hover:brightness-105 active:scale-98 transition-all cursor-pointer flex items-center justify-center disabled:opacity-60 drop-shadow-xs"
+            className="w-full mt-1.5 py-3 rounded-[6px] text-white font-extrabold text-[15px] tracking-wider uppercase shadow-md hover:brightness-105 active:scale-98 transition-all cursor-pointer flex items-center justify-center disabled:opacity-60 drop-shadow-xs"
           >
             {loading ? 'SAVING...' : 'SAVE'}
           </button>

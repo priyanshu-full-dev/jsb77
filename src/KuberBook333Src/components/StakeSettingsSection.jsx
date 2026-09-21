@@ -59,45 +59,45 @@ export default function StakeSettingsSection({ onToast }) {
       {/* Stake Settings Container */}
       <form
         onSubmit={handleUpdate}
-        className="w-full bg-[#1e1e1e] rounded-[8px] shadow-md border border-[#2d2d2d] overflow-hidden flex flex-col"
+        className="w-full bg-[#1e1e1e] rounded-[8px] shadow-md  overflow-hidden flex flex-col"
       >
         {/* Header with Gold Gradient */}
         <div
           style={{
             background: 'transparent linear-gradient(94deg,#b6842d,#ebda8d 55%,#b7862f)',
           }}
-          className="px-4 py-2.5 text-white font-bold text-[16px] tracking-wide"
+          className="px-3 py-2 text-white font-bold text-[16px] tracking-wide"
         >
           Stake Settings
         </div>
 
         {/* Form Body - Grid of Button Name & Button Value */}
-        <div className="p-3 sm:p-4 flex flex-col gap-3 bg-[#1e1e1e]">
+        <div className="p-3 px-5 sm:p-4 flex flex-col gap-3 bg-[#1e1e1e]">
           {stakes.map((stake) => (
-            <div key={stake.id} className="grid grid-cols-2 gap-3">
+            <div key={stake.id} className="grid grid-cols-2 gap-5">
               {/* Button Name Input */}
-              <div className="flex flex-col gap-1">
-                <label className="text-[13.5px] font-semibold text-[#8e8e8e]">
+              <div className="flex flex-col ">
+                <label className="text-[16px] font-semibold text-[#666666]">
                   Button Name
                 </label>
                 <input
                   type="text"
                   value={stake.name}
                   onChange={(e) => handleChange(stake.id, 'name', e.target.value)}
-                  className="w-full h-[38px] bg-white rounded-[5px] px-3 text-black font-semibold text-[14px] outline-none border border-transparent focus:border-amber-500 shadow-xs transition-colors"
+                  className="w-full h-[35px] bg-white rounded-[4px] px-[12px] py-[6px] text-black font-semibold text-[14px] outline-none border border-transparent focus:border-amber-500 shadow-xs transition-colors"
                 />
               </div>
 
               {/* Button Value Input */}
-              <div className="flex flex-col gap-1">
-                <label className="text-[13.5px] font-semibold text-[#8e8e8e]">
+              <div className="flex flex-col ">
+                <label className="text-[16px] font-semibold text-[#666666]">
                   Button Value
                 </label>
                 <input
                   type="text"
                   value={stake.value}
                   onChange={(e) => handleChange(stake.id, 'value', e.target.value)}
-                  className="w-full h-[38px] bg-white rounded-[5px] px-3 text-black font-semibold text-[14px] outline-none border border-transparent focus:border-amber-500 shadow-xs transition-colors"
+                  className="w-full h-[35px] bg-white rounded-[4px] px-[12px] py-[6px] text-black font-semibold text-[14px] outline-none border border-transparent focus:border-amber-500 shadow-xs transition-colors"
                 />
               </div>
             </div>

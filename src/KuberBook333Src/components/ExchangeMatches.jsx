@@ -28,94 +28,7 @@ export default function ExchangeMatches({
     { id: 'upcoming', label: 'UPCOMING' },
   ];
 
-  const defaultMatches = [
-    {
-      id: 101,
-      sport: 'cricket',
-      title: 'Meerut Mavericks v Noida Super Kings',
-      time: '04/09/2026, 19:30',
-      odds: ['1.42', '2.08', '0', '0', '1.93', '3.4'],
-      hasTv: true,
-      hasBm: true,
-    },
-    {
-      id: 102,
-      sport: 'cricket',
-      title: 'Glasgow Cosmic v Belfast Titans',
-      time: '04/09/2026, 18:45',
-      odds: ['2.36', '2.38', '0', '0', '1.73', '1.74'],
-      hasTv: true,
-      hasBm: true,
-    },
-    {
-      id: 1021,
-      sport: 'soccer',
-      title: 'Goztepe U19 v Gazisehir Gaziantep U19',
-      time: '07/09/2026, 18:30',
-      live: false,
-      odds: ['1.54', '1.63', '4.5', '5', '5.7', '6.8'],
-      hasTv: true,
-      hasF: false,
-      hasBm: true,
-    },
-    {
-      id: 103,
-      sport: 'soccer',
-      title: 'Istanbulspor v 76 Igdir Belediyespor',
-      time: '07/09/2026, 19:30',
-      live: false,
-      odds: ['3.4', '3.55', '3.55', '3.75', '2.28', '2.34'],
-      hasTv: true,
-      hasF: false,
-      hasBm: false,
-    },
-    {
-      id: 104,
-      sport: 'soccer',
-      title: 'Erokspor A.S v Kayserispor',
-      time: '07/09/2026, 19:30',
-      live: false,
-      odds: ['2.64', '2.72', '3.45', '3.65', '2.78', '2.9'],
-      hasTv: true,
-      hasF: true,
-      hasBm: false,
-    },
-    {
-      id: 105,
-      sport: 'soccer',
-      title: 'Olympic El Qanal v El Geish',
-      time: '07/09/2026, 19:30',
-      live: false,
-      odds: ['2.5', '3.7', '2.8', '2.84', '2.7', '2.78'],
-      hasTv: true,
-      hasF: true,
-      hasBm: true,
-    },
-    {
-      id: 106,
-      sport: 'cricket',
-      title: 'Hong Kong W v Pakistan W',
-      time: '07/09/2026, 21:00',
-      live: false,
-      odds: ['--', '--', '0', '0', '--', '--'],
-      hasTv: true,
-      hasF: true,
-      hasBm: true,
-    },
-    {
-      id: 107,
-      sport: 'cricket',
-      title: 'United Arab Emirates W v Bangladesh W',
-      time: '08/09/2026, 20:00',
-      live: false,
-      odds: ['--', '--', '0', '0', '--', '--'],
-      hasTv: true,
-      hasF: false,
-      hasBm: true,
-    },
-  ];
-
-  const displayMatches = matches && matches.length > 0 ? matches : defaultMatches;
+  const displayMatches = matches || [];
 
   return (
     <section className="bg-white mt-0.5 select-none shadow-sm">
@@ -178,149 +91,165 @@ export default function ExchangeMatches({
 
       {/* 3. Match List */}
       <div className="p-[5px] flex flex-col gap-0.5">
-        {displayMatches.map((match) => {
-          const isFav = favorites?.has ? favorites.has(match.id) : false;
-          return (
-            <div key={match.id} className="bg-white pb-0 border-b border-[#e2e8f0]">
-              {/* Top Row: Sport Icon + Slanted Gray Badge with Match Name & Date */}
-              <div className="flex gap-2 items-center">
-                {/* Dynamic Sport Icon */}
-                <div
-                  onClick={() => onMatchClick && onMatchClick(match)}
-                  className="w-[16px] flex items-center justify-center shrink-0 cursor-pointer"
-                >
-                  {match.sport === 'soccer' || match.sport === 'football' || match.icon === '⚽' ? (
-                    <span className="text-[17px] leading-none">⚽</span>
-                  ) : match.sport === 'tennis' || match.icon === '🎾' ? (
-                    <span className="text-[17px] leading-none">🎾</span>
-                  ) : match.sport === 'horse' || match.icon === '🏇' ? (
-                    <span className="text-[17px] leading-none">🏇</span>
-                  ) : match.sport === 'greyhound' || match.icon === '🐕' ? (
-                    <span className="text-[17px] leading-none">🐕</span>
-                  ) : match.sport === 'basketball' || match.icon === '🏀' ? (
-                    <span className="text-[17px] leading-none">🏀</span>
-                  ) : (
-                    <img src="/games/cricket_ball.png" alt="Cricket" className="w-[16px] h-[16px] object-contain shrink-0" />
-                  )}
-                </div>
-
-                {/* Slanted Gray Header with polygon(0 0, 100% 0, 100% 100%, 5% 100%) */}
-                <div
-                  onClick={() => onMatchClick && onMatchClick(match)}
-                  style={{
-                    clipPath: 'polygon(0 0, 100% 0, 100% 100%, 5% 100%)',
-                  }}
-                  className="flex-1 bg-[#dedddd] pl-5 pr-2 pb-2 pt-1.5 flex flex-col justify-center cursor-pointer hover:bg-[#d2d9e0] transition-colors"
-                >
-                  {/* Row 1: Match Title & Live Dot */}
-                  <div className="flex items-center gap-1 font-bold text-[11px] text-black leading-tight truncate">
-                    <span className="truncate">{match.title}</span>
-                    {match.live && (
-                      <span className="w-2 h-2 rounded-full animate-live-dot bg-[#008000] shrink-0 inline-block" />
+        {displayMatches && displayMatches.length > 0 ? (
+          displayMatches.map((match) => {
+            const isFav = favorites?.has ? favorites.has(match.id) : false;
+            return (
+              <div key={match.id} className="bg-white pb-0 border-b border-[#e2e8f0]">
+                {/* Top Row: Sport Icon + Slanted Gray Badge with Match Name & Date */}
+                <div className="flex gap-2 items-center">
+                  {/* Dynamic Sport Icon */}
+                  <div
+                    onClick={() => onMatchClick && onMatchClick(match)}
+                    className="w-[16px] flex items-center justify-center shrink-0 cursor-pointer"
+                  >
+                    {match.sport === 'soccer' || match.sport === 'football' || match.icon === '⚽' ? (
+                      <span className="text-[17px] leading-none">⚽</span>
+                    ) : match.sport === 'tennis' || match.icon === '🎾' ? (
+                      <span className="text-[17px] leading-none">🎾</span>
+                    ) : match.sport === 'horse' || match.icon === '🏇' ? (
+                      <span className="text-[17px] leading-none">🏇</span>
+                    ) : match.sport === 'greyhound' || match.icon === '🐕' ? (
+                      <span className="text-[17px] leading-none">🐕</span>
+                    ) : match.sport === 'basketball' || match.icon === '🏀' ? (
+                      <span className="text-[17px] leading-none">🏀</span>
+                    ) : (
+                      <img src="/games/cricket_ball.png" alt="Cricket" className="w-[16px] h-[16px] object-contain shrink-0" />
                     )}
                   </div>
 
-                  {/* Row 2: Date/Time on left & TV / F / BM badges on right (exact DOM structure) */}
-                  <div className="flex items-center justify-between">
-                    <div className="text-[9.6px] text-[#0e6438] font-extrabold ml-2 leading-tight">
-                      {match.time}
+                  {/* Slanted Gray Header with polygon(0 0, 100% 0, 100% 100%, 5% 100%) */}
+                  <div
+                    onClick={() => onMatchClick && onMatchClick(match)}
+                    style={{
+                      clipPath: 'polygon(0 0, 100% 0, 100% 100%, 5% 100%)',
+                    }}
+                    className="flex-1 bg-[#dedddd] pl-5 pr-2 pb-2 pt-1.5 flex flex-col justify-center cursor-pointer hover:bg-[#d2d9e0] transition-colors"
+                  >
+                    {/* Row 1: Match Title & Live Dot */}
+                    <div className="flex items-center gap-1 font-bold text-[11px] text-black leading-tight truncate">
+                      <span className="truncate">{match.title}</span>
+                      {match.live && (
+                        <span className="w-2 h-2 rounded-full animate-live-dot bg-[#008000] shrink-0 inline-block" />
+                      )}
                     </div>
 
-                    {/* Exact TV Monitor Icon & Badges */}
-                    <div className="flex items-center gap-1 shrink-0 ml-2">
-                      {match.hasTv && <TvMonitorIcon />}
-                      {match.hasF && (
-                        <span className="w-[18px] h-[18px] rounded-full bg-[#b88622] text-white text-[10px] font-bold flex items-center justify-center shadow-2xs leading-none shrink-0">
-                          F
-                        </span>
-                      )}
-                      {match.hasBm && (
-                        <span className="w-[18px] h-[18px] rounded-full bg-[#b88622] text-white text-[8.5px] font-black flex items-center justify-center shadow-2xs leading-none tracking-tighter shrink-0">
-                          BM
-                        </span>
-                      )}
+                    {/* Row 2: Date/Time on left & TV / F / BM badges on right (exact DOM structure) */}
+                    <div className="flex items-center justify-between">
+                      <div className="text-[9.6px] text-[#0e6438] font-extrabold ml-2 leading-tight">
+                        {match.time}
+                      </div>
+
+                      {/* Exact TV Monitor Icon & Badges */}
+                      <div className="flex items-center gap-1 shrink-0 ml-2">
+                        {match.hasTv && <TvMonitorIcon />}
+                        {match.hasF && (
+                          <span className="w-[18px] h-[18px] rounded-full bg-[#b88622] text-white text-[10px] font-bold flex items-center justify-center shadow-2xs leading-none shrink-0">
+                            F
+                          </span>
+                        )}
+                        {match.hasBm && (
+                          <span className="w-[18px] h-[18px] rounded-full bg-[#b88622] text-white text-[8.5px] font-black flex items-center justify-center shadow-2xs leading-none tracking-tighter shrink-0">
+                            BM
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Bottom Row: Favorite Star + 6 Colored Odds Boxes (Equal gap between all boxes) */}
-              <div className="flex items-center pt-[5px] gap-2 pb-0.5">
-                {/* Left: Star Favorite Toggle Button */}
-                <button
-                  type="button"
-                  onClick={() => onToggleFavorite && onToggleFavorite(match)}
-                  className="w-[16.5px] flex items-center justify-center shrink-0 cursor-pointer p-0 hover:scale-110 active:scale-95 transition-transform"
-                  title={isFav ? 'Remove from Favourites' : 'Add to Favourites'}
-                  aria-label={isFav ? 'Remove from Favourites' : 'Add to Favourites'}
-                >
-                  <img
-                    src={isFav ? '/games/download (1) copy.svg' : '/games/download copy.svg'}
-                    alt="Favorite"
-                    className="w-[17px] h-[17px] object-contain"
-                  />
-                </button>
-
-                {/* Right: 6 Colored Odds Boxes with completely equal gap */}
-                <div className="flex-1 grid grid-cols-6 gap-[4px]">
-                  {/* 1. Back 1 */}
+                {/* Bottom Row: Favorite Star + 6 Colored Odds Boxes (Equal gap between all boxes) */}
+                <div className="flex items-center pt-[5px] gap-2 pb-0.5">
+                  {/* Left: Star Favorite Toggle Button */}
                   <button
                     type="button"
-                    onClick={() => onOddsClick && onOddsClick(match, match.odds[0], 'Back 1')}
-                    className="w-full text-[14px] text-[#273a47] cursor-pointer h-[25px] rounded-[2px] bg-[#a5d9fe] font-black flex items-center justify-center hover:brightness-95 transition-all"
+                    onClick={() => onToggleFavorite && onToggleFavorite(match)}
+                    className="w-[16.5px] flex items-center justify-center shrink-0 cursor-pointer p-0 hover:scale-110 active:scale-95 transition-transform"
+                    title={isFav ? 'Remove from Favourites' : 'Add to Favourites'}
+                    aria-label={isFav ? 'Remove from Favourites' : 'Add to Favourites'}
                   >
-                    {match.odds[0] || '0'}
+                    <img
+                      src={isFav ? '/games/download (1) copy.svg' : '/games/download copy.svg'}
+                      alt="Favorite"
+                      className="w-[17px] h-[17px] object-contain"
+                    />
                   </button>
 
-                  {/* 2. Lay 1 */}
-                  <button
-                    type="button"
-                    onClick={() => onOddsClick && onOddsClick(match, match.odds[1], 'Lay 1')}
-                    className="w-full text-[14px] text-[#273a47] cursor-pointer h-[25px] rounded-[2px] bg-[#f8d0cb] font-black flex items-center justify-center hover:brightness-95 transition-all"
-                  >
-                    {match.odds[1] || '0'}
-                  </button>
+                  {/* Right: 6 Colored Odds Boxes with completely equal gap */}
+                  {(() => {
+                    const odds = Array.isArray(match.odds) ? match.odds : ['--', '--', '--', '--', '--', '--'];
+                    return (
+                      <div className="flex-1 grid grid-cols-6 gap-[4px]">
+                        {/* 1. Back 1 */}
+                        <button
+                          type="button"
+                          onClick={() => onOddsClick && onOddsClick(match, odds[0], 'Back 1')}
+                          className="w-full text-[14px] text-[#273a47] cursor-pointer h-[25px] rounded-[2px] bg-[#a5d9fe] font-black flex items-center justify-center hover:brightness-95 transition-all"
+                        >
+                          {odds[0] || '0'}
+                        </button>
 
-                  {/* 3. Back X */}
-                  <button
-                    type="button"
-                    onClick={() => onOddsClick && onOddsClick(match, match.odds[2], 'Back X')}
-                    className="w-full text-[14px] text-[#273a47] cursor-pointer h-[25px] rounded-[2px] bg-[#a5d9fe] font-black flex items-center justify-center hover:brightness-95 transition-all"
-                  >
-                    {match.odds[2] || '0'}
-                  </button>
+                        {/* 2. Lay 1 */}
+                        <button
+                          type="button"
+                          onClick={() => onOddsClick && onOddsClick(match, odds[1], 'Lay 1')}
+                          className="w-full text-[14px] text-[#273a47] cursor-pointer h-[25px] rounded-[2px] bg-[#f8d0cb] font-black flex items-center justify-center hover:brightness-95 transition-all"
+                        >
+                          {odds[1] || '0'}
+                        </button>
 
-                  {/* 4. Lay X */}
-                  <button
-                    type="button"
-                    onClick={() => onOddsClick && onOddsClick(match, match.odds[3], 'Lay X')}
-                    className="w-full text-[14px] text-[#273a47] cursor-pointer h-[25px] rounded-[2px] bg-[#f8d0cb] font-black flex items-center justify-center hover:brightness-95 transition-all"
-                  >
-                    {match.odds[3] || '0'}
-                  </button>
+                        {/* 3. Back X */}
+                        <button
+                          type="button"
+                          onClick={() => onOddsClick && onOddsClick(match, odds[2], 'Back X')}
+                          className="w-full text-[14px] text-[#273a47] cursor-pointer h-[25px] rounded-[2px] bg-[#a5d9fe] font-black flex items-center justify-center hover:brightness-95 transition-all"
+                        >
+                          {odds[2] || '0'}
+                        </button>
 
-                  {/* 5. Back 2 */}
-                  <button
-                    type="button"
-                    onClick={() => onOddsClick && onOddsClick(match, match.odds[4], 'Back 2')}
-                    className="w-full text-[14px] text-[#273a47] cursor-pointer h-[25px] rounded-[2px] bg-[#a5d9fe] font-black flex items-center justify-center hover:brightness-95 transition-all"
-                  >
-                    {match.odds[4] || '0'}
-                  </button>
+                        {/* 4. Lay X */}
+                        <button
+                          type="button"
+                          onClick={() => onOddsClick && onOddsClick(match, odds[3], 'Lay X')}
+                          className="w-full text-[14px] text-[#273a47] cursor-pointer h-[25px] rounded-[2px] bg-[#f8d0cb] font-black flex items-center justify-center hover:brightness-95 transition-all"
+                        >
+                          {odds[3] || '0'}
+                        </button>
 
-                  {/* 6. Lay 2 */}
-                  <button
-                    type="button"
-                    onClick={() => onOddsClick && onOddsClick(match, match.odds[5], 'Lay 2')}
-                    className="w-full text-[14px] text-[#273a47] cursor-pointer h-[25px] rounded-[2px] bg-[#f8d0cb] font-black flex items-center justify-center hover:brightness-95 transition-all"
-                  >
-                    {match.odds[5] || '0'}
-                  </button>
+                        {/* 5. Back 2 */}
+                        <button
+                          type="button"
+                          onClick={() => onOddsClick && onOddsClick(match, odds[4], 'Back 2')}
+                          className="w-full text-[14px] text-[#273a47] cursor-pointer h-[25px] rounded-[2px] bg-[#a5d9fe] font-black flex items-center justify-center hover:brightness-95 transition-all"
+                        >
+                          {odds[4] || '0'}
+                        </button>
+
+                        {/* 6. Lay 2 */}
+                        <button
+                          type="button"
+                          onClick={() => onOddsClick && onOddsClick(match, odds[5], 'Lay 2')}
+                          className="w-full text-[14px] text-[#273a47] cursor-pointer h-[25px] rounded-[2px] bg-[#f8d0cb] font-black flex items-center justify-center hover:brightness-95 transition-all"
+                        >
+                          {odds[5] || '0'}
+                        </button>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
+            );
+          })
+        ) : (
+          <div className="py-6 px-3 flex items-center justify-center">
+            <div className="w-full bg-[#fffbeb] border border-[#fef08a] rounded p-3 flex items-center justify-center gap-2 text-[#854d0e] text-[13px] font-medium shadow-2xs">
+              <svg className="w-4 h-4 text-[#eab308] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>No Exchange Games Available</span>
             </div>
-          );
-        })}
+          </div>
+        )}
       </div>
     </section>
   );

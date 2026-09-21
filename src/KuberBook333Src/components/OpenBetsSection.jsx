@@ -63,14 +63,14 @@ export default function OpenBetsSection({ user, onToast }) {
   return (
     <div className="w-full bg-[#f2f4f7] min-h-screen pb-24 text-neutral-900 select-none flex flex-col pt-1">
       {/* CARD CONTAINER: FILTERS + PAGINATION */}
-      <div className="mx-2 bg-white rounded-[6px] border border-gray-300 p-3 shadow-2xs flex flex-col">
+      <div className=" bg-white  border-t border-gray-300 py-2 -mt-1 px-4 pr-10 shadow-2xs flex flex-col">
         {/* Filter Form */}
         <form onSubmit={handleApply} className="w-full flex flex-col gap-2.5">
           {/* Row 1: From & To */}
           <div className="grid grid-cols-2 gap-3">
             {/* From */}
-            <div className="flex flex-col gap-1">
-              <label className="text-[13px] font-medium text-gray-700">From</label>
+            <div className="flex flex-col ">
+              <label className="text-[12px] font-medium text-gray-700">From</label>
               <div className="border border-gray-300 rounded-[4px] px-2.5 py-1.5 flex items-center justify-between bg-white focus-within:border-amber-600 transition-colors">
                 <input
                   type="date"
@@ -82,8 +82,8 @@ export default function OpenBetsSection({ user, onToast }) {
             </div>
 
             {/* To */}
-            <div className="flex flex-col gap-1">
-              <label className="text-[13px] font-medium text-gray-700">To</label>
+            <div className="flex flex-col ">
+              <label className="text-[12px] font-medium text-gray-700">To</label>
               <div className="border border-gray-300 rounded-[4px] px-2.5 py-1.5 flex items-center justify-between bg-white focus-within:border-amber-600 transition-colors">
                 <input
                   type="date"

@@ -192,11 +192,11 @@ export default function AffiliateSection({ user, onToast }) {
   };
 
   return (
-    <div className="w-full bg-[#f2f4f7] min-h-screen flex flex-col pb-24 text-neutral-900 select-none">
+    <div className="w-full bg-white  min-h-screen flex flex-col pb-24 text-neutral-900 select-none">
       {/* ========================================================= */}
       {/* 1. TOP AFFILIATE CONTENT (ACCORDING TO ACTIVE SUB-TAB)   */}
       {/* ========================================================= */}
-      <div className="p-2 pt-5 flex flex-col gap-3.5">
+      <div className="p-2 pt-5 flex flex-col gap-5">
         {activeTab === 'dashboard' ? (
           <>
             {/* ----------------------------------------------------- */}
@@ -216,15 +216,15 @@ export default function AffiliateSection({ user, onToast }) {
                 className="absolute top-0 right-0 pointer-events-none select-none"
               />
 
-              <h2 className="text-white font-extrabold text-[17px] tracking-wide mb-3 relative z-10">
+              <h2 className="text-white font-extrabold text-[16px] tracking-wide mb-3 relative z-10">
                 Today Status
               </h2>
 
               <div className="grid grid-cols-2 mt-[15px] relative z-10">
                 {/* Left Column */}
-                <div className="flex flex-col items-center justify-center gap-5 pr-2">
+                <div className="flex flex-col items-center  justify-center gap-2 pr-2 mt-[12px]">
                   <div className="flex flex-col items-center py-[5px]">
-                    <span className="font-extrabold text-[22px] text-neutral-900 leading-none">
+                    <span className="font-semibold text-[20px] text-neutral-900 leading-none">
                       0
                     </span>
                     <span className="text-[12px] font-medium text-neutral-900 mt-1">
@@ -232,7 +232,7 @@ export default function AffiliateSection({ user, onToast }) {
                     </span>
                   </div>
                   <div className="flex flex-col items-center py-[5px]">
-                    <span className="font-extrabold text-[22px] text-neutral-900 leading-none">
+                    <span className="font-semibold text-[20px] text-neutral-900 leading-none">
                       0
                     </span>
                     <span className="text-[12px] font-medium text-neutral-900 mt-1">
@@ -245,9 +245,9 @@ export default function AffiliateSection({ user, onToast }) {
                 <div className="absolute left-1/2 top-1 bottom-1 w-[1px] bg-[#3a5833]/40 transform -translate-x-1/2" />
 
                 {/* Right Column */}
-                <div className="flex flex-col items-center justify-center gap-5 pl-2">
+                <div className="flex flex-col items-center justify-center gap-2 pl-2 mt-[12px]">
                   <div className="flex flex-col items-center py-[5px]">
-                    <span className="font-extrabold text-[22px] text-neutral-900 leading-none">
+                    <span className="font-semibold text-[20px] text-neutral-900 leading-none">
                       0
                     </span>
                     <span className="text-[12px] font-medium text-neutral-900 mt-1">
@@ -255,7 +255,7 @@ export default function AffiliateSection({ user, onToast }) {
                     </span>
                   </div>
                   <div className="flex flex-col items-center py-[5px]">
-                    <span className="font-extrabold text-[22px] text-neutral-900 leading-none">
+                    <span className="font-semibold text-[20px] text-neutral-900 leading-none">
                       0
                     </span>
                     <span className="text-[12px] font-medium text-neutral-900 mt-1">
@@ -274,12 +274,12 @@ export default function AffiliateSection({ user, onToast }) {
                 background: 'transparent linear-gradient(94deg,#b6842d,#ebda8d 55%,#b7862f)',
                 border: '1px solid #ffffff29',
               }}
-              className="w-full rounded-md p-3.5 shadow-md flex flex-col gap-3 relative overflow-hidden"
+              className="w-full rounded-md p-4 shadow-md flex flex-col gap-3 relative overflow-hidden"
             >
               {/* Top Row: Title + Girl Avatar */}
               <div className="flex items-center justify-between">
                 <div className="flex-1 pr-2">
-                  <h3 className="text-white font-extrabold text-[18px] leading-tight tracking-wide">
+                  <h3 className="text-white font-extrabold text-[20px] leading-tight tracking-wide">
                     Invite Your Friends
                   </h3>
                   <p className="text-black font-semibold text-[13px] mt-1 leading-snug">
@@ -754,13 +754,13 @@ export default function AffiliateSection({ user, onToast }) {
                 style={
                   reportType === 'commission'
                     ? {
-                        background: 'transparent linear-gradient(94deg,#b6842d,#ebda8d 55%,#b7862f)',
-                        borderColor: '#b6842d',
-                      }
+                      background: 'transparent linear-gradient(94deg,#b6842d,#ebda8d 55%,#b7862f)',
+                      borderColor: '#b6842d',
+                    }
                     : {
-                        background: '#ffffff',
-                        borderColor: '#b6842d',
-                      }
+                      background: '#ffffff',
+                      borderColor: '#b6842d',
+                    }
                 }
                 className="w-full py-2.5 rounded-[8px] border text-black font-extrabold text-[13.5px] tracking-wide uppercase transition-all shadow-xs cursor-pointer text-center"
               >
@@ -772,13 +772,13 @@ export default function AffiliateSection({ user, onToast }) {
                 style={
                   reportType === 'user'
                     ? {
-                        background: 'transparent linear-gradient(94deg,#b6842d,#ebda8d 55%,#b7862f)',
-                        borderColor: '#b6842d',
-                      }
+                      background: 'transparent linear-gradient(94deg,#b6842d,#ebda8d 55%,#b7862f)',
+                      borderColor: '#b6842d',
+                    }
                     : {
-                        background: '#ffffff',
-                        borderColor: '#b6842d',
-                      }
+                      background: '#ffffff',
+                      borderColor: '#b6842d',
+                    }
                 }
                 className="w-full py-2.5 rounded-[8px] border text-black font-extrabold text-[13.5px] tracking-wide uppercase transition-all shadow-xs cursor-pointer text-center"
               >
@@ -787,30 +787,64 @@ export default function AffiliateSection({ user, onToast }) {
             </div>
 
             {/* Date Filter Card */}
-            <div className="w-full bg-white rounded-[10px] p-3 shadow-sm border border-gray-200">
+            <div className="w-full bg-white rounded-[6px] p-3 border border-gray-300">
               <div className="grid grid-cols-2 gap-3">
                 {/* From Date */}
-                <div className="flex flex-col gap-1">
-                  <label className="text-[13px] font-semibold text-gray-700">From</label>
-                  <div className="border border-gray-300 rounded-[6px] px-2.5 py-1.5 flex items-center justify-between bg-white">
+                <div className="flex flex-col">
+                  <label className="text-[13px] font-medium text-gray-700 mb-1">From</label>
+                  <div className="relative border border-gray-300 rounded-[6px] px-3 h-[38px] flex items-center justify-between bg-white cursor-pointer focus-within:border-amber-600 transition-colors">
+                    <span className="text-[14.5px] text-gray-800 font-medium select-none">
+                      {(() => {
+                        if (!fromDate) return '';
+                        const p = fromDate.split('-');
+                        return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : fromDate;
+                      })()}
+                    </span>
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="w-[18px] h-[18px] fill-none stroke-black stroke-[1.8] shrink-0 pointer-events-none"
+                      aria-hidden="true"
+                    >
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                      <line x1="16" y1="2" x2="16" y2="6" />
+                      <line x1="8" y1="2" x2="8" y2="6" />
+                      <line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
                     <input
                       type="date"
                       value={fromDate}
                       onChange={(e) => setFromDate(e.target.value)}
-                      className="w-full bg-transparent text-[13.5px] text-gray-800 font-medium outline-none cursor-pointer"
+                      className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
                     />
                   </div>
                 </div>
 
                 {/* To Date */}
-                <div className="flex flex-col gap-1">
-                  <label className="text-[13px] font-semibold text-gray-700">To Date</label>
-                  <div className="border border-gray-300 rounded-[6px] px-2.5 py-1.5 flex items-center justify-between bg-white">
+                <div className="flex flex-col">
+                  <label className="text-[13px] font-medium text-gray-700 mb-1">To Date</label>
+                  <div className="relative border border-gray-300 rounded-[6px] px-3 h-[38px] flex items-center justify-between bg-white cursor-pointer focus-within:border-amber-600 transition-colors">
+                    <span className="text-[14.5px] text-gray-800 font-medium select-none">
+                      {(() => {
+                        if (!toDate) return '';
+                        const p = toDate.split('-');
+                        return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : toDate;
+                      })()}
+                    </span>
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="w-[18px] h-[18px] fill-none stroke-black stroke-[1.8] shrink-0 pointer-events-none"
+                      aria-hidden="true"
+                    >
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                      <line x1="16" y1="2" x2="16" y2="6" />
+                      <line x1="8" y1="2" x2="8" y2="6" />
+                      <line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
                     <input
                       type="date"
                       value={toDate}
                       onChange={(e) => setToDate(e.target.value)}
-                      className="w-full bg-transparent text-[13.5px] text-gray-800 font-medium outline-none cursor-pointer"
+                      className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
                     />
                   </div>
                 </div>

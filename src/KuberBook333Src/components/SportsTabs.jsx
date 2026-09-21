@@ -67,7 +67,7 @@ export default function SportsTabs({ activeSport, onSelectSport }) {
 
   return (
     <nav className="bg-[#e4e7eb] select-none border-b border-gray-300 w-full">
-      <div className="flex items-center gap-[10px] overflow-x-auto custom-scrollbar px-0.5 py-0.5 w-full">
+      <div className="flex items-center gap-[9px] overflow-x-auto custom-scrollbar px-0.5 py-0.5 w-full">
         {tabs.map((tab) => {
           const isActive = activeSport === tab.id;
           return (

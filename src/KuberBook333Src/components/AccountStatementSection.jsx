@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { getAccountStatements } from '../../api';
 
+const formatDateDisplay = (dateStr) => {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  return dateStr;
+};
+
 export default function AccountStatementSection({ user, onToast }) {
   const [fromDate, setFromDate] = useState(() => {
     const d = new Date();
@@ -51,10 +60,10 @@ export default function AccountStatementSection({ user, onToast }) {
 
   useEffect(() => {
     fetchStatements();
-  }, [page]);
+  }, [fromDate, toDate, typeFilter, page]);
 
   const handleSubmit = (e) => {
-    if (e) e.preventDefault();
+    e.preventDefault();
     setPage(1);
     fetchStatements();
   };
@@ -64,19 +73,19 @@ export default function AccountStatementSection({ user, onToast }) {
       if (onToast) {
         onToast({
           id: Date.now(),
-          type: 'add',
-          message: 'No statement data to export.',
+          type: 'error',
+          message: 'No transactions to export',
         });
       } else {
-        alert('No statement data to export.');
+        alert('No transactions to export');
       }
       return;
     }
 
-    const headers = ['SR. NO', 'DATE', 'DESCRIPTION', 'CREDIT', 'DEBIT', 'BALANCE', 'REMARK'];
+    const headers = ['Sr No', 'Date', 'Description', 'Credit', 'Debit', 'Balance', 'Remark'];
     const rows = transactions.map((t, idx) => [
       idx + 1,
-      t.date || t.createdAt || 'N/A',
+      t.date || t.createdAt || '-',
       `"${(t.description || t.narration || '').replace(/"/g, '""')}"`,
       t.credit || 0,
       t.debit || 0,
@@ -91,7 +100,7 @@ export default function AccountStatementSection({ user, onToast }) {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `account_statement_${fromDate}_${toDate}.csv`);
+    link.setAttribute('download', `account_statement_${fromDate}_to_${toDate}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -106,109 +115,140 @@ export default function AccountStatementSection({ user, onToast }) {
   });
 
   return (
-    <div className="w-full bg-[#f2f4f7] min-h-screen pb-24 text-neutral-900 select-none p-2 pt-2 flex flex-col gap-3">
+    <div className="w-full bg-[#fff] min-h-screen pb-24 text-neutral-900 select-none flex flex-col gap-3">
       {/* 1. FILTER & SEARCH FORM CARD */}
       <form
         onSubmit={handleSubmit}
-        className="w-full bg-white rounded-[10px] p-3 shadow-xs border border-gray-200 flex flex-col gap-2.5"
+        className="w-full bg-white px-4 py-3 border border-gray-300 flex flex-col gap-1 rounded-[4px]"
       >
-        {/* Row 1: Date Range */}
-        <div className="grid grid-cols-2 gap-3">
+        {/* Row 1: Date Range (From & To Date) */}
+        <div className="grid grid-cols-2 gap-2 mr-3">
           {/* From */}
-          <div className="flex flex-col gap-1">
-            <label className="text-[13px] font-semibold text-gray-700">From</label>
-            <div className="border border-gray-300 rounded-[6px] px-2.5 py-1.5 flex items-center justify-between bg-white focus-within:border-amber-600 transition-colors">
+          <div className="flex flex-col">
+            <label className="text-[12px] font-medium text-gray-700 ">From</label>
+            <div className="relative border border-gray-300 rounded-[6px] px-2 h-[35px] flex items-center justify-between bg-white cursor-pointer focus-within:border-amber-600 transition-colors">
+              <span className="text-[14.5px] text-gray-800 font-medium select-none">
+                {formatDateDisplay(fromDate)}
+              </span>
+              <svg
+                viewBox="0 0 24 24"
+                className="w-[18px] h-[18px] fill-none stroke-black stroke-[1.8] shrink-0 pointer-events-none"
+                aria-hidden="true"
+              >
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
               <input
                 type="date"
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
-                className="w-full bg-transparent text-[13.5px] text-gray-800 font-medium outline-none cursor-pointer"
+                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
               />
             </div>
           </div>
 
           {/* To Date */}
-          <div className="flex flex-col gap-1">
-            <label className="text-[13px] font-semibold text-gray-700">To Date</label>
-            <div className="border border-gray-300 rounded-[6px] px-2.5 py-1.5 flex items-center justify-between bg-white focus-within:border-amber-600 transition-colors">
+          <div className="flex flex-col">
+            <label className="text-[12px] font-medium text-gray-700 ">To Date</label>
+            <div className="relative border border-gray-300 rounded-[6px] px-2 h-[35px] flex items-center justify-between bg-white cursor-pointer focus-within:border-amber-600 transition-colors">
+              <span className="text-[14.5px] text-gray-800 font-medium select-none">
+                {formatDateDisplay(toDate)}
+              </span>
+              <svg
+                viewBox="0 0 24 24"
+                className="w-[18px] h-[18px] fill-none stroke-black stroke-[1.8] shrink-0 pointer-events-none"
+                aria-hidden="true"
+              >
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
               <input
                 type="date"
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
-                className="w-full bg-transparent text-[13.5px] text-gray-800 font-medium outline-none cursor-pointer"
+                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
               />
             </div>
           </div>
         </div>
 
-        {/* Row 2: Types Dropdown */}
-        <div className="flex flex-col gap-1">
-          <label className="text-[13px] font-semibold text-gray-700">Types</label>
-          <div className="relative">
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="w-full border border-gray-300 rounded-[6px] px-3 py-2 bg-white text-[14px] text-gray-800 font-medium outline-none appearance-none cursor-pointer pr-8 focus:border-amber-600 transition-colors"
-            >
-              <option value="All">All</option>
-              <option value="Deposit">Deposit</option>
-              <option value="Withdraw">Withdraw</option>
-              <option value="Cricket">Cricket</option>
-              <option value="Soccer">Soccer</option>
-              <option value="Tennis">Tennis</option>
-              <option value="Casino">Casino</option>
-              <option value="Aviator">Aviator</option>
-            </select>
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
-              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-none stroke-currentColor stroke-2">
-                <path d="M6 9l6 6 6-6" />
-              </svg>
+        {/* Row 2: Types Dropdown (Equal 1/2 Column Width) */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col">
+            <label className="text-[13px] font-medium text-gray-700 mb-1">Types</label>
+            <div className="relative">
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="w-full border border-gray-300 rounded-[6px] px-3 h-[38px] bg-white text-[14.5px] text-gray-800 font-medium outline-none appearance-none cursor-pointer pr-8 focus:border-amber-600 transition-colors"
+              >
+                <option value="All">All</option>
+                <option value="Deposit">Deposit</option>
+                <option value="Withdraw">Withdraw</option>
+                <option value="Cricket">Cricket</option>
+                <option value="Soccer">Soccer</option>
+                <option value="Tennis">Tennis</option>
+                <option value="Casino">Casino</option>
+                <option value="Aviator">Aviator</option>
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-800 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" className="w-[16px] h-[16px] fill-none stroke-currentColor stroke-[2]">
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Row 3: Search Bet, SUBMIT, and Export Button */}
-        <div className="flex items-end gap-2 pt-1">
+        {/* Row 3: Search Bet (Col 1) and SUBMIT + Download (Col 2) */}
+        <div className="grid grid-cols-2 gap-3 items-end">
           {/* Search Bet Input */}
-          <div className="flex-1 flex flex-col gap-1">
-            <label className="text-[13px] font-semibold text-gray-700">Search Bet</label>
+          <div className="flex flex-col">
+            <label className="text-[13px] font-medium text-gray-700 mb-1">Search Bet</label>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search"
-              className="w-full h-[40px] border border-gray-300 rounded-[6px] px-3 py-2 bg-white text-[14px] text-gray-800 font-medium outline-none placeholder-gray-400 focus:border-amber-600 transition-colors"
+              className="w-full h-[38px] border border-gray-300 rounded-[6px] px-3 bg-white text-[14.5px] text-gray-800 font-medium outline-none placeholder-gray-500 focus:border-amber-600 transition-colors"
             />
           </div>
 
-          {/* SUBMIT Button */}
-          <button
-            type="submit"
-            style={{
-              background: 'transparent linear-gradient(94deg,#b6842d,#ebda8d 55%,#b7862f)',
-            }}
-            className="h-[40px] px-5 rounded-[6px] text-white font-extrabold text-[14px] tracking-wider uppercase flex items-center justify-center shadow-xs hover:brightness-105 active:scale-95 transition-all cursor-pointer shrink-0"
-          >
-            SUBMIT
-          </button>
-
-          {/* Download / Export Button */}
-          <button
-            type="button"
-            onClick={handleExportCSV}
-            style={{
-              background: 'transparent linear-gradient(94deg,#b6842d,#ebda8d 55%,#b7862f)',
-            }}
-            className="w-[46px] h-[40px] rounded-[6px] flex items-center justify-center text-white shadow-xs hover:brightness-105 active:scale-95 transition-all cursor-pointer shrink-0"
-            title="Download Statement"
-          >
-            <svg
-              viewBox="0 0 512 512"
-              className="w-[20px] h-[20px] fill-white"
+          {/* SUBMIT & Download Buttons */}
+          <div className="flex items-center gap-2 h-[38px]">
+            {/* SUBMIT Button */}
+            <button
+              type="submit"
+              style={{
+                background: 'transparent linear-gradient(94deg,#b6842d,#ebda8d 55%,#b7862f)',
+              }}
+              className="flex-1 h-full rounded-[6px] text-white font-extrabold text-[14.5px] tracking-wider uppercase flex items-center justify-center shadow-xs hover:brightness-105 active:scale-95 transition-all cursor-pointer"
             >
-              <path d="M216 0h80c13.3 0 24 10.7 24 24v168h87.7c17.8 0 26.7 21.5 14.1 34.1L269.7 378.3c-7.5 7.5-19.8 7.5-27.3 0L90.1 226.1c-12.6-12.6-3.7-34.1 14.1-34.1H192V24c0-13.3 10.7-24 24-24zm296 376v112c0 13.3-10.7 24-24 24H24c-13.3 0-24-10.7-24-24V376c0-13.3 10.7-24 24-24h146.7l49 49c20.1 20.1 52.5 20.1 72.6 0l49-49H488c13.3 0 24 10.7 24 24zm-124 88c0-11-9-20-20-20s-20 9-20 20 9 20 20 20 20-9 20-20zm64 0c0-11-9-20-20-20s-20 9-20 20 9 20 20 20 20-9 20-20z" />
-            </svg>
-          </button>
+              SUBMIT
+            </button>
+
+            {/* Download Button */}
+            <button
+              type="button"
+              onClick={handleExportCSV}
+              style={{
+                background: 'transparent linear-gradient(94deg,#b6842d,#ebda8d 55%,#b7862f)',
+              }}
+              className="w-[46px] h-full rounded-[6px] flex items-center justify-center text-white shadow-xs hover:brightness-105 active:scale-95 transition-all cursor-pointer shrink-0"
+              title="Download Statement"
+            >
+              <svg
+                viewBox="0 0 512 512"
+                className="w-[19px] h-[19px] fill-white"
+              >
+                <path d="M216 0h80c13.3 0 24 10.7 24 24v168h87.7c17.8 0 26.7 21.5 14.1 34.1L269.7 378.3c-7.5 7.5-19.8 7.5-27.3 0L90.1 226.1c-12.6-12.6-3.7-34.1 14.1-34.1H192V24c0-13.3 10.7-24 24-24zm296 376v112c0 13.3-10.7 24-24 24H24c-13.3 0-24-10.7-24-24V376c0-13.3 10.7-24 24-24h146.7l49 49c20.1 20.1 52.5 20.1 72.6 0l49-49H488c13.3 0 24 10.7 24 24zm-124 88c0-11-9-20-20-20s-20 9-20 20 9 20 20 20 20-9 20-20zm64 0c0-11-9-20-20-20s-20 9-20 20 9 20 20 20 20-9 20-20z" />
+              </svg>
+            </button>
+          </div>
         </div>
       </form>
 

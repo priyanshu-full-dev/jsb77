@@ -86,14 +86,14 @@ export default function CricketPage() {
     });
   };
 
-  const handleOddsClick = (match, oddValue, oddType) => {
-    if (!oddValue || oddValue === '--' || oddValue === '0') return;
-    setSelectedBet({
-      match: match.title,
-      odd: oddValue,
-      type: oddType,
-      stake: betStake,
-    });
+  const handleMatchClick = (match) => {
+    if (!match) return;
+    const eventId = match.eventId || (match.id ? String(match.id).replace(/^match_/, '') : 'surrey_w_v_somerset_w');
+    navigate(`/match/${match.id}?eventId=${eventId}&eventType=4&sport=cricket&marketId=${match.marketId || eventId}&eventName=${encodeURIComponent(match.title || '')}`);
+  };
+
+  const handleOddsClick = (match) => {
+    handleMatchClick(match);
   };
 
   const handlePlaceBet = () => {
@@ -163,7 +163,7 @@ export default function CricketPage() {
         {/* 4. DEDICATED CRICKET SECTION */}
         <CricketSection
           onOddsClick={handleOddsClick}
-          onMatchClick={(m) => navigate(`/match/${m.id}`)}
+          onMatchClick={handleMatchClick}
           favorites={favorites}
           onToggleFavorite={handleToggleFavorite}
           searchQuery={searchQuery}

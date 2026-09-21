@@ -97,7 +97,7 @@ export default function BottomNav({
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col items-center pointer-events-none select-none">
+    <div className="fixed bottom-0 left-0 right-0 z-[60] flex flex-col items-center pointer-events-none select-none">
       <div className="w-full max-w-[480px] pointer-events-auto flex flex-col">
         {/* 1. Curved Black Bottom Navigation Bar (5-column Grid) */}
         <div className="relative w-full h-[50px] bg-black text-white grid grid-cols-5 items-start py-[7px] rounded-t-[25px]">

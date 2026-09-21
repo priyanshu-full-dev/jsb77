@@ -38,13 +38,15 @@ const bookmakerOddsSlice = createSlice({
       state.error = null;
     },
 
-    // ✅ Always keep only one key/value pair
     setBookmakerData: (state, action) => {
-      const { matchId, data } = action.payload;
-      if (Object.values(state.bookMakerData).length > 1) {
+      const { matchId, data } = action.payload || {};
+      if (Object.values(state.bookMakerData).length > 2) {
         state.bookMakerData = {};
       }
-      state.bookMakerData[matchId] = { data: data };
+      if (matchId) {
+        state.bookMakerData[matchId] = { data: data };
+      }
+      state.bookMakerData.active = { data: data };
       state.loading = false;
     },
 

@@ -342,7 +342,7 @@ const Deposit = () => {
       } else {
         toast.error(
           response.data.message ||
-            "Request not submitted. Please try agian later",
+          "Request not submitted. Please try agian later",
         );
       }
     } catch (error) {
@@ -379,25 +379,25 @@ const Deposit = () => {
 
   const details = paymentDetails.account?.[0]
     ? [
-        {
-          label:  "BANK NAME",
-          value: paymentDetails.account[0].bankName || "N/A",
-        },
-        {
-          label:  "ACCOUNT HOLDER NAME",
-          value: paymentDetails.account[0].accountHolder || "N/A",
-        },
-         {
-                label: "SWIFT CODE",
-                value: paymentDetails.account[0].ifscCode || "N/A",
-              },
+      {
+        label: "BANK NAME",
+        value: paymentDetails.account[0].bankName || "N/A",
+      },
+      {
+        label: "ACCOUNT HOLDER NAME",
+        value: paymentDetails.account[0].accountHolder || "N/A",
+      },
+      {
+        label: "SWIFT CODE",
+        value: paymentDetails.account[0].ifscCode || "N/A",
+      },
 
 
-        {
-          label:  "ACCOUNT NUMBER",
-          value: paymentDetails.account[0].accountNumber || "N/A",
-        },
-      ]
+      {
+        label: "ACCOUNT NUMBER",
+        value: paymentDetails.account[0].accountNumber || "N/A",
+      },
+    ]
     : [];
 
   const phoneNumber = paymentDetails.gpay?.[0]?.phoneNumber || "13433414145";
@@ -464,11 +464,10 @@ const Deposit = () => {
                     }));
                   }}
                   className={`relative cursor-pointer rounded-2xl border p-3 transition-all
-        ${
-          isSelected
-            ? "border-[#5f259f] bg-[#f3e8ff] shadow-md scale-[1.02]"
-            : "border-gray-200 bg-white hover:border-[#5f259f]"
-        }`}
+        ${isSelected
+                      ? "border-[#5f259f] bg-[#f3e8ff] shadow-md scale-[1.02]"
+                      : "border-gray-200 bg-white hover:border-[#5f259f]"
+                    }`}
                 >
                   {/* SELECTED TAG */}
                   {isSelected && (
@@ -480,9 +479,8 @@ const Deposit = () => {
                   {/* ICON */}
                   <div
                     className={`h-9 w-9 rounded-full flex items-center justify-center mb-2
-          ${
-            isSelected ? "bg-[#5f259f] text-white" : "bg-gray-100 text-gray-600"
-          }`}
+          ${isSelected ? "bg-[#5f259f] text-white" : "bg-gray-100 text-gray-600"
+                      }`}
                   >
                     {item.method === "qr" && <BsQrCode size={18} />}
                     {item.method === "bank" && <BsBank2 size={18} />}
@@ -635,17 +633,15 @@ const Deposit = () => {
             <button
               onClick={() => handleTabClick("QR")}
               className={`rounded-xl p-3 border text-center transition
-              ${
-                activeTab === "QR"
+              ${activeTab === "QR"
                   ? "border-[#5f259f] bg-[#f3e8ff]"
                   : "border-gray-200 bg-white"
-              }`}
+                }`}
             >
               <BsQrCode
                 size={22}
-                className={`mx-auto ${
-                  activeTab === "QR" ? "text-[#5f259f]" : "text-gray-500"
-                }`}
+                className={`mx-auto ${activeTab === "QR" ? "text-[#5f259f]" : "text-gray-500"
+                  }`}
               />
               <p className="text-[11px] mt-1 font-medium">
                 {isBangladesh ? "Bangla QR" : "UPI"}
@@ -656,17 +652,15 @@ const Deposit = () => {
             <button
               onClick={() => handleTabClick("Bank")}
               className={`rounded-xl p-3 border text-center transition
-              ${
-                activeTab === "Bank"
+              ${activeTab === "Bank"
                   ? "border-[#5f259f] bg-[#f3e8ff]"
                   : "border-gray-200 bg-white"
-              }`}
+                }`}
             >
               <BsBank2
                 size={22}
-                className={`mx-auto ${
-                  activeTab === "Bank" ? "text-[#5f259f]" : "text-gray-500"
-                }`}
+                className={`mx-auto ${activeTab === "Bank" ? "text-[#5f259f]" : "text-gray-500"
+                  }`}
               />
               <p className="text-[11px] mt-1 font-medium">
                 {isBangladesh ? "Bank / Mobile" : "Bank"}
@@ -677,11 +671,10 @@ const Deposit = () => {
             <button
               onClick={() => handleTabClick("USDT")}
               className={`rounded-xl p-3 flex justify-center items-center flex-col border text-center transition
-              ${
-                activeTab === "USDT"
+              ${activeTab === "USDT"
                   ? "border-[#5f259f] bg-[#f3e8ff]"
                   : "border-gray-200 bg-white"
-              }`}
+                }`}
             >
               {isBangladesh ? (
                 <img src="/bkash.svg" alt="bkash" className="h-6 w-6" />
@@ -762,7 +755,7 @@ const Deposit = () => {
                     </p>
 
                     {Array.isArray(paymentDetails?.gpay?.[0]?.upiId) &&
-                    paymentDetails.gpay[0].upiId.length > 0 ? (
+                      paymentDetails.gpay[0].upiId.length > 0 ? (
                       <div className="mt-2 space-y-2">
                         {paymentDetails.gpay[0].upiId.map((upi, index) => (
                           <div
@@ -774,11 +767,10 @@ const Deposit = () => {
                             </span>
                             <button
                               onClick={() => handleCopyUpi(upi)}
-                              className={`text-xs font-medium ${
-                                copiedUpi === upi
+                              className={`text-xs font-medium ${copiedUpi === upi
                                   ? "text-green-600"
                                   : "text-[#5f259f]"
-                              }`}
+                                }`}
                             >
                               {copiedUpi === upi ? "COPIED" : "COPY"}
                             </button>
@@ -921,7 +913,7 @@ const Deposit = () => {
             />
             <button
               onClick={handleButtonClick}
-              className="w-full px-4 py-5 mt-4 rounded text-[13px] bg-[#dbdbdb] text-gray-700 focus:outline-none focus:ring-0 cursor-pointer flex justify-between items-center"
+              className="w-full px-4 py-6 mt-4 rounded text-[13px] bg-[#dbdbdb] text-gray-700 focus:outline-none focus:ring-0 cursor-pointer flex justify-between items-center"
             >
               <p className="font-bold text-center">ATTACH SCREENSHOT</p>
               <AiOutlinePaperClip className="w-5 h-5 text-gray-700" />

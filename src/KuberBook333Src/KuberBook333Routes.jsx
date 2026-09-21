@@ -7,6 +7,14 @@ export const KuberBook333Router = createBrowserRouter([
     element: <KuberBook333Page />,
   },
   {
+    path: "/deposit",
+    element: <KuberBook333Page />,
+  },
+  {
+    path: "/withdraw",
+    element: <KuberBook333Page />,
+  },
+  {
     path: "/inplay",
     element: <KuberBook333Page />,
   },
@@ -32,6 +40,10 @@ export const KuberBook333Router = createBrowserRouter([
   },
   {
     path: "/casino",
+    element: <KuberBook333Page />,
+  },
+  {
+    path: "/casino/:category",
     element: <KuberBook333Page />,
   },
   {
@@ -168,6 +180,38 @@ export const KuberBook333Router = createBrowserRouter([
   },
   {
     path: "/changepassword",
+    element: <KuberBook333Page />,
+  },
+  {
+    path: "/full-market",
+    element: <KuberBook333Page />,
+  },
+  {
+    path: "/horse-market",
+    element: <KuberBook333Page />,
+  },
+  {
+    path: "/greyhound-market",
+    element: <KuberBook333Page />,
+  },
+  {
+    path: "/favourites",
+    element: <KuberBook333Page />,
+  },
+  {
+    path: "/favorites",
+    element: <KuberBook333Page />,
+  },
+  {
+    path: "/multi_market",
+    element: <KuberBook333Page />,
+  },
+  {
+    path: "/multi-market",
+    element: <KuberBook333Page />,
+  },
+  {
+    path: "/sports",
     element: <KuberBook333Page />,
   },
   {

@@ -148,46 +148,11 @@ const App = () => {
     return () => clearInterval(id);
   }, [dispatch]);
 
-  // --- Select Active Project Router (Mahadev vs KuberBook333 vs Kuberbook666) ---
-  const activeRouter = useMemo(() => {
-    try {
-      const searchParams = new URLSearchParams(window.location.search);
-      const requested = searchParams.get("project") || searchParams.get("layout");
-      if (requested === "mahadev") {
-        localStorage.setItem("active_project", "mahadev");
-        return MahadevExchRouter;
-      }
-      if (requested === "kuber666" || requested === "kuberbook666") {
-        localStorage.setItem("active_project", "kuber666");
-        return Kuberbook666Router;
-      }
-      if (requested === "kuber333" || requested === "kuber" || requested === "kuberbook") {
-        localStorage.setItem("active_project", "kuber333");
-        return KuberBook333Router;
-      }
-      const saved = localStorage.getItem("active_project");
-      if (saved === "mahadev") {
-        return MahadevExchRouter;
-      }
-      if (saved === "kuber666") {
-        return Kuberbook666Router;
-      }
-      if (saved === "kuber333") {
-        return KuberBook333Router;
-      }
-      if (domainName.includes("mahadev")) {
-        return MahadevExchRouter;
-      }
-    } catch {
-      // ignore
-    }
-    return KuberBook333Router;
-  }, [domainName, siteDetails?.layout]);
-
+  // --- Run KuberBook333 Directly ---
   return (
     <>
       <Suspense fallback={<Loader />}>
-        <RouterProvider router={activeRouter} />
+        <RouterProvider router={KuberBook333Router} />
       </Suspense>
     </>
   );

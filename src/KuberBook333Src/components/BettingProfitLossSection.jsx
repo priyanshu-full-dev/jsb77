@@ -30,7 +30,7 @@ export default function BettingProfitLossSection({ user, onToast }) {
       if (res?.data?.data || res?.data?.records || res?.data?.profit_loss) {
         const list = res?.data?.data || res?.data?.records || res?.data?.profit_loss || [];
         setProfitLossList(Array.isArray(list) ? list : []);
-        
+
         // Compute total P/L
         const total = (Array.isArray(list) ? list : []).reduce(
           (acc, curr) => acc + (Number(curr.pnl || curr.profitLoss || curr.amount || 0) || 0),
@@ -66,17 +66,16 @@ export default function BettingProfitLossSection({ user, onToast }) {
         style={{
           background: 'transparent linear-gradient(94deg,#b6842d,#ebda8d 55%,#b7862f)',
         }}
-        className="w-full px-3 py-2.5 flex items-center justify-between shadow-xs"
+        className="w-full px-4 py-2 flex items-center justify-between shadow-xs"
       >
-        <h2 className="text-white font-bold text-[16px] tracking-wide drop-shadow-xs">
+        <h2 className="text-white font-bold text-[17px] tracking-wide drop-shadow-xs">
           Profit and Loss
         </h2>
-        <div className="text-[14px] font-bold text-black flex items-center gap-1">
+        <div className="text-[16px] font-bold text-black flex items-center gap-1">
           <span>Total P/L :</span>
           <span
-            className={`${
-              totalPL > 0 ? 'text-green-700' : 'text-[#e53935]'
-            }`}
+            className={`${totalPL > 0 ? 'text-green-700' : 'text-[#e53935]'
+              }`}
           >
             {totalPL.toFixed(2)}
           </span>
@@ -86,7 +85,7 @@ export default function BettingProfitLossSection({ user, onToast }) {
       {/* 2. FILTER CARD: "From" & "To Date" + "Submit" Button */}
       <form
         onSubmit={handleSubmit}
-        className="w-full bg-white px-3 py-3 border-b border-gray-200 flex flex-col gap-2.5"
+        className="w-full bg-white px-3 py-3 border-b border-gray-200 flex flex-col gap-5"
       >
         <div className="grid grid-cols-2 gap-3">
           {/* From */}
@@ -132,7 +131,7 @@ export default function BettingProfitLossSection({ user, onToast }) {
       </form>
 
       {/* 3. TABLE SECTION: "Event" & "P&L" */}
-      <div className="w-full mt-3 bg-white border-t border-b border-gray-300 flex flex-col">
+      <div className="w-full bg-white border-t border-b border-gray-300 flex flex-col">
         {/* Table Header */}
         <div className="grid grid-cols-2 bg-[#e9ecef] border-b border-gray-300 text-[13.5px] font-bold text-gray-700">
           <div className="py-2.5 px-3 text-center border-r border-gray-300">
@@ -171,9 +170,8 @@ export default function BettingProfitLossSection({ user, onToast }) {
                   )}
                 </div>
                 <div
-                  className={`py-2.5 px-3 text-center font-bold flex items-center justify-center ${
-                    pnl >= 0 ? 'text-green-600' : 'text-red-600'
-                  }`}
+                  className={`py-2.5 px-3 text-center font-bold flex items-center justify-center ${pnl >= 0 ? 'text-green-600' : 'text-red-600'
+                    }`}
                 >
                   {pnl >= 0 ? `+${pnl.toFixed(2)}` : pnl.toFixed(2)}
                 </div>

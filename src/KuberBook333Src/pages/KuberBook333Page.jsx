@@ -1,6 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import '../KuberBook.css';
+
+import {
+  subscribeToMatchData,
+  subscribeToMarketOddsData,
+  subscribeToAuraMarketOddsData,
+  subscribeToBookmakerData,
+  subscribeToAuraBookmakerData,
+  subscribeToFancyOddsData,
+  subscribeToHorseMatchesData,
+  subscribeToHourseOddsData,
+  subscribeToGreyhoundMatchesData,
+  subscribeToGreyHoundOddsData,
+  subscribeToKabaddiMatchesData,
+  subscribeToKabaddiMatchesDataOdds,
+  subscribeToDiamondCasinoOddsData,
+  subscribeToJoinProfileRoom,
+  subscribeToJoinMyBets,
+  subscribeToLeaveMyBets,
+  unsubscribeFromHourseOdds,
+  unsubscribeFromGreyHoundOdds,
+} from '../../socketClient';
+import { getUserId } from '../../utils/helper/commonSelectors';
+import {
+  setMarketName,
+  setMarketOddsData,
+  setRunningData,
+} from '../../redux/slices/fullmarketSlice';
 
 import Header from '../components/Header';
 import TickerMarquee from '../components/TickerMarquee';
@@ -23,6 +51,7 @@ import BettingProfitLossSection from '../components/BettingProfitLossSection';
 import MyBetsSection from '../components/MyBetsSection';
 import OpenBetsSection from '../components/OpenBetsSection';
 import ChangePasswordSection from '../components/ChangePasswordSection';
+import DepositSection from '../components/DepositSection';
 import ChangeLanguageModal from '../components/ChangeLanguageModal';
 import BonusRulesModal from '../components/BonusRulesModal';
 import AuthModal from '../components/AuthModal';
@@ -32,9 +61,16 @@ import SearchModal from '../components/SearchModal';
 import BottomNav from '../components/BottomNav';
 import UserProfileMenu from '../components/UserProfileMenu';
 import ToastNotification from '../components/ToastNotification';
+import DesktopLayout from '../components/DesktopLayout';
 
 const getSportFromPath = (pathname) => {
   const clean = pathname.replace(/^\//, '').toLowerCase();
+  if (clean.startsWith('deposit')) {
+    return 'deposit';
+  }
+  if (clean.startsWith('withdraw')) {
+    return 'withdraw';
+  }
   if (
     clean.startsWith('change-password') ||
     clean.startsWith('change_password') ||
@@ -86,11 +122,12 @@ const getSportFromPath = (pathname) => {
   }
   if (clean.startsWith('affiliate') || clean.startsWith('affiliates')) return 'affiliate';
   if (!clean || clean === 'inplay' || clean === 'kuberbook333' || clean === 'b2c') return 'inplay';
-  if (clean.startsWith('match') || clean.startsWith('event')) return 'match_detail';
+  if (clean.startsWith('match') || clean.startsWith('event') || clean.startsWith('full-market')) return 'match_detail';
   if (
     clean === 'aviator' ||
-    clean === 'casino' ||
-    clean === 'livecasino' ||
+    clean.startsWith('casino') ||
+    clean.startsWith('livecasino') ||
+    clean.startsWith('live-casino') ||
     clean === 'games' ||
     clean === 'aura' ||
     clean === 'mines' ||
@@ -101,11 +138,18 @@ const getSportFromPath = (pathname) => {
     clean === 'fun-games' ||
     clean === 'fun_games'
   ) return 'casino';
+  if (
+    clean === 'favourites' ||
+    clean === 'favorites' ||
+    clean === 'multi_market' ||
+    clean === 'multi-market' ||
+    clean === 'multimarket'
+  ) return 'favourites';
   if (clean === 'cricket') return 'cricket';
   if (clean === 'soccer' || clean === 'football') return 'soccer';
   if (clean === 'tennis') return 'tennis';
-  if (clean === 'horse' || clean === 'horseracing' || clean === 'horse_racing' || clean === 'horse-racing') return 'horse';
-  if (clean === 'greyhound' || clean === 'greyhound_racing' || clean === 'greyhound-racing') return 'greyhound';
+  if (clean === 'horse' || clean === 'horseracing' || clean === 'horse_racing' || clean === 'horse-racing' || clean === 'horse-market') return 'horse';
+  if (clean === 'greyhound' || clean === 'greyhound_racing' || clean === 'greyhound-racing' || clean === 'greyhound-market') return 'greyhound';
   if (clean === 'mac88') return 'mac88';
   if (clean === 'sportsbook' || clean === 'sports_book' || clean === 'sports-book') return 'sportsbook';
   if (clean === 'basketball') return 'basketball';
@@ -115,28 +159,283 @@ const getSportFromPath = (pathname) => {
   return clean;
 };
 
+// Helper: Safely parse matches from Redux socket updates
+const parseReduxSportMatches = (reduxMatchesData, sportName) => {
+  if (!reduxMatchesData || !Array.isArray(reduxMatchesData)) return [];
+  return reduxMatchesData.map((m, idx) => {
+    const eventName = m?.eventName || m?.title || `${sportName} Match ${idx + 1}`;
+    const matchOdds0 = m?.matchOdds?.[0];
+    const runners = matchOdds0?.runners || m?.matchRunners || [];
+
+    let r1 = null;
+    let r2 = null;
+    let rDraw = null;
+
+    if (runners.length === 2) {
+      r1 = runners[0];
+      r2 = runners[1];
+    } else if (runners.length >= 3) {
+      rDraw = runners.find((r) => r?.runnerName?.toLowerCase()?.includes('draw'));
+      const nonDraws = runners.filter((r) => !r?.runnerName?.toLowerCase()?.includes('draw'));
+      r1 = nonDraws[0] || runners[0];
+      r2 = nonDraws[1] || runners[1];
+      if (!rDraw) rDraw = runners[2];
+    } else if (runners.length === 1) {
+      r1 = runners[0];
+    }
+
+    const formatPrice = (p, fallback = '0') => {
+      if (p === undefined || p === null || p === '' || p === '--') return fallback;
+      const num = Number(p);
+      if (isNaN(num) || num === 0) return fallback;
+      return String(p);
+    };
+
+    const back1 = formatPrice(r1?.ex?.availableToBack?.[0]?.price, '0');
+    const lay1 = formatPrice(r1?.ex?.availableToLay?.[0]?.price, '0');
+    const backX = rDraw ? formatPrice(rDraw?.ex?.availableToBack?.[0]?.price, '0') : '0';
+    const layX = rDraw ? formatPrice(rDraw?.ex?.availableToLay?.[0]?.price, '0') : '0';
+    const back2 = formatPrice(r2?.ex?.availableToBack?.[0]?.price, '0');
+    const lay2 = formatPrice(r2?.ex?.availableToLay?.[0]?.price, '0');
+
+    const resolvedSportId = m?.sportId || m?.eventType || (sportName === 'Cricket' ? 4 : sportName === 'Soccer' ? 1 : 2);
+
+    const isInPlay = Boolean(
+      matchOdds0?.inplay === true ||
+      matchOdds0?.inplay === 'true' ||
+      matchOdds0?.inPlay === true ||
+      matchOdds0?.inPlay === 'true' ||
+      m?.inplay === true ||
+      m?.inplay === 'true' ||
+      m?.inPlay === true ||
+      m?.inPlay === 'true' ||
+      m?.live === true ||
+      m?.live === 'true'
+    );
+
+    return {
+      id: m?.eventId ? `match_${m.eventId}` : `socket_${sportName}_${idx}`,
+      eventId: m?.eventId,
+      eventType: resolvedSportId,
+      sportId: resolvedSportId,
+      competitionId: m?.competitionId,
+      marketId: m?.marketId,
+      joinedMarketIds: m?.joinedMarketIds,
+      sport: sportName.toLowerCase(),
+      sportName: sportName,
+      date: 'today',
+      title: eventName,
+      time: m?.openDate || m?.time || (isInPlay ? 'INPLAY' : 'Upcoming'),
+      inplay: isInPlay,
+      live: isInPlay,
+      odds: [back1, lay1, backX, layX, back2, lay2],
+      hasTv: Boolean(m?.tv || m?.hasTv),
+      hasF: Boolean(m?.fancy || m?.f || m?.hasF),
+      hasBm: Boolean(m?.bm || m?.hasBm),
+      hasToss: Boolean(m?.markets?.some((mkt) => (mkt?.marketName || '').toLowerCase().includes('toss'))),
+      markets: m?.markets,
+      minBet: '1',
+      maxBet: '25000',
+      matchOdds: m?.matchOdds,
+      runners: runners.map((r, rIdx) => ({
+        id: r?.selectionId ? `runner_${r.selectionId}` : `runner_${rIdx + 1}`,
+        selectionId: r?.selectionId,
+        name: r?.runnerName || `Runner ${rIdx + 1}`,
+        back: {
+          odd: formatPrice(r?.ex?.availableToBack?.[0]?.price, '--'),
+          size: r?.ex?.availableToBack?.[0]?.size ? String(r?.ex?.availableToBack?.[0]?.size) : '--',
+        },
+        lay: {
+          odd: formatPrice(r?.ex?.availableToLay?.[0]?.price, '--'),
+          size: r?.ex?.availableToLay?.[0]?.size ? String(r?.ex?.availableToLay?.[0]?.size) : '--',
+        },
+      })),
+    };
+  });
+};
+
 export default function KuberBook333Page() {
   const location = useLocation();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [searchParams] = useSearchParams();
+
+  // Redux Selectors
+  const currentUserId = useSelector(getUserId());
+  const reduxMatches = useSelector((state) => state.matches);
+  const reduxHorse = useSelector((state) => state.horse);
+  const reduxGreyhound = useSelector((state) => state.greyhound);
 
   // Active sport dynamically synced with current React Router DOM path
   const activeSport = getSportFromPath(location.pathname);
+  const VALID_SPORTS_TABS = [
+    'inplay',
+    'cricket',
+    'soccer',
+    'football',
+    'tennis',
+    'horse',
+    'greyhound',
+    'mac88',
+    'sportsbook',
+    'basketball',
+    'volleyball',
+    'tabletennis',
+    'mma',
+  ];
+
   const [selectedSportTab, setSelectedSportTab] = useState(() => {
     const clean = location.pathname.replace(/^\//, '').toLowerCase();
-    if (!clean || clean === 'inplay' || clean === 'kuberbook333' || clean === 'b2c') return 'inplay';
-    if (clean.startsWith('match') || clean.startsWith('event')) return 'inplay';
-    return clean;
+    if (VALID_SPORTS_TABS.includes(clean)) {
+      return clean === 'football' ? 'soccer' : clean;
+    }
+    return 'inplay';
   });
 
+  // 1. Global Socket Subscriptions for All Sports Channels (Cricket, Soccer, Tennis, Horse, Greyhound, Kabaddi)
+  useEffect(() => {
+    console.log('⚡ [KUBER333 SOCKET] Subscribing to Global Live Channels: Cricket(4), Soccer(1), Tennis(2), Kabaddi, Horse, Greyhound');
+    const unsubCricket = subscribeToMatchData({
+      eventId: 4,
+      competitionId: null,
+      matchId: null,
+      marketId: null,
+      sport: 'cricket',
+    });
+    const unsubSoccer = subscribeToMatchData({
+      eventId: 1,
+      competitionId: null,
+      matchId: null,
+      marketId: null,
+      sport: 'soccer',
+    });
+    const unsubTennis = subscribeToMatchData({
+      eventId: 2,
+      competitionId: null,
+      matchId: null,
+      marketId: null,
+      sport: 'tennis',
+    });
+    const unsubKabaddi = subscribeToKabaddiMatchesData();
+    const unsubHorse = subscribeToHorseMatchesData();
+    const unsubGreyhound = subscribeToGreyhoundMatchesData();
+
+    return () => {
+      typeof unsubCricket === 'function' && unsubCricket();
+      typeof unsubSoccer === 'function' && unsubSoccer();
+      typeof unsubTennis === 'function' && unsubTennis();
+      typeof unsubKabaddi === 'function' && unsubKabaddi();
+      typeof unsubHorse === 'function' && unsubHorse();
+      typeof unsubGreyhound === 'function' && unsubGreyhound();
+    };
+  }, []);
+
+  // 2. User Profile and My Bets Socket Room Subscriptions
+  useEffect(() => {
+    if (currentUserId) {
+      console.log(`👤 [KUBER333 SOCKET] Joining User Profile & MyBets Room for User: ${currentUserId}`);
+      subscribeToJoinProfileRoom(currentUserId);
+      subscribeToJoinMyBets(currentUserId);
+    }
+  }, [currentUserId]);
+
+  // 3. Route-Specific Dynamic Subscriptions (Inspection & Realtime sync across every route)
   useEffect(() => {
     window.scrollTo(0, 0);
     const clean = location.pathname.replace(/^\//, '').toLowerCase();
-    if (!clean || clean === 'inplay' || clean === 'kuberbook333' || clean === 'b2c') {
+    if (clean === 'inplay') {
       setSelectedSportTab('inplay');
-    } else if (!clean.startsWith('match') && !clean.startsWith('event')) {
-      setSelectedSportTab(clean);
+    } else if (VALID_SPORTS_TABS.includes(clean)) {
+      setSelectedSportTab(clean === 'football' ? 'soccer' : clean);
     }
-  }, [location.pathname]);
+
+    console.log(`🌐 [KUBER333 ROUTE INSPECT] Active Route: "${location.pathname}" | Query: "${location.search}"`);
+
+    // A. Handle Horse / Greyhound market subscriptions
+    const gmid = searchParams.get('gmid');
+    const isHorseRoute = clean.includes('horse');
+    const isGreyhoundRoute = clean.includes('greyhound');
+
+    if (gmid) {
+      if (isHorseRoute) {
+        console.log(`🏇 [KUBER333 SOCKET] Subscribed to Horse Market Odds: gmid=${gmid}`);
+        subscribeToHourseOddsData({ gmid });
+        return () => unsubscribeFromHourseOdds(gmid);
+      } else if (isGreyhoundRoute) {
+        console.log(`🐕 [KUBER333 SOCKET] Subscribed to Greyhound Market Odds: gmid=${gmid}`);
+        subscribeToGreyHoundOddsData({ gmid });
+        return () => unsubscribeFromGreyHoundOdds(gmid);
+      }
+    }
+
+    // B. Handle Sport Match Details / Full Market subscriptions
+    const eventId = searchParams.get('eventId');
+    const eventType = searchParams.get('eventType');
+    const competitionId = searchParams.get('competitionId');
+    const marketId = searchParams.get('marketId');
+    const joinedMarketIds = searchParams.get('joinedMarketIds') || marketId;
+    const sportParam = searchParams.get('sport') || searchParams.get('sportName') || 'Cricket';
+    const bm = searchParams.get('bm');
+    const fancy = searchParams.get('fancy') || searchParams.get('f');
+
+    const isMatchDetailRoute =
+      clean.startsWith('match') || clean.startsWith('event') || clean.startsWith('full-market');
+
+    const cleanups = [];
+
+    if (isMatchDetailRoute) {
+      if (eventId) {
+        console.log(`📊 [KUBER333 SOCKET] Subscribed to Match Market Odds: eventId=${eventId}, marketId=${joinedMarketIds}, sport=${sportParam}`);
+        const unsubMarket = subscribeToMarketOddsData({
+          eventId,
+          eventType: eventType || eventId,
+          competitionId,
+          matchId: eventId,
+          marketId: joinedMarketIds,
+          sport: sportParam,
+        });
+        cleanups.push(unsubMarket);
+
+        if (bm === 'true' || bm === '1') {
+          console.log(`📖 [KUBER333 SOCKET] Subscribed to Bookmaker Odds: eventId=${eventId}`);
+          const unsubBm = subscribeToBookmakerData({
+            eventId,
+            eventType: eventType || eventId,
+            competitionId,
+            sport: sportParam,
+          });
+          cleanups.push(unsubBm);
+        }
+
+        if (fancy === 'true' || fancy === '1') {
+          console.log(`🎯 [KUBER333 SOCKET] Subscribed to Fancy Odds: eventId=${eventId}`);
+          const unsubFancy = subscribeToFancyOddsData({
+            eventId,
+            eventType: eventType || eventId,
+            competitionId,
+            sport: sportParam,
+          });
+          cleanups.push(unsubFancy);
+        }
+      } else {
+        // Auto-subscribe fallback for Surrey W v Somerset W live demo match
+        console.log(`🏏 [KUBER333 SOCKET] Subscribing Live Market Odds for Surrey W v Somerset W (eventId: 4, marketId: 1.234567)`);
+        const unsubMarket = subscribeToMarketOddsData({
+          eventId: '4',
+          eventType: '4',
+          competitionId: '1',
+          matchId: '4',
+          marketId: '1.234567',
+          sport: 'Cricket',
+        });
+        cleanups.push(unsubMarket);
+      }
+    }
+
+    return () => {
+      cleanups.forEach((fn) => typeof fn === 'function' && fn());
+    };
+  }, [location.pathname, location.search, searchParams]);
 
   const [activeBottomNav, setActiveBottomNav] = useState('home');
   const [exchangeTab, setExchangeTab] = useState('today');
@@ -178,7 +477,18 @@ export default function KuberBook333Page() {
   };
   const [selectedBet, setSelectedBet] = useState(null);
   const [betStake, setBetStake] = useState('100');
-  const [favorites, setFavorites] = useState(new Set());
+  const [favorites, setFavorites] = useState(() => {
+    try {
+      const stored = localStorage.getItem('kuberbook_favorites');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) return new Set(parsed);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return new Set();
+  });
   const [toast, setToast] = useState(null);
 
   // Auto-dismiss toast notification after 3 seconds
@@ -191,11 +501,23 @@ export default function KuberBook333Page() {
   }, [toast]);
 
   const handleToggleFavorite = (match) => {
+    if (!match || !match.id) return;
     setFavorites((prev) => {
       const next = new Set(prev);
       const isFav = next.has(match.id);
+
+      let savedMatchesList = [];
+      try {
+        const stored = localStorage.getItem('kuberbook_saved_matches');
+        if (stored) savedMatchesList = JSON.parse(stored);
+        if (!Array.isArray(savedMatchesList)) savedMatchesList = [];
+      } catch (e) {
+        console.error(e);
+      }
+
       if (isFav) {
         next.delete(match.id);
+        savedMatchesList = savedMatchesList.filter((m) => m.id !== match.id);
         setToast({
           id: Date.now(),
           type: 'remove',
@@ -203,520 +525,67 @@ export default function KuberBook333Page() {
         });
       } else {
         next.add(match.id);
+        savedMatchesList = [
+          match,
+          ...savedMatchesList.filter((m) => m.id !== match.id),
+        ];
         setToast({
           id: Date.now(),
           type: 'add',
           message: 'Event Added Successfully',
         });
       }
+
+      try {
+        localStorage.setItem('kuberbook_favorites', JSON.stringify(Array.from(next)));
+        localStorage.setItem('kuberbook_saved_matches', JSON.stringify(savedMatchesList));
+      } catch (e) {
+        console.error('Failed to save favorites to localStorage', e);
+      }
+
       return next;
     });
   };
 
-  // Comprehensive Real Fixtures Dataset across Football, Tennis, Cricket, and Live Inplay
-  const allMatches = [
-    // --- LIVE INPLAY MATCH: SURREY W V SOMERSET W (Matching User Match Detail Screenshots) ---
-    {
-      id: 'surrey_w_v_somerset_w',
-      sport: 'cricket',
-      date: 'today',
-      title: 'Surrey W v Somerset W',
-      time: '12/09/2026, 15:30',
-      live: true,
-      odds: ['3.5', '5.7', '0', '0', '1.21', '1.4'],
-      hasTv: true,
-      hasF: true,
-      hasBm: true,
-      minBet: '1',
-      maxBet: '1000',
-      runners: [
-        {
-          id: 'runner_1',
-          name: 'Surrey W',
-          back: { odd: '3.5', size: '756.33' },
-          lay: { odd: '5.7', size: '1.15' },
-        },
-        {
-          id: 'runner_2',
-          name: 'Somerset W',
-          back: { odd: '1.21', size: '153.23' },
-          lay: { odd: '1.4', size: '1.9k' },
-        },
-      ],
-    },
+  // Live Redux socket matches only (No dummy data)
+  const allMatches = useMemo(() => {
+    const liveCricket = parseReduxSportMatches(reduxMatches?.cricket?.matches?.data, 'Cricket');
+    const liveSoccer = parseReduxSportMatches(reduxMatches?.soccer?.matches?.data, 'Soccer');
+    const liveTennis = parseReduxSportMatches(reduxMatches?.tennis?.matches?.data, 'Tennis');
 
-    // --- LIVE INPLAY MATCH 1: CRICKET - NAMIBIA V SOUTH AFRICA ---
-    {
-      id: 'namibia_v_south_africa',
-      sport: 'cricket',
-      date: 'today',
-      title: 'Namibia v South Africa',
-      time: '11/09/2026, 13:00',
-      live: true,
-      odds: ['6', '6.2', '0', '0', '1.19', '1.2'],
-      hasTv: true,
-      hasF: true,
-      hasBm: true,
-      minBet: '1',
-      maxBet: '25000',
-      runners: [
-        {
-          id: 'runner_1',
-          name: 'Namibia',
-          back: { odd: '6', size: '2.5' },
-          lay: { odd: '6.2', size: '3.1' },
-        },
-        {
-          id: 'runner_2',
-          name: 'South Africa',
-          back: { odd: '1.19', size: '15.2' },
-          lay: { odd: '1.2', size: '25.0' },
-        },
-      ],
-    },
-
-    // --- LIVE INPLAY MATCH 2: TENNIS - IVASHKA V YI ZHOU ---
-    {
-      id: 'ivashka_v_yi_zhou',
-      sport: 'tennis',
-      date: 'today',
-      title: 'Ivashka v Yi Zhou',
-      time: '11/09/2026, 12:30',
-      live: true,
-      odds: ['1.29', '1.44', '0', '0', '3.25', '4.5'],
-      hasTv: true,
-      hasF: false,
-      hasBm: false,
-      minBet: '1',
-      maxBet: '25000',
-      runners: [
-        {
-          id: 'runner_1',
-          name: 'Ivashka',
-          back: { odd: '1.29', size: '4.5' },
-          lay: { odd: '1.44', size: '2.8' },
-        },
-        {
-          id: 'runner_2',
-          name: 'Yi Zhou',
-          back: { odd: '3.25', size: '1.8' },
-          lay: { odd: '4.5', size: '3.2' },
-        },
-      ],
-    },
-
-    // --- TENNIS: JAY FRIEND V MICHELE RIBECAI (Matching User Match Detail Screenshots) ---
-    {
-      id: 'ja_friend_v_ribecai',
-      sport: 'tennis',
-      date: 'today',
-      title: 'Ja Friend v Ribecai',
-      time: '08/09/2026, 12:30',
-      live: false,
-      odds: ['1.96', '1.98', '0', '0', '2.02', '2.04'],
-      hasTv: true,
-      minBet: '1',
-      maxBet: '25000',
-      runners: [
-        {
-          id: 'runner_1',
-          name: 'Jay Friend',
-          back: { odd: '1.94', size: '1.92' },
-          lay: { odd: '1.99', size: '2.94' },
-        },
-        {
-          id: 'runner_2',
-          name: 'Michele Ribecai',
-          back: { odd: '2.00', size: '2.93' },
-          lay: { odd: '2.06', size: '1.81' },
-        },
-      ],
-    },
-
-    // --- FOOTBALL / SOCCER FIXTURES (Matching Football screenshot) ---
-    {
-      id: 'fb_1',
-      sport: 'soccer',
-      date: 'today',
-      title: 'Bulgaria v Luxembourg',
-      time: '26/09/2026, 21:30',
-      live: false,
-      odds: ['1.01', '12', '1.09', '0', '1.09', '0'],
-      hasTv: false,
-      minBet: '1',
-      maxBet: '25000',
-      runners: [
-        {
-          id: 'fb_r1',
-          name: 'Bulgaria',
-          back: { odd: '1.01', size: '12.5' },
-          lay: { odd: '12', size: '4.2' },
-        },
-        {
-          id: 'fb_r2',
-          name: 'Luxembourg',
-          back: { odd: '1.09', size: '1.9' },
-          lay: { odd: '15', size: '2.1' },
-        },
-      ],
-    },
-    {
-      id: 'fb_2',
-      sport: 'soccer',
-      date: 'today',
-      title: 'San Marino v Finland',
-      time: '26/09/2026, 21:30',
-      live: false,
-      odds: ['1.04', '950', '1.01', '540', '1.07', '1.12'],
-      hasTv: false,
-    },
-    {
-      id: 'fb_3',
-      sport: 'soccer',
-      date: 'today',
-      title: 'Iceland v Estonia',
-      time: '26/09/2026, 21:30',
-      live: false,
-      odds: ['1.04', '8.8', '1.12', '500', '1.14', '0'],
-      hasTv: false,
-    },
-    {
-      id: 'fb_4',
-      sport: 'soccer',
-      date: 'today',
-      title: 'Slovenia v Scotland',
-      time: '26/09/2026, 18:30',
-      live: false,
-      odds: ['1.06', '17', '1.13', '3.8', '1.06', '17'],
-      hasTv: false,
-    },
-    {
-      id: 'fb_5',
-      sport: 'soccer',
-      date: 'today',
-      title: 'Hungary v Ukraine',
-      time: '26/09/2026, 00:15',
-      live: false,
-      odds: ['1.24', '15', '1.09', '6.8', '1.27', '0'],
-      hasTv: false,
-    },
-    {
-      id: 'fb_6',
-      sport: 'soccer',
-      date: 'today',
-      title: 'Montenegro v Cyprus',
-      time: '26/09/2026, 00:15',
-      live: false,
-      odds: ['1.15', '18', '1.12', '4.2', '1.18', '22'],
-      hasTv: false,
-    },
-    {
-      id: 'fb_7',
-      sport: 'soccer',
-      date: 'today',
-      title: 'Caykur Rizespor U19 v Alanyaspor U19',
-      time: '07/09/2026, 18:30',
-      live: false,
-      odds: ['2.22', '2.46', '3.55', '3.95', '3.1', '3.5'],
-      hasTv: false,
-    },
-    {
-      id: 'fb_8',
-      sport: 'soccer',
-      date: 'today',
-      title: 'Goztepe U19 v Gazisehir Gaziantep U19',
-      time: '07/09/2026, 18:30',
-      live: false,
-      odds: ['1.54', '1.63', '4.5', '5', '5.7', '6.8'],
-      hasTv: false,
-    },
-    {
-      id: 'fb_9',
-      sport: 'soccer',
-      date: 'today',
-      title: 'Istanbulspor v 76 Igdir Belediyespor',
-      time: '07/09/2026, 19:30',
-      live: false,
-      odds: ['3.4', '3.55', '3.55', '3.75', '2.28', '2.34'],
-      hasTv: true,
-    },
-    {
-      id: 'fb_10',
-      sport: 'soccer',
-      date: 'today',
-      title: 'Erokspor A.S v Kayserispor',
-      time: '07/09/2026, 19:30',
-      live: false,
-      odds: ['2.64', '2.72', '3.45', '3.65', '2.78', '2.9'],
-      hasTv: true,
-    },
-    {
-      id: 'fb_11',
-      sport: 'soccer',
-      date: 'today',
-      title: 'Olympic El Qanal v El Geish',
-      time: '07/09/2026, 19:30',
-      live: false,
-      odds: ['2.5', '3.7', '2.8', '2.84', '2.7', '2.78'],
-      hasTv: true,
-    },
-    {
-      id: 'fb_12',
-      sport: 'soccer',
-      date: 'today',
-      title: 'CSC 1599 Selimbar v Metalul Buzau',
-      live: false,
-      time: '07/09/2026, 13:30',
-      odds: ['13', '13.5', '4.3', '4.5', '1.43', '1.45'],
-      hasTv: true,
-      hasF: true,
-      hasBm: true,
-    },
-
-    // --- TENNIS FIXTURES (Matching Tennis screenshot) ---
-    {
-      id: 'tn_1',
-      sport: 'tennis',
-      date: 'today',
-      title: 'Bax v Max Jones',
-      time: '08/09/2026, 08:30',
-      live: false,
-      odds: ['1.69', '3.4', '0', '0', '1.43', '2.44'],
-      hasTv: true,
-    },
-    {
-      id: 'tn_2',
-      sport: 'tennis',
-      date: 'today',
-      title: 'Lajovic v Ma Landaluce',
-      time: '08/09/2026, 23:45',
-      live: false,
-      odds: ['2.28', '2.38', '0', '0', '1.72', '1.78'],
-      hasTv: false,
-    },
-    {
-      id: 'tn_3',
-      sport: 'tennis',
-      date: 'today',
-      title: 'Gaubas v Pa Lagutin',
-      time: '08/09/2026, 22:40',
-      live: false,
-      odds: ['1.44', '1.49', '0', '0', '3.05', '3.25'],
-      hasTv: false,
-    },
-    {
-      id: 'tn_4',
-      sport: 'tennis',
-      date: 'today',
-      title: 'Campana Lee v Alcalà Gurri',
-      time: '08/09/2026, 22:40',
-      live: false,
-      odds: ['3.8', '4.2', '0', '0', '1.32', '1.36'],
-      hasTv: false,
-    },
-    {
-      id: 'tn_5',
-      sport: 'tennis',
-      date: 'today',
-      title: 'Tiafoe v Al Michelsen',
-      time: '08/09/2026, 22:30',
-      live: false,
-      odds: ['1.7', '1.72', '0', '0', '2.4', '2.48'],
-      hasTv: false,
-    },
-    {
-      id: 'tn_6',
-      sport: 'tennis',
-      date: 'today',
-      title: 'Sonego v Passaro',
-      time: '08/09/2026, 22:00',
-      live: false,
-      odds: ['1.52', '1.58', '0', '0', '2.6', '2.7'],
-      hasTv: false,
-    },
-    {
-      id: 'tn_7',
-      sport: 'tennis',
-      date: 'today',
-      title: "Benj O'Connell v Ichikawa",
-      live: false,
-      time: '07/09/2026, 08:30',
-      odds: ['1.03', '1.05', '0', '0', '21', '34'],
-      hasTv: true,
-    },
-    {
-      id: 'tn_8',
-      sport: 'tennis',
-      date: 'today',
-      title: 'Ol Ovcharenko v G Kravchenko',
-      live: false,
-      time: '07/09/2026, 14:30',
-      odds: ['1.89', '1.97', '0', '0', '2.04', '2.1'],
-      hasTv: true,
-    },
-    {
-      id: 'tn_9',
-      sport: 'tennis',
-      date: 'today',
-      title: 'D Obradovic v Th Faurel',
-      live: false,
-      time: '07/09/2026, 14:30',
-      odds: ['1.24', '1.26', '0', '0', '4.6', '4.8'],
-      hasTv: true,
-    },
-    {
-      id: 'tn_10',
-      sport: 'tennis',
-      date: 'today',
-      title: 'A Zverev v Halys',
-      live: false,
-      time: '07/09/2026, 06:12',
-      odds: ['1.1', '1.11', '0', '0', '10.5', '11'],
-      hasTv: true,
-    },
-
-    // --- CRICKET FIXTURES (Matching Cricket screenshot) ---
-    {
-      id: 'cr_leicestershire_v_somerset',
-      sport: 'cricket',
-      date: 'today',
-      title: 'Leicestershire v Somerset',
-      time: '08/09/2026, 15:00',
-      live: false,
-      odds: ['--', '--', '0', '0', '--', '--'],
-      hasTv: true,
-      hasF: true,
-      hasBm: false,
-      noMarket: true,
-    },
-    {
-      id: 'cr_1',
-      sport: 'cricket',
-      date: 'today',
-      title: 'Hong Kong W v Pakistan W',
-      time: '07/09/2026, 21:00',
-      live: false,
-      odds: ['--', '--', '0', '0', '--', '--'],
-      hasTv: true,
-      hasF: true,
-      hasBm: true,
-      noMarket: true,
-    },
-    {
-      id: 'cr_2',
-      sport: 'cricket',
-      date: 'tomorrow',
-      title: 'United Arab Emirates W v Bangladesh W',
-      time: '08/09/2026, 20:00',
-      live: false,
-      odds: ['--', '--', '0', '0', '--', '--'],
-      hasTv: false,
-      hasF: false,
-      hasBm: true,
-      noMarket: true,
-    },
-    {
-      id: 'cr_3',
-      sport: 'cricket',
-      date: 'upcoming',
-      title: 'England v Pakistan',
-      time: '09/09/2026, 15:30',
-      live: false,
-      odds: ['--', '--', '--', '--', '--', '--'],
-      hasTv: false,
-      hasF: true,
-      hasBm: true,
-    },
-    {
-      id: 'cr_4',
-      sport: 'cricket',
-      date: 'upcoming',
-      title: 'Dublin Guardians v Belfast Wolves',
-      time: '09/09/2026, 18:45',
-      live: false,
-      odds: ['--', '--', '0', '0', '--', '--'],
-      hasTv: false,
-      hasF: false,
-      hasBm: true,
-    },
-    {
-      id: 'cr_5',
-      sport: 'cricket',
-      date: 'upcoming',
-      title: 'Rotterdam Dockers v Glasgow Cosmic',
-      time: '10/09/2026, 15:00',
-      live: false,
-      odds: ['--', '--', '0', '0', '--', '--'],
-      hasTv: false,
-      hasF: false,
-      hasBm: false,
-    },
-    {
-      id: 'cr_6',
-      sport: 'cricket',
-      date: 'today',
-      title: 'Trivandrum Royals v Thrissur Titans',
-      time: '07/09/2026, 14:30',
-      live: false,
-      odds: ['1.8', '1.81', '0', '0', '2.22', '2.26'],
-      hasTv: true,
-      hasF: true,
-      hasBm: true,
-    },
-    {
-      id: 'cr_7',
-      sport: 'cricket',
-      date: 'tomorrow',
-      title: 'Meerut Mavericks v Noida Super Kings',
-      time: '08/09/2026, 19:30',
-      live: false,
-      odds: ['1.42', '2.08', '0', '0', '1.93', '3.4'],
-      hasTv: true,
-      hasBm: true,
-      hasF: false,
-    },
-
-    // --- HORSE & GREYHOUND RACING FIXTURES ---
-    {
-      id: 'hr_1',
-      sport: 'horse',
-      date: 'today',
-      title: 'Sandown - 14:15 Hand Stakes',
-      time: '08/09/2026, 14:15',
-      live: false,
-      odds: ['3.25', '3.4', '0', '0', '5.5', '5.8'],
-      hasTv: true,
-    },
-    {
-      id: 'hr_2',
-      sport: 'horse',
-      date: 'today',
-      title: 'Ascot - 15:30 Gold Cup Trophy',
-      time: '08/09/2026, 15:30',
-      live: false,
-      odds: ['2.1', '2.2', '0', '0', '4.2', '4.5'],
-      hasTv: true,
-    },
-    {
-      id: 'gh_1',
-      sport: 'greyhound',
-      date: 'today',
-      title: 'Romford - 18:09 Open 400m',
-      time: '08/09/2026, 18:09',
-      live: false,
-      odds: ['2.5', '2.6', '0', '0', '3.8', '4.0'],
-      hasTv: true,
-    },
-  ];
+    return [...liveCricket, ...liveSoccer, ...liveTennis];
+  }, [reduxMatches]);
 
   const handleOddsClick = (match, oddValue, oddType) => {
-    if (!oddValue || oddValue === '--' || oddValue === '0') return;
-    setSelectedBet({
-      match: match.title,
-      odd: oddValue,
-      type: oddType,
-      stake: betStake,
-    });
+    handleMatchClick(match);
+  };
+
+  const handleMatchClick = (match) => {
+    if (!match) return;
+    if (match?.matchRunners) {
+      dispatch(setRunningData(match.matchRunners));
+    }
+    if (match?.markets) {
+      dispatch(setMarketName(match.markets));
+    }
+    if (match?.matchOdds) {
+      dispatch(
+        setMarketOddsData({
+          data: { data: match.matchOdds },
+          sport: match.sport || 'Cricket',
+        })
+      );
+    }
+
+    const eventId = match.eventId || (match.id ? String(match.id).replace(/^match_/, '') : '36075212');
+    const sportName = (match.sport || 'cricket').toLowerCase();
+    const sportId = match.eventType || match.sportId || (sportName === 'soccer' ? 1 : sportName === 'tennis' ? 2 : 4);
+    const competitionId = match.competitionId || '12830953';
+    const marketId = match.marketId || match.joinedMarketIds || '1.262481009';
+
+    navigate(
+      `/match/${match.id}?eventId=${eventId}&eventType=${sportId}&competitionId=${competitionId}&marketId=${marketId}&joinedMarketIds=${match.joinedMarketIds || marketId}&bm=${match.hasBm ? 'true' : 'false'}&fancy=${match.hasF ? 'true' : 'false'}&sport=${sportName}&eventName=${encodeURIComponent(match.title || '')}`
+    );
   };
 
   const handlePlaceBet = () => {
@@ -728,6 +597,10 @@ export default function KuberBook333Page() {
 
   const handleBottomNavSelect = (tab) => {
     setActiveBottomNav(tab);
+    setLanguageModalOpen(false);
+    setBonusRulesModalOpen(false);
+    setProfileMenuOpen(false);
+    setMenuOpen(false);
     if (tab === 'home') {
       navigate('/');
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -737,14 +610,21 @@ export default function KuberBook333Page() {
     } else if (tab === 'inplay') {
       navigate('/inplay');
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (tab === 'casino' || tab === 'favourites') {
-      setAuthModal('login');
+    } else if (tab === 'favourites') {
+      navigate('/favourites');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (tab === 'casino') {
+      navigate('/casino');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const handleSelectSport = (sport) => {
+    setSelectedSportTab(sport);
     if (sport === 'inplay') {
       navigate('/inplay');
+    } else if (sport === 'favourites' || sport === 'multi_market') {
+      navigate('/favourites');
     } else {
       navigate(`/${sport}`);
     }
@@ -778,6 +658,39 @@ export default function KuberBook333Page() {
     return matchesSport && matchesQuery;
   });
 
+  // 4. Filter Saved Favorites Matches from Local Storage & Socket Matches
+  const filteredFavorites = useMemo(() => {
+    const savedMap = new Map();
+    try {
+      const stored = localStorage.getItem('kuberbook_saved_matches');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((m) => {
+            if (m && m.id && favorites.has(m.id)) {
+              savedMap.set(m.id, m);
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    // Sync live odds from socket if currently active
+    allMatches.forEach((m) => {
+      if (favorites.has(m.id)) {
+        savedMap.set(m.id, { ...savedMap.get(m.id), ...m });
+      }
+    });
+
+    const favList = Array.from(savedMap.values());
+    if (!searchQuery) return favList;
+    return favList.filter((m) =>
+      m?.title?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [allMatches, favorites, searchQuery]);
+
   // Extract match ID if on match detail view
   const matchIdMatch = location.pathname.match(/^\/(?:match|event)\/([^/]+)/i);
   const currentMatchId = matchIdMatch ? matchIdMatch[1] : 'surrey_w_v_somerset_w';
@@ -790,303 +703,377 @@ export default function KuberBook333Page() {
     allMatches[0];
 
   return (
-    <div className="min-h-screen bg-[#000000] text-neutral-900 flex justify-center font-sans select-none antialiased">
-      {/* Exact Mobile App Container */}
-      <div className="w-full max-w-[480px] bg-[#f2f4f7] min-h-screen shadow-2xl relative flex flex-col pb-20">
-        {/* 1. TOP BLACK HEADER */}
-        <Header
-          user={user}
-          onLogoClick={() => navigate('/')}
-          onLogout={handleLogout}
-          onProfileClick={() => setProfileMenuOpen(!profileMenuOpen)}
-          onMenuClick={() => setMenuOpen(!menuOpen)}
-          onSearchClick={() => setSearchOpen(true)}
-          onAuthClick={(type) => setAuthModal(type)}
-          isSearchOpen={searchOpen}
-          onSearchClose={() => {
-            setSearchOpen(false);
-            setSearchQuery('');
-          }}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-        />
-
-        {/* 2. TICKER MARQUEE BAR */}
-        <TickerMarquee
-          onMatchClick={(item) => {
-            const found = allMatches.find(
-              (m) => m.title?.toLowerCase() === item.title?.toLowerCase()
-            );
-            if (found) {
-              navigate(`/match/${found.id}`);
-            } else {
-              navigate(`/match/${item.title?.toLowerCase().replace(/\s+/g, '_')}`);
-            }
-          }}
-        />
-
-        {/* 3. SPORTS CATEGORY TABS (5 DISTINCT CARDS) */}
-        <SportsTabs
-          activeSport={activeSport === 'match_detail' ? selectedSportTab : activeSport}
-          onSelectSport={handleSelectSport}
-        />
-
-        {/* 4. CONTENT AREA BASED ON ACTIVE SPORT */}
-        {activeSport === 'change_password' ? (
-          /* DEDICATED CHANGE PASSWORD VIEW */
-          <ChangePasswordSection user={user} onToast={setToast} />
-        ) : activeSport === 'open_bets' ? (
-          /* DEDICATED OPEN BETS VIEW */
-          <OpenBetsSection user={user} onToast={setToast} />
-        ) : activeSport === 'my_bets' ? (
-          /* DEDICATED MY BETS VIEW */
-          <MyBetsSection user={user} onToast={setToast} />
-        ) : activeSport === 'profit_loss' ? (
-          /* DEDICATED BETTING PROFIT & LOSS VIEW */
-          <BettingProfitLossSection user={user} onToast={setToast} />
-        ) : activeSport === 'bonuses' ? (
-          /* DEDICATED BONUSES VIEW */
-          <BonusesSection user={user} />
-        ) : activeSport === 'settings' ? (
-          /* DEDICATED STAKE SETTINGS VIEW */
-          <StakeSettingsSection onToast={setToast} />
-        ) : activeSport === 'account_statement' ? (
-          /* DEDICATED ACCOUNT STATEMENT VIEW */
-          <AccountStatementSection user={user} onToast={setToast} />
-        ) : activeSport === 'affiliate' ? (
-          /* DEDICATED AFFILIATE PORTAL & SUB-VIEWS */
-          <AffiliateSection user={user} />
-        ) : activeSport === 'match_detail' ? (
-          /* IN-MATCH BETTING VIEW (MATCH ODDS + RUNNERS + INLINE BET SLIP) */
-          <MatchDetailSection
-            match={currentMatch}
+    <div className="min-h-screen bg-[#000000] text-neutral-900 font-sans select-none antialiased">
+      {/* 1. MOBILE APP VIEW (Rendered on mobile screens < lg, 100% UNTOUCHED) */}
+      <div className="lg:hidden flex justify-center w-full min-h-screen">
+        <div className="w-full max-w-[480px] bg-[#f2f4f7] min-h-screen shadow-2xl relative flex flex-col pb-20">
+          {/* 1. TOP BLACK HEADER */}
+          <Header
             user={user}
-            onPlaceBetSuccess={(betInfo) => {
-              setToast({
-                id: Date.now(),
-                type: 'add',
-                message: `Bet Placed! ${betInfo.runner} @ ${betInfo.odds} (₹${betInfo.stake})`,
-              });
+            onLogoClick={() => navigate('/')}
+            onLogout={handleLogout}
+            onProfileClick={() => setProfileMenuOpen(!profileMenuOpen)}
+            onMenuClick={() => setMenuOpen(!menuOpen)}
+            onSearchClick={() => setSearchOpen(true)}
+            onAuthClick={(type) => setAuthModal(type)}
+            isSearchOpen={searchOpen}
+            onSearchClose={() => {
+              setSearchOpen(false);
+              setSearchQuery('');
             }}
-            onBackToList={() => navigate(-1)}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
           />
-        ) : activeSport === 'inplay' ? (
-          <>
-            {/* FEATURED GAMES (2 HORIZONTAL SCROLLING ROWS OF 16:9 CARDS) */}
-            <FeaturedGames
-              onGameClick={(gameId) => {
-                if (gameId === 'mines') {
-                  navigate('/mines');
-                } else if (gameId === 'chicken_road' || gameId === 'color_prediction') {
-                  navigate('/color-prediction');
-                } else if (gameId === 'fun_games') {
-                  navigate('/fun-games');
-                } else {
-                  navigate('/aviator');
-                }
+
+          {/* 2. TICKER MARQUEE BAR */}
+          <TickerMarquee />
+
+          {/* 3. SPORTS CATEGORY TABS (5 DISTINCT CARDS) */}
+          {activeSport !== 'deposit' && activeSport !== 'withdraw' && (
+            <SportsTabs
+              activeSport={selectedSportTab}
+              onSelectSport={handleSelectSport}
+            />
+          )}
+
+          {/* Logged in User Deposit & Withdraw Action Bar */}
+          {user && activeSport !== 'deposit' && activeSport !== 'withdraw' && (
+            <div className="w-full px-1 bg-white pt-0.5 pb-2 flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => navigate('/deposit')}
+                className="w-full flex items-center justify-center gap-2.5 bg-[linear-gradient(180deg,#007b15,#138e00)] hover:bg-[#086600] text-white font-semibold px-4 py-1.5 text-[14px] rounded-sm cursor-pointer active:scale-98 transition-all"
+              >
+                <img
+                  src="/games/download (3).webp"
+                  alt="Deposit"
+                  className="w-[20px] h-[20px] object-contain shrink-0 brightness-0 invert"
+                />
+                Deposit
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/withdraw')}
+                className="w-full flex items-center justify-center gap-2.5 bg-[linear-gradient(180deg,#7b0000,#d10000)] hover:bg-[#cc0000] text-white font-semibold px-4 py-1.5 text-[14px] rounded-sm cursor-pointer active:scale-98 transition-all"
+              >
+                <img
+                  src="/games/download (4).webp"
+                  alt="Withdraw"
+                  className="w-[20px] h-[20px] object-contain shrink-0 brightness-0 invert"
+                />
+                Withdraw
+              </button>
+            </div>
+          )}
+
+          {/* 4. CONTENT AREA BASED ON ACTIVE SPORT */}
+          {activeSport === 'deposit' || activeSport === 'withdraw' ? (
+            /* DEDICATED DEPOSIT & WITHDRAW VIEW */
+            <DepositSection user={user} onToast={setToast} activeTab={activeSport} />
+          ) : activeSport === 'change_password' ? (
+            /* DEDICATED CHANGE PASSWORD VIEW */
+            <ChangePasswordSection user={user} onToast={setToast} />
+          ) : activeSport === 'open_bets' ? (
+            /* DEDICATED OPEN BETS VIEW */
+            <OpenBetsSection user={user} onToast={setToast} />
+          ) : activeSport === 'my_bets' ? (
+            /* DEDICATED MY BETS VIEW */
+            <MyBetsSection user={user} onToast={setToast} />
+          ) : activeSport === 'profit_loss' ? (
+            /* DEDICATED BETTING PROFIT & LOSS VIEW */
+            <BettingProfitLossSection user={user} onToast={setToast} />
+          ) : activeSport === 'bonuses' ? (
+            /* DEDICATED BONUSES VIEW */
+            <BonusesSection user={user} />
+          ) : activeSport === 'settings' ? (
+            /* DEDICATED STAKE SETTINGS VIEW */
+            <StakeSettingsSection onToast={setToast} />
+          ) : activeSport === 'account_statement' ? (
+            /* DEDICATED ACCOUNT STATEMENT VIEW */
+            <AccountStatementSection user={user} onToast={setToast} />
+          ) : activeSport === 'affiliate' ? (
+            /* DEDICATED AFFILIATE PORTAL & SUB-VIEWS */
+            <AffiliateSection user={user} />
+          ) : activeSport === 'match_detail' ? (
+            /* IN-MATCH BETTING VIEW (MATCH ODDS + RUNNERS + INLINE BET SLIP) */
+            <MatchDetailSection
+              match={currentMatch}
+              user={user}
+              onPlaceBetSuccess={(betInfo) => {
+                setToast({
+                  id: Date.now(),
+                  type: 'add',
+                  message: `Bet Placed! ${betInfo.runner} @ ${betInfo.odds} (₹${betInfo.stake})`,
+                });
               }}
+              onBackToList={() => navigate(-1)}
             />
-
-            {/* "NEW LAUNCH" SECTION (GOLD BANNER + 3 PORTRAIT CARDS) */}
-            <NewLaunchSection
-              onGameClick={(gameId) => {
-                navigate('/aviator');
-              }}
-            />
-
-            {/* "INPLAY" LIVE ODDS GRID */}
-            <InplayOddsTable
-              matches={filteredInplay}
-              onOddsClick={handleOddsClick}
-              onMatchClick={(match) => navigate(`/match/${match.id}`)}
-              favorites={favorites}
-              onToggleFavorite={handleToggleFavorite}
-            />
-
-            {/* CASINO PROVIDERS */}
-            <CasinoProviders
-              onProviderClick={() => {
-                navigate('/casino');
-              }}
-            />
-
-            {/* EXCHANGE GAMES */}
-            <ExchangeMatches
-              matches={filteredExchange}
-              exchangeTab={exchangeTab}
-              onTabChange={(tab) => setExchangeTab(tab)}
-              onOddsClick={handleOddsClick}
-              onMatchClick={(match) => navigate(`/match/${match.id}`)}
-              favorites={favorites}
-              onToggleFavorite={handleToggleFavorite}
-            />
-          </>
-        ) : activeSport === 'casino' ? (
-          /* CASINO & CRASH GAMES SECTION (AURA, LIVE CASINO, AVIATOR, ETC.) */
-          <CasinoGamesSection
-            onGameClick={() => {
-              setAuthModal('login');
-            }}
-          />
-        ) : activeSport === 'mac88' ? (
-          /* MAC88 CASINO GAMES SECTION */
-          <Mac88Section
-            onGameClick={() => {
-              setAuthModal('login');
-            }}
-          />
-        ) : (activeSport === 'horse' || activeSport === 'greyhound') ? (
-          /* HORSE RACING & GREYHOUND RACING SECTION */
-          <RacingSection sport={activeSport} />
-        ) : (
-          /* DEDICATED SPORT FIXTURES SECTION (FOOTBALL, CRICKET, TENNIS, ETC.) */
-          <SportSection
-            sport={activeSport}
-            matches={filteredSportMatches}
-            onOddsClick={handleOddsClick}
-            onMatchClick={(match) => navigate(`/match/${match.id}`)}
-            favorites={favorites}
-            onToggleFavorite={handleToggleFavorite}
-          />
-        )}
-
-        {/* 5. TOAST NOTIFICATION */}
-        <ToastNotification
-          toast={toast}
-          onClose={() => setToast(null)}
-        />
-
-        {activeSport !== 'affiliate' && (
-          <>
-            {/* 6a. FLOATING WHATSAPP 24x7 CUSTOMER SUPPORT BUTTON */}
-            <a
-              href="https://wa.me/"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ width: '70px', height: '70px' }}
-              className="fixed bottom-[74px] left-0 z-40 flex items-center justify-center drop-shadow-[0_4px_12px_rgba(0,0,0,0.35)] cursor-pointer"
-              aria-label="24x7 WhatsApp Customer Support"
-            >
-              <img
-                src="/games/wp_support.png"
-                alt="24x7 Customer Support"
-                style={{ width: '70px', height: '70px' }}
-                className="w-[70px] h-[70px] object-contain animate-wp-support"
+          ) : activeSport === 'inplay' ? (
+            <>
+              {/* FEATURED GAMES (2 HORIZONTAL SCROLLING ROWS OF 16:9 CARDS) */}
+              <FeaturedGames
+                onGameClick={(gameId) => {
+                  if (gameId === 'mines') {
+                    navigate('/mines');
+                  } else if (gameId === 'chicken_road' || gameId === 'color_prediction') {
+                    navigate('/color-prediction');
+                  } else if (gameId === 'fun_games') {
+                    navigate('/fun-games');
+                  } else {
+                    navigate('/casino/aviator');
+                  }
+                }}
               />
-            </a>
 
-            {/* 6b. FLOATING TELEGRAM BUTTON + 4-WAY ARROW AVIATOR BUTTON */}
-            <div className="fixed bottom-[74px] right-2 z-40 flex items-center justify-center">
+              {/* "NEW LAUNCH" SECTION (GOLD BANNER + 3 PORTRAIT CARDS) */}
+              <NewLaunchSection
+                onGameClick={(gameId) => {
+                  navigate('/casino/aviator');
+                }}
+              />
+
+              {/* "INPLAY" LIVE ODDS GRID */}
+              <InplayOddsTable
+                matches={filteredInplay}
+                onOddsClick={handleOddsClick}
+                onMatchClick={handleMatchClick}
+                favorites={favorites}
+                onToggleFavorite={handleToggleFavorite}
+              />
+
+              {/* CASINO PROVIDERS */}
+              <CasinoProviders
+                onProviderClick={() => {
+                  navigate('/casino');
+                }}
+              />
+
+              {/* EXCHANGE GAMES */}
+              <ExchangeMatches
+                matches={filteredExchange}
+                exchangeTab={exchangeTab}
+                onTabChange={(tab) => setExchangeTab(tab)}
+                onOddsClick={handleOddsClick}
+                onMatchClick={handleMatchClick}
+                favorites={favorites}
+                onToggleFavorite={handleToggleFavorite}
+              />
+            </>
+          ) : activeSport === 'casino' ? (
+            /* CASINO & CRASH GAMES SECTION (AURA, LIVE CASINO, AVIATOR, ETC.) */
+            <CasinoGamesSection
+              onGameClick={() => {
+                setAuthModal('login');
+              }}
+            />
+          ) : activeSport === 'mac88' ? (
+            /* MAC88 CASINO GAMES SECTION */
+            <Mac88Section
+              onGameClick={() => {
+                setAuthModal('login');
+              }}
+            />
+          ) : (activeSport === 'horse' || activeSport === 'greyhound') ? (
+            /* HORSE RACING & GREYHOUND RACING SECTION */
+            <RacingSection sport={activeSport} />
+          ) : (activeSport === 'favourites' || activeSport === 'multi_market') ? (
+            /* FAVOURITES & SAVED MATCHES SECTION */
+            <SportSection
+              sport="favourites"
+              matches={filteredFavorites}
+              onOddsClick={handleOddsClick}
+              onMatchClick={handleMatchClick}
+              favorites={favorites}
+              onToggleFavorite={handleToggleFavorite}
+            />
+          ) : (
+            /* DEDICATED SPORT FIXTURES SECTION (FOOTBALL, CRICKET, TENNIS, ETC.) */
+            <SportSection
+              sport={activeSport}
+              matches={filteredSportMatches}
+              onOddsClick={handleOddsClick}
+              onMatchClick={handleMatchClick}
+              favorites={favorites}
+              onToggleFavorite={handleToggleFavorite}
+            />
+          )}
+
+          {/* 5. TOAST NOTIFICATION */}
+          <ToastNotification
+            toast={toast}
+            onClose={() => setToast(null)}
+          />
+
+          {activeSport !== 'affiliate' && (
+            <>
+              {/* 6a. FLOATING WHATSAPP 24x7 CUSTOMER SUPPORT BUTTON */}
               <a
-                href="https://t.me/"
+                href="https://wa.me/"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ width: '70px', height: '70px' }}
-                className="flex items-center justify-center cursor-pointer group relative"
-                aria-label="Telegram Channel"
+                className="fixed bottom-[74px] left-0 z-40 flex items-center justify-center drop-shadow-[0_4px_12px_rgba(0,0,0,0.35)] cursor-pointer"
+                aria-label="24x7 WhatsApp Customer Support"
               >
-                <span className="absolute w-[68px] h-[68px] rounded-full bg-[#82c98d]/50 pointer-events-none animate-bg-blow-base" />
-                <span className="absolute w-[68px] h-[68px] rounded-full bg-[#82c98d]/65 pointer-events-none animate-bg-blow-wave1" />
-                <span className="absolute w-[68px] h-[68px] rounded-full bg-[#82c98d]/65 pointer-events-none animate-bg-blow-wave2" />
                 <img
-                  src="/games/talegram.png"
-                  alt="Telegram Support"
-                  style={{ width: '65px', height: '65px' }}
-                  className="w-[30px] h-[30px] object-contain relative z-10"
+                  src="/games/wp_support.png"
+                  alt="24x7 Customer Support"
+                  style={{ width: '70px', height: '70px' }}
+                  className="w-[70px] h-[70px] object-contain animate-wp-support"
                 />
               </a>
 
-              {/* Golden 4-Way Arrow Button that redirects to Aviator inner page (ONLY inside matches) */}
-              {activeSport === 'match_detail' && (
-                <button
-                  type="button"
-                  onClick={() => navigate('/aviator')}
-                  style={{
-                    background: 'linear-gradient(135deg, #caa049 0%, #b8862f 100%)',
-                    border: '2px solid #ebda8d',
-                  }}
-                  className="absolute -top-1 -left-1 w-[36px] h-[36px] rounded-full shadow-lg flex items-center justify-center z-30 cursor-pointer hover:scale-110 active:scale-95 transition-all"
-                  title="Play Aviator"
-                  aria-label="Play Aviator"
+              {/* 6b. FLOATING TELEGRAM BUTTON + 4-WAY ARROW AVIATOR BUTTON */}
+              <div className="fixed bottom-[74px] right-2 z-40 flex items-center justify-center">
+                <a
+                  href="https://t.me/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ width: '70px', height: '70px' }}
+                  className="flex items-center justify-center cursor-pointer group relative"
+                  aria-label="Telegram Channel"
                 >
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="w-5 h-5 fill-white drop-shadow-xs"
-                    xmlns="http://www.w3.org/2000/svg"
+                  <span className="absolute w-[68px] h-[68px] rounded-full bg-[#82c98d]/50 pointer-events-none animate-bg-blow-base" />
+                  <span className="absolute w-[68px] h-[68px] rounded-full bg-[#82c98d]/65 pointer-events-none animate-bg-blow-wave1" />
+                  <span className="absolute w-[68px] h-[68px] rounded-full bg-[#82c98d]/65 pointer-events-none animate-bg-blow-wave2" />
+                  <img
+                    src="/games/talegram.png"
+                    alt="Telegram Support"
+                    style={{ width: '65px', height: '65px' }}
+                    className="w-[30px] h-[30px] object-contain relative z-10"
+                  />
+                </a>
+
+                {/* Golden 4-Way Arrow Button that redirects to Aviator inner page (ONLY inside matches) */}
+                {activeSport === 'match_detail' && (
+                  <button
+                    type="button"
+                    onClick={() => navigate('/casino/aviator')}
+                    style={{
+                      background: 'linear-gradient(135deg, #caa049 0%, #b8862f 100%)',
+                      border: '2px solid #ebda8d',
+                    }}
+                    className="absolute -top-1 -left-1 w-[36px] h-[36px] rounded-full shadow-lg flex items-center justify-center z-30 cursor-pointer hover:scale-110 active:scale-95 transition-all"
+                    title="Play Aviator"
+                    aria-label="Play Aviator"
                   >
-                    <path d="M12 2L8 6h3v4H7V7L3 11l4 4v-3h4v4H8l4 4 4-4h-3v-4h4v3l4-4-4-4v3h-4V6h3L12 2z" />
-                  </svg>
-                </button>
-              )}
-            </div>
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="w-5 h-5 fill-white drop-shadow-xs"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path d="M12 2L8 6h3v4H7V7L3 11l4 4v-3h4v4H8l4 4 4-4h-3v-4h4v3l4-4-4-4v3h-4V6h3L12 2z" />
+                    </svg>
+                  </button>
+                )}
+              </div>
 
-            {/* 7. BOTTOM NAVIGATION BAR */}
-            <BottomNav
-              activeTab={activeBottomNav}
-              onSelectTab={handleBottomNavSelect}
-            />
-          </>
-        )}
+              {/* 7. BOTTOM NAVIGATION BAR */}
+              <BottomNav
+                activeTab={
+                  activeSport === 'favourites' || activeSport === 'multi_market'
+                    ? 'favourites'
+                    : activeSport === 'casino'
+                    ? 'casino'
+                    : activeSport === 'inplay' || !activeSport
+                    ? 'home'
+                    : activeSport === 'cricket' || activeSport === 'soccer' || activeSport === 'tennis'
+                    ? 'sports'
+                    : activeBottomNav
+                }
+                onSelectTab={handleBottomNavSelect}
+              />
+            </>
+          )}
+        </div>
+      </div>
 
-        {/* MODALS AND DRAWERS */}
-        <SideDrawer
-          isOpen={menuOpen}
-          onClose={() => setMenuOpen(false)}
-          onSelectSport={(sport) => {
-            handleSelectSport(sport);
-            setMenuOpen(false);
-          }}
-          onAuthClick={(type) => {
-            setAuthModal(type);
-            setMenuOpen(false);
-          }}
-        />
-
-
-
-        <AuthModal
-          isOpen={!!authModal}
-          type={authModal}
-          onClose={() => setAuthModal(null)}
-          onLoginSuccess={handleLoginSuccess}
-        />
-
-        <BetSlipDrawer
-          selectedBet={selectedBet}
-          betStake={betStake}
-          setBetStake={setBetStake}
-          onClose={() => setSelectedBet(null)}
-          onPlaceBet={handlePlaceBet}
-        />
-
-        <UserProfileMenu
-          isOpen={profileMenuOpen}
+      {/* 2. DESKTOP VIEW (Rendered on lg: and larger screens, matching reference screenshot) */}
+      <div className="hidden lg:flex flex-col w-full min-h-screen">
+        <DesktopLayout
           user={user}
-          onClose={() => setProfileMenuOpen(false)}
+          activeSport={activeSport}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          onOpenRules={() => setBonusRulesModalOpen(true)}
+          onProfileClick={() => setProfileMenuOpen(!profileMenuOpen)}
+          onAuthClick={(type) => setAuthModal(type)}
           onLogout={handleLogout}
-          onOpenBonusRules={() => setBonusRulesModalOpen(true)}
-          onOpenLanguageModal={() => setLanguageModalOpen(true)}
-        />
-
-        <BonusRulesModal
-          isOpen={bonusRulesModalOpen}
-          onClose={() => setBonusRulesModalOpen(false)}
-        />
-
-        <ChangeLanguageModal
-          isOpen={languageModalOpen}
-          onClose={() => setLanguageModalOpen(false)}
-          currentLanguage={currentLanguage}
-          onSelectLanguage={(lang) => {
-            setCurrentLanguage(lang);
-            setToast({
-              id: Date.now(),
-              type: 'add',
-              message: `Language changed to ${lang}`,
-            });
-          }}
+          onSelectSport={handleSelectSport}
+          navigate={navigate}
+          allMatches={allMatches}
+          filteredInplay={filteredInplay}
+          filteredExchange={filteredExchange}
+          filteredSportMatches={filteredSportMatches}
+          filteredFavorites={filteredFavorites}
+          exchangeTab={exchangeTab}
+          setExchangeTab={setExchangeTab}
+          handleOddsClick={handleOddsClick}
+          handleMatchClick={handleMatchClick}
+          favorites={favorites}
+          handleToggleFavorite={handleToggleFavorite}
+          currentMatch={currentMatch}
+          setToast={setToast}
         />
       </div>
+
+      {/* MODALS AND DRAWERS (Accessible from both Mobile and Desktop) */}
+      <SideDrawer
+        isOpen={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        onSelectSport={(sport) => {
+          handleSelectSport(sport);
+          setMenuOpen(false);
+        }}
+        onAuthClick={(type) => {
+          setAuthModal(type);
+          setMenuOpen(false);
+        }}
+        onOpenRules={() => setBonusRulesModalOpen(true)}
+      />
+
+      <AuthModal
+        isOpen={!!authModal}
+        type={authModal}
+        onClose={() => setAuthModal(null)}
+        onLoginSuccess={handleLoginSuccess}
+      />
+
+      <BetSlipDrawer
+        selectedBet={selectedBet}
+        betStake={betStake}
+        setBetStake={setBetStake}
+        onClose={() => setSelectedBet(null)}
+        onPlaceBet={handlePlaceBet}
+      />
+
+      <UserProfileMenu
+        isOpen={profileMenuOpen}
+        user={user}
+        onClose={() => setProfileMenuOpen(false)}
+        onLogout={handleLogout}
+        onOpenBonusRules={() => setBonusRulesModalOpen(true)}
+        onOpenLanguageModal={() => setLanguageModalOpen(true)}
+      />
+
+      <BonusRulesModal
+        isOpen={bonusRulesModalOpen}
+        onClose={() => setBonusRulesModalOpen(false)}
+      />
+
+      <ChangeLanguageModal
+        isOpen={languageModalOpen}
+        onClose={() => setLanguageModalOpen(false)}
+        currentLanguage={currentLanguage}
+        onSelectLanguage={(lang) => {
+          setCurrentLanguage(lang);
+          setToast({
+            id: Date.now(),
+            type: 'add',
+            message: `Language changed to ${lang}`,
+          });
+        }}
+      />
     </div>
   );
 }

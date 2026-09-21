@@ -208,13 +208,13 @@ socket.on("auramarketOddsUpdate", (data) => {
 // Bookmaker
 socket.on("bookmakerUpdate", (data) => {
   console.log("📖 [SOCKET: bookmakerUpdate]", data);
-  if (data.bookmakerOdds) {
+  if (data?.bookmakerOdds) {
     const sport = data.sport || "unknown";
     store.dispatch(
       setBookmakerData({
         data: data.bookmakerOdds,
         sport,
-        matchId: data.matchId || null,
+        matchId: data?.matchId || data?.eventId || null,
       })
     );
   }
@@ -222,13 +222,13 @@ socket.on("bookmakerUpdate", (data) => {
 
 socket.on("auraBookmakerUpdate", (data) => {
   console.log("📖 [SOCKET: auraBookmakerUpdate]", data);
-  if (data.auraBookmakerOdds) {
+  if (data?.auraBookmakerOdds) {
     const sport = data.sport || "unknown";
     store.dispatch(
       setBookmakerData({
         data: data.auraBookmakerOdds,
         sport,
-        matchId: data.matchId || null,
+        matchId: data?.matchId || data?.eventId || null,
       })
     );
   }
@@ -237,13 +237,13 @@ socket.on("auraBookmakerUpdate", (data) => {
 // Fancy Odds
 socket.on("fancyOddsUpdate", (data) => {
   console.log("🎯 [SOCKET: fancyOddsUpdate]", data);
-  if (data.fancyOdds) {
+  if (data?.fancyOdds) {
     const sport = data.sport || "unknown";
     store.dispatch(
       setFancyOddsData({
         data: data.fancyOdds,
         sport,
-        matchId: data?.matchId || null,
+        matchId: data?.matchId || data?.eventId || null,
       })
     );
   }

@@ -67,7 +67,7 @@ export default function MyBetsSection({ user, onToast }) {
         style={{
           background: 'transparent linear-gradient(94deg,#b6842d,#ebda8d 55%,#b7862f)',
         }}
-        className="w-full px-3 py-2.5 flex items-center justify-between shadow-xs mb-1"
+        className="w-full px-4 py-2 flex items-center justify-between shadow-xs mb-1"
       >
         <h2 className="text-white font-bold text-[16px] tracking-wide drop-shadow-xs">
           My Bets
@@ -75,13 +75,13 @@ export default function MyBetsSection({ user, onToast }) {
       </div>
 
       {/* 2. CARD CONTAINER: FILTERS + PAGINATION */}
-      <div className="mx-2 bg-white rounded-[4px] border border-gray-300 p-3 shadow-2xs flex flex-col">
+      <div className=" bg-white  border-b border-gray-300 p-3 px-4 pr-10 shadow-2xs flex flex-col">
         {/* Filter Form */}
         <form onSubmit={handleApply} className="w-full flex flex-col gap-2.5">
           {/* Row 1: From & To */}
           <div className="grid grid-cols-2 gap-3">
             {/* From */}
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col ß">
               <label className="text-[13px] font-medium text-gray-700">From</label>
               <div className="border border-gray-300 rounded-[4px] px-2.5 py-1.5 flex items-center justify-between bg-white focus-within:border-amber-600 transition-colors">
                 <input
@@ -94,7 +94,7 @@ export default function MyBetsSection({ user, onToast }) {
             </div>
 
             {/* To */}
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col ß">
               <label className="text-[13px] font-medium text-gray-700">To</label>
               <div className="border border-gray-300 rounded-[4px] px-2.5 py-1.5 flex items-center justify-between bg-white focus-within:border-amber-600 transition-colors">
                 <input
@@ -166,13 +166,12 @@ export default function MyBetsSection({ user, onToast }) {
                   <div className="flex justify-between items-center font-bold text-gray-900">
                     <span>{bet.matchName || bet.event || 'Match'}</span>
                     <span
-                      className={`text-[12px] px-2 py-0.5 rounded font-semibold ${
-                        isWin
-                          ? 'bg-green-100 text-green-700'
-                          : isLoss
+                      className={`text-[12px] px-2 py-0.5 rounded font-semibold ${isWin
+                        ? 'bg-green-100 text-green-700'
+                        : isLoss
                           ? 'bg-red-100 text-red-700'
                           : 'bg-gray-200 text-gray-700'
-                      }`}
+                        }`}
                     >
                       {bet.status || (isWin ? 'WON' : isLoss ? 'LOST' : 'SETTLED')}
                     </span>
@@ -191,9 +190,8 @@ export default function MyBetsSection({ user, onToast }) {
                   <div className="flex justify-between text-[12px] pt-1 border-t border-gray-200">
                     <span className="text-gray-400">{bet.date || bet.createdAt}</span>
                     <span
-                      className={`font-bold ${
-                        isWin ? 'text-green-600' : isLoss ? 'text-red-600' : 'text-gray-700'
-                      }`}
+                      className={`font-bold ${isWin ? 'text-green-600' : isLoss ? 'text-red-600' : 'text-gray-700'
+                        }`}
                     >
                       P/L: {isWin ? `+₹${bet.pnl}` : `₹${bet.pnl || 0}`}
                     </span>

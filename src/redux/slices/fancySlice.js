@@ -37,13 +37,14 @@ const fancyOddsSlice = createSlice({
       state.error = null;
     },
     setFancyOddsData: (state, action) => {
-      
-
-      const { matchId, data } = action.payload;
-      if (Object.values(state.fancyData).length > 1) { 
+      const { matchId, data } = action.payload || {};
+      if (Object.values(state.fancyData).length > 2) { 
         state.fancyData = {};
       }
-      state.fancyData[matchId] = {data:data};
+      if (matchId) {
+        state.fancyData[matchId] = { data: data };
+      }
+      state.fancyData.active = { data: data };
       state.loading = false;
     },
     setFancyOddsError: (state, action) => {

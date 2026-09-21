@@ -6,9 +6,10 @@ const LANGUAGES = [
   { id: 'kn', name: 'Kannada' },
   { id: 'ta', name: 'Tamil' },
   { id: 'te', name: 'Telugu' },
-  { id: 'bn', name: 'Bengali' },
+  { id: 'gu', name: 'Gujrati' },
   { id: 'mr', name: 'Marathi' },
-  { id: 'gu', name: 'Gujarati' },
+  { id: 'ur', name: 'Urdu' },
+  { id: 'ru', name: 'Russian' },
 ];
 
 export default function ChangeLanguageModal({
@@ -34,7 +35,7 @@ export default function ChangeLanguageModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs transition-opacity animate-fadeIn">
+    <div className="fixed inset-0 z-40 flex items-center justify-center p-4 pb-20 bg-black/60 backdrop-blur-xs transition-opacity animate-fadeIn">
       {/* MODAL CARD */}
       <div
         className="w-full max-w-[360px] bg-white rounded-[10px] shadow-2xl overflow-hidden flex flex-col"
@@ -45,7 +46,7 @@ export default function ChangeLanguageModal({
           style={{
             background: 'transparent linear-gradient(94deg,#b6842d,#ebda8d 55%,#b7862f)',
           }}
-          className="w-full px-4 py-3 flex items-center justify-between shadow-xs"
+          className="w-full px-4 py-2 flex items-center justify-between shadow-xs"
         >
           <h3 className="text-black font-bold text-[16.5px] tracking-wide">
             Change Language
@@ -87,7 +88,7 @@ export default function ChangeLanguageModal({
           </div>
 
           {/* Languages List */}
-          <div className="flex flex-col gap-2 max-h-[220px] overflow-y-auto pr-0.5">
+          <div className="grid gap-y-4 h-[35vh] overflow-y-auto pr-0.5 custom-scrollbar">
             {filtered.map((lang) => {
               const isSelected = selected === lang.name;
               return (
@@ -95,10 +96,10 @@ export default function ChangeLanguageModal({
                   key={lang.id}
                   type="button"
                   onClick={() => setSelected(lang.name)}
-                  className={`w-full text-left py-3 px-3.5 rounded-[6px] text-[14px] font-medium transition-all cursor-pointer ${
+                  className={`w-full p-2 py-3 font-semibold text-base rounded-md text-left transition-all cursor-pointer ${
                     isSelected
-                      ? 'bg-amber-100/70 text-amber-900 font-bold border border-amber-500 shadow-2xs'
-                      : 'bg-[#f1f3f5] text-gray-800 hover:bg-gray-200/80'
+                      ? 'border-2 border-[#caa049] bg-amber-50/70 text-gray-900 font-bold shadow-xs'
+                      : 'bg-[#f2f2f2] text-gray-600 hover:bg-gray-200/80'
                   }`}
                 >
                   {lang.name}

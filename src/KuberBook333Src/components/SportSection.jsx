@@ -23,6 +23,12 @@ export default function SportSection({
 }) {
   const getBannerTitle = () => {
     switch (sport) {
+      case 'favourites':
+      case 'favorites':
+        return 'FAVOURITES';
+      case 'multi_market':
+      case 'multimarket':
+        return 'MULTI MARKET';
       case 'cricket':
         return 'CRICKET';
       case 'soccer':
@@ -51,8 +57,9 @@ export default function SportSection({
     }
   };
 
-  const getSportIcon = () => {
-    if (sport === 'cricket') {
+  const getMatchRowIcon = (match) => {
+    const s = (match?.sport || sport || '').toLowerCase();
+    if (s === 'cricket') {
       return (
         <img
           src="/games/cricket_ball.png"
@@ -61,31 +68,31 @@ export default function SportSection({
         />
       );
     }
-    if (sport === 'soccer' || sport === 'football') {
+    if (s === 'soccer' || s === 'football') {
       return <span className="text-[17px] leading-none">⚽</span>;
     }
-    if (sport === 'tennis') {
+    if (s === 'tennis') {
       return <span className="text-[17px] leading-none">🎾</span>;
     }
-    if (sport === 'horse') {
+    if (s === 'horse') {
       return <span className="text-[17px] leading-none">🏇</span>;
     }
-    if (sport === 'greyhound') {
+    if (s === 'greyhound') {
       return <span className="text-[17px] leading-none">🐕</span>;
     }
-    if (sport === 'basketball') {
+    if (s === 'basketball') {
       return <span className="text-[17px] leading-none">🏀</span>;
     }
-    if (sport === 'volleyball') {
+    if (s === 'volleyball') {
       return <span className="text-[17px] leading-none">🏐</span>;
     }
-    if (sport === 'tabletennis') {
+    if (s === 'tabletennis') {
       return <span className="text-[17px] leading-none">🏓</span>;
     }
-    if (sport === 'mma') {
+    if (s === 'mma') {
       return <span className="text-[17px] leading-none">🥋</span>;
     }
-    return <span className="text-[17px] leading-none">🏆</span>;
+    return <span className="text-[17px] leading-none">⭐</span>;
   };
 
   return (
@@ -139,7 +146,7 @@ export default function SportSection({
                     onClick={() => onMatchClick && onMatchClick(match)}
                     className="w-[16px] flex items-center justify-center shrink-0 cursor-pointer"
                   >
-                    {getSportIcon()}
+                    {getMatchRowIcon(match)}
                   </div>
 
                   {/* Slanted Gray Header with polygon(0 0, 100% 0, 100% 100%, 5% 100%) */}
@@ -200,57 +207,67 @@ export default function SportSection({
                   </button>
 
                   {/* 6 Odds Boxes */}
-                  <div className="flex-1 grid grid-cols-6 gap-[4px]">
-                    <button
-                      type="button"
-                      onClick={() => onOddsClick && onOddsClick(match, match.odds[0], 'Back 1')}
-                      className="w-full text-[14px] text-[#273a47] cursor-pointer h-[25px] rounded-[2px] bg-[#a5d9fe] font-black flex items-center justify-center hover:brightness-95 transition-all"
-                    >
-                      {match.odds[0] || '--'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onOddsClick && onOddsClick(match, match.odds[1], 'Lay 1')}
-                      className="w-full text-[14px] text-[#273a47] cursor-pointer h-[25px] rounded-[2px] bg-[#f8d0cb] font-black flex items-center justify-center hover:brightness-95 transition-all"
-                    >
-                      {match.odds[1] || '--'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onOddsClick && onOddsClick(match, match.odds[2], 'Back X')}
-                      className="w-full text-[14px] text-[#273a47] cursor-pointer h-[25px] rounded-[2px] bg-[#a5d9fe] font-black flex items-center justify-center hover:brightness-95 transition-all"
-                    >
-                      {match.odds[2] || '--'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onOddsClick && onOddsClick(match, match.odds[3], 'Lay X')}
-                      className="w-full text-[14px] text-[#273a47] cursor-pointer h-[25px] rounded-[2px] bg-[#f8d0cb] font-black flex items-center justify-center hover:brightness-95 transition-all"
-                    >
-                      {match.odds[3] || '--'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onOddsClick && onOddsClick(match, match.odds[4], 'Back 2')}
-                      className="w-full text-[14px] text-[#273a47] cursor-pointer h-[25px] rounded-[2px] bg-[#a5d9fe] font-black flex items-center justify-center hover:brightness-95 transition-all"
-                    >
-                      {match.odds[4] || '--'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onOddsClick && onOddsClick(match, match.odds[5], 'Lay 2')}
-                      className="w-full text-[14px] text-[#273a47] cursor-pointer h-[25px] rounded-[2px] bg-[#f8d0cb] font-black flex items-center justify-center hover:brightness-95 transition-all"
-                    >
-                      {match.odds[5] || '--'}
-                    </button>
-                  </div>
+                  {(() => {
+                    const odds = Array.isArray(match.odds) ? match.odds : ['--', '--', '--', '--', '--', '--'];
+                    return (
+                      <div className="flex-1 grid grid-cols-6 gap-[4px]">
+                        <button
+                          type="button"
+                          onClick={() => onOddsClick && onOddsClick(match, odds[0], 'Back 1')}
+                          className="w-full text-[14px] text-[#273a47] cursor-pointer h-[25px] rounded-[2px] bg-[#a5d9fe] font-black flex items-center justify-center hover:brightness-95 transition-all"
+                        >
+                          {odds[0] || '--'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onOddsClick && onOddsClick(match, odds[1], 'Lay 1')}
+                          className="w-full text-[14px] text-[#273a47] cursor-pointer h-[25px] rounded-[2px] bg-[#f8d0cb] font-black flex items-center justify-center hover:brightness-95 transition-all"
+                        >
+                          {odds[1] || '--'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onOddsClick && onOddsClick(match, odds[2], 'Back X')}
+                          className="w-full text-[14px] text-[#273a47] cursor-pointer h-[25px] rounded-[2px] bg-[#a5d9fe] font-black flex items-center justify-center hover:brightness-95 transition-all"
+                        >
+                          {odds[2] || '--'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onOddsClick && onOddsClick(match, odds[3], 'Lay X')}
+                          className="w-full text-[14px] text-[#273a47] cursor-pointer h-[25px] rounded-[2px] bg-[#f8d0cb] font-black flex items-center justify-center hover:brightness-95 transition-all"
+                        >
+                          {odds[3] || '--'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onOddsClick && onOddsClick(match, odds[4], 'Back 2')}
+                          className="w-full text-[14px] text-[#273a47] cursor-pointer h-[25px] rounded-[2px] bg-[#a5d9fe] font-black flex items-center justify-center hover:brightness-95 transition-all"
+                        >
+                          {odds[4] || '--'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onOddsClick && onOddsClick(match, odds[5], 'Lay 2')}
+                          className="w-full text-[14px] text-[#273a47] cursor-pointer h-[25px] rounded-[2px] bg-[#f8d0cb] font-black flex items-center justify-center hover:brightness-95 transition-all"
+                        >
+                          {odds[5] || '--'}
+                        </button>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             );
           })
         ) : (
-          <div className="py-8 text-center text-gray-500 font-medium text-[13px]">
-            No matches currently available for {getBannerTitle()}.
+          <div className="py-6 px-3 flex items-center justify-center">
+            <div className="w-full bg-[#fffbeb] border border-[#fef08a] rounded p-3 flex items-center justify-center gap-2 text-[#854d0e] text-[13px] font-medium shadow-2xs">
+              <svg className="w-4 h-4 text-[#eab308] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>No {getBannerTitle()} Events Available</span>
+            </div>
           </div>
         )}
       </div>
