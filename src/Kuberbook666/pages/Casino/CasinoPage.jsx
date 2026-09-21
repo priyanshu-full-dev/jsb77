@@ -26,6 +26,10 @@ import ezugiImg from "../../CasinoImage/ezugi.svg";
 import saGamingImg from "../../CasinoImage/Sa Gaming.png";
 import vivoGamingImg from "../../CasinoImage/Vivo gaming.png";
 import turboGamingImg from "../../CasinoImage/Turbo gaming.png";
+import {
+  getCachedCasinoData,
+  fetchCasinoData,
+} from "../../../utils/helper/gameProvider";
 
 const normalizeGameId = (id) => {
   if (!id) return null;
@@ -48,6 +52,27 @@ const TOP_PROVIDERS = [
   { name: "Vivo Gaming", logo: vivoGamingImg },
   { name: "Turbo Games", logo: turboGamingImg },
 ];
+
+const processRawCasinoList = (rawList, lockedProviders, lockedGameIds) => {
+  if (!Array.isArray(rawList) || rawList.length === 0) return [];
+  return rawList
+    .filter((item) => item?.provider?.isAllowed !== false)
+    .filter(
+      (item) => !lockedProviders.has(item?.provider?.name?.toLowerCase())
+    )
+    .map((item) => ({
+      ...item,
+      provider: {
+        ...item.provider,
+        gameList: item.provider?.gameList?.filter((game) => {
+          if (game.gameId?.startsWith("DMD")) return false;
+          const gid = normalizeGameId(game.gameId);
+          return !lockedGameIds.has(gid);
+        }),
+      },
+    }))
+    .filter((item) => item.provider?.gameList?.length > 0);
+};
 
 export default function CasinoPage({ tab }) {
   const location = useLocation();
@@ -77,22 +102,6 @@ export default function CasinoPage({ tab }) {
     return "Aura";
   }, [location.pathname]);
 
-  const [activeProvider, setActiveProvider] = useState(getInitialProvider);
-  const [activeCategory, setActiveCategory] = useState("All");
-  const [search, setSearch] = useState("");
-  const [gameData, setGameData] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [visibleCount, setVisibleCount] = useState(40);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isAccordionOpen, setIsAccordionOpen] = useState(false);
-  const [selectedGameForNotice, setSelectedGameForNotice] = useState(null);
-
-  const gridRef = useRef(null);
-
-  useEffect(() => {
-    setActiveProvider(getInitialProvider());
-  }, [getInitialProvider]);
-
   // Locked providers & games
   const lockedProviders = useMemo(() => {
     return new Set(
@@ -110,54 +119,52 @@ export default function CasinoPage({ tab }) {
     );
   }, [permissionList]);
 
-  // Fetch 100% dynamic Casino data from internal API
+  const [activeProvider, setActiveProvider] = useState(getInitialProvider);
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [search, setSearch] = useState("");
+
+  // Instant 0ms render from memory cache
+  const [gameData, setGameData] = useState(() => {
+    const cached = getCachedCasinoData();
+    return processRawCasinoList(cached, lockedProviders, lockedGameIds);
+  });
+  const [isLoading, setIsLoading] = useState(() => {
+    const cached = getCachedCasinoData();
+    return !(Array.isArray(cached) && cached.length > 0);
+  });
+
+  const [visibleCount, setVisibleCount] = useState(40);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isAccordionOpen, setIsAccordionOpen] = useState(false);
+  const [selectedGameForNotice, setSelectedGameForNotice] = useState(null);
+
+  const gridRef = useRef(null);
+
+  useEffect(() => {
+    setActiveProvider(getInitialProvider());
+  }, [getInitialProvider]);
+
+  // Fetch 100% dynamic Casino data with Smart Cache (No repeated server hits)
   useEffect(() => {
     let isMounted = true;
-    const fetchCasino = async () => {
+    const loadCasino = async () => {
       try {
-        setIsLoading(true);
-        let res = await axios.get(
-          `https://api.professor.monster/api/int/getIntCasinos${domainId ? `?domainId=${domainId}` : ""}`
-        );
-
-        let rawList = res.data || [];
-        if (!Array.isArray(rawList) || rawList.length === 0) {
-          res = await axios.get(
-            `https://api.professor.monster/api/int/getIntCasinos`
-          );
-          rawList = res.data || [];
+        if (gameData.length === 0) {
+          setIsLoading(true);
         }
-
+        const rawList = await fetchCasinoData(domainId);
         if (!isMounted) return;
 
-        const data = rawList
-          .filter((item) => item?.provider?.isAllowed !== false)
-          .filter(
-            (item) => !lockedProviders.has(item?.provider?.name?.toLowerCase())
-          )
-          .map((item) => ({
-            ...item,
-            provider: {
-              ...item.provider,
-              gameList: item.provider?.gameList?.filter((game) => {
-                if (game.gameId?.startsWith("DMD")) return false;
-                const gid = normalizeGameId(game.gameId);
-                return !lockedGameIds.has(gid);
-              }),
-            },
-          }))
-          .filter((item) => item.provider?.gameList?.length > 0);
-
-        setGameData(data);
+        const processed = processRawCasinoList(rawList, lockedProviders, lockedGameIds);
+        setGameData(processed);
       } catch (error) {
-        console.error("Casino API failed:", error);
-        toast.error("Casino API failed to load");
+        console.error("Casino data loading failed:", error);
       } finally {
         if (isMounted) setIsLoading(false);
       }
     };
 
-    fetchCasino();
+    loadCasino();
     return () => {
       isMounted = false;
     };

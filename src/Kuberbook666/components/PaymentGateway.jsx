@@ -30,13 +30,24 @@ export default function PaymentGateway({ amount, open = true, toggle, fetchTrans
   const userID = useSelector(
     (state) => state?.user?.userData?._id || localStorage.getItem("userId") || ""
   );
-  const domainId = useSelector(
-    (state) =>
-      state?.site?.siteDetails?.admindomainName?._id ||
-      state?.site?.siteDetails?.domainDetails?._id ||
-      state?.site?.siteDetails?.domainId ||
-      ""
-  );
+
+  let localSite = {};
+  try {
+    localSite = JSON.parse(localStorage.getItem("siteDetails") || "{}");
+  } catch {
+    localSite = {};
+  }
+
+  const domainId =
+    siteDetails?.admindomainName?._id ||
+    siteDetails?.siteDetails?.admindomainName?._id ||
+    siteDetails?.domainDetails?._id ||
+    siteDetails?.siteDetails?.domainDetails?._id ||
+    siteDetails?.domainId ||
+    localSite?.admindomainName?._id ||
+    localSite?.domainDetails?._id ||
+    localSite?.domainId ||
+    "6a85553b526a2dbeb187f071";
 
   const [activeTab, setActiveTab] = useState("phone pe");
   const [loading, setLoading] = useState(false);

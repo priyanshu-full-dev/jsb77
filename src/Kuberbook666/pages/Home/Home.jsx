@@ -22,6 +22,7 @@ import {
   updateUserCasinoBalance,
 } from "../../../redux/slices/userSlice";
 import { openLoginModal, isUserLoggedIn } from "../../utils/authModalEvents";
+import { fetchCasinoData } from "../../../utils/helper/gameProvider";
 
 const Home = () => {
   const dispatch = useDispatch();
@@ -38,33 +39,20 @@ const Home = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedGameForNotice, setSelectedGameForNotice] = useState(null);
 
-  /* ---------------- FETCH CASINO API DATA (SMART CACHING) ---------------- */
+  /* ---------------- FETCH CASINO API DATA (SHARED SMART CACHE) ---------------- */
   useEffect(() => {
-    const cacheKey = "casino_data_all";
-    const cached = getCache(cacheKey, 24 * 60 * 60 * 1000);
-    if (cached && Array.isArray(cached) && cached.length > 0) {
-      if (!casinoApiData || casinoApiData.length === 0) {
-        dispatch(updateCasinoSlice({ casinoApiData: cached }));
-      }
-    }
-
-    const fetchCasinoData = async () => {
+    const loadHomeCasino = async () => {
       try {
-        const res = await axios.get(
-          "https://api.professor.monster/api/int/getIntCasinos",
-          { timeout: 15000 }
-        );
-        const data = res?.data || [];
+        const data = await fetchCasinoData();
         if (Array.isArray(data) && data.length > 0) {
-          setCache(cacheKey, data);
           dispatch(updateCasinoSlice({ casinoApiData: data }));
         }
       } catch (error) {
-        console.error("Error fetching casino list for Kuber Home:", error);
+        console.error("Error loading casino list for Kuber Home:", error);
       }
     };
 
-    fetchCasinoData();
+    loadHomeCasino();
   }, [dispatch]);
 
   /* ---------------- EXTRACT ALL UNIQUE GAMES ---------------- */
