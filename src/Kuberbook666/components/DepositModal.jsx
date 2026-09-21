@@ -1,28 +1,61 @@
 import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 import { IoCloseOutline } from "react-icons/io5";
+import { toast } from "react-toastify";
+import PaymentGateway from "./PaymentGateway";
+import { getPaymentsByUserId } from "../../api";
+
+const QUICK_AMOUNTS = [500, 1000, 2000, 5000, 10000, 25000, 50000];
 
 const DepositModal = ({ isOpen, onClose }) => {
   const [amount, setAmount] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+  const [openGateway, setOpenGateway] = useState(false);
+  const [activeView, setActiveView] = useState("deposit"); // 'deposit' | 'history'
+  const [transactions, setTransactions] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  const userId = useSelector(
+    (state) => state?.user?.userData?._id || localStorage.getItem("userId") || ""
+  );
+
+  const fetchTransactions = async () => {
+    if (!userId) return;
+    try {
+      setLoadingHistory(true);
+      const res = await getPaymentsByUserId(userId);
+      const data = Array.isArray(res?.data)
+        ? res.data
+        : Array.isArray(res?.data?.data)
+        ? res.data.data
+        : Array.isArray(res)
+        ? res
+        : [];
+      setTransactions(data);
+    } catch (error) {
+      console.error("Failed to fetch transactions:", error);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
-      setAmount("");
-      setError("");
-      setSuccess(false);
       document.body.style.overflow = "hidden";
+      if (userId) {
+        fetchTransactions();
+      }
     } else {
       document.body.style.overflow = "";
+      setOpenGateway(false);
+      setError("");
     }
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isOpen]);
+  }, [isOpen, userId]);
 
   if (!isOpen) return null;
-
-  const quickAmounts = [100, 500, 1000, 5000, 10000, 50000];
 
   const handleAddAmount = (val) => {
     const current = parseInt(amount, 10) || 0;
@@ -31,9 +64,9 @@ const DepositModal = ({ isOpen, onClose }) => {
     setError("");
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const num = parseInt(amount, 10);
+  const handleProceed = (e) => {
+    e?.preventDefault();
+    const num = Number(amount);
     if (!num || isNaN(num)) {
       setError("Please enter a valid amount");
       return;
@@ -48,26 +81,22 @@ const DepositModal = ({ isOpen, onClose }) => {
     }
 
     setError("");
-    setSuccess(true);
-    setTimeout(() => {
-      alert(`Deposit request for ₹${num} submitted successfully!`);
-      onClose();
-    }, 600);
+    setOpenGateway(true);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-black/75 backdrop-blur-xs transition-opacity duration-150"
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-md bg-[#151822] rounded-xl shadow-2xl border border-red-900/40 overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-lg bg-white text-gray-900 rounded-2xl shadow-2xl overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-150 font-sans max-h-[92vh] flex flex-col">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#6e081d] to-[#c10931] text-white">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 bg-gradient-to-r from-[#680a1e] to-[#c10931] text-white shrink-0">
           <div className="flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -86,92 +115,193 @@ const DepositModal = ({ isOpen, onClose }) => {
                 fill="#ffffff"
               ></path>
             </svg>
-            <h3 className="font-lato font-bold text-base tracking-wide uppercase">
-              Deposit
+            <h3 className="font-bold text-base tracking-wide uppercase">
+              {openGateway ? "Deposit Gateway" : "Deposit Funds"}
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-full hover:bg-black/20 transition-colors text-white"
+            className="p-1 rounded-full hover:bg-black/20 transition-colors text-white cursor-pointer"
             aria-label="Close"
           >
             <IoCloseOutline className="text-xl" />
           </button>
         </div>
 
-        {/* Modal Body - User's exact markup */}
-        <div className="mx-2 pb-3">
-          <div className="w-full mt-2.5 py-[15px] rounded-lg bg-bg_Quaternary px-3">
-            <div className="font-lato font-bold text-text_Ternary text-base leading-5">
-              <p>
-                Amount<span className="text-text_Danger">*</span>
-              </p>
-            </div>
-            <div className="w-full mt-2 py-2 grid grid-cols-12 border rounded-[4px] px-2 items-center justify-center border-ternary3">
-              <input
-                className="block focus:outline-none bg-transparent col-span-11 w-full h-max font-lato placeholder:font-lato placeholder:font-normal font-bold text-base text-text_Ternary"
-                placeholder=" Enter Amount"
-                autocomplete="off"
-                type="number"
-                value={amount}
-                onChange={(e) => {
-                  setAmount(e.target.value);
-                  setError("");
-                }}
-                style={{ background: "transparent" }}
-              />
-              <span className="font-lato font-bold leading-4 text-ternary text-base col-span-1 text-center">
-                ₹
-              </span>
-            </div>
-
-            <div className="flex justify-between items-center text-xs pl-1 mt-1 text-text_Ternary font-lato">
-              <span>
-                <span>Min 100</span>
-                <span className="text-xs"> - </span>
-                <span>Max 200000</span>
-              </span>
-              {error && (
-                <span className="text-red-500 font-medium text-xs">
-                  {error}
+        {/* View Switcher (Deposit vs History) when not in Gateway */}
+        {!openGateway && (
+          <div className="flex border-b border-gray-200 bg-gray-50 px-4 pt-2">
+            <button
+              type="button"
+              onClick={() => setActiveView("deposit")}
+              className={`pb-2 px-4 text-xs sm:text-sm font-bold border-b-2 transition-colors cursor-pointer ${
+                activeView === "deposit"
+                  ? "border-[#680a1e] text-[#680a1e]"
+                  : "border-transparent text-gray-500 hover:text-gray-900"
+              }`}
+            >
+              Deposit Funds
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveView("history")}
+              className={`pb-2 px-4 text-xs sm:text-sm font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${
+                activeView === "history"
+                  ? "border-[#680a1e] text-[#680a1e]"
+                  : "border-transparent text-gray-500 hover:text-gray-900"
+              }`}
+            >
+              <span>Transaction History</span>
+              {transactions.length > 0 && (
+                <span className="text-[10px] bg-red-100 text-[#680a1e] px-1.5 py-0.2 rounded-full">
+                  {transactions.length}
                 </span>
               )}
-            </div>
-
-            {/* Quick Amount Chips */}
-            <div className="w-full grid grid-cols-3 gap-[10px] mt-[18px]">
-              {quickAmounts.map((val) => (
-                <button
-                  key={val}
-                  onClick={() => handleAddAmount(val)}
-                  className="inline-block relative overflow-hidden transition-all ease-in-out duration-300 active:scale-95 text-white min-h-9 text-base font-lato rounded-md font-[800] leading-4 cursor-pointer hover:brightness-110 shadow"
-                  type="button"
-                  style={{
-                    background:
-                      "var(--text-color-brand-primary-but, #c10931)",
-                  }}
-                >
-                  <span>+{val.toLocaleString()}</span>
-                </button>
-              ))}
-            </div>
-
-            <div className="my-2">
-              <span className="text-text_Primary text-base font-lato font-[480] leading-4"></span>
-            </div>
-
-            {/* Submit Button */}
-            <button
-              onClick={handleSubmit}
-              disabled={success}
-              className="relative overflow-hidden transition duration-150 ease-in-out bg-bg_text_brand_primary flex items-center justify-center gap-x-2 w-full text-white h-10 text-base rounded-md font-[500] leading-4 cursor-pointer hover:brightness-110 active:scale-[99%] shadow-md disabled:opacity-50"
-              style={{
-                background: "var(--text-color-brand-primary-but, #c10931)",
-              }}
-            >
-              {success ? "Processing..." : "Submit"}
             </button>
           </div>
+        )}
+
+        {/* Modal Scrollable Content */}
+        <div className="p-4 sm:p-5 overflow-y-auto flex-1">
+          {openGateway ? (
+            /* Step 2: Payment Gateway Screen */
+            <PaymentGateway
+              amount={amount}
+              toggle={() => setOpenGateway(false)}
+              fetchTransactions={fetchTransactions}
+              onClose={onClose}
+            />
+          ) : activeView === "deposit" ? (
+            /* Step 1: Amount Selection */
+            <div>
+              <form onSubmit={handleProceed} className="space-y-4">
+                <div>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label className="text-xs font-bold text-gray-800 uppercase tracking-wide">
+                      Deposit Amount (INR) <span className="text-red-600">*</span>
+                    </label>
+                    <span className="text-[11px] text-gray-500 font-medium">
+                      Min: ₹100 | Max: ₹2,00,000
+                    </span>
+                  </div>
+
+                  <div className="flex items-center bg-[#f2f4f8] border border-gray-200 rounded-xl px-3 py-2.5 focus-within:border-[#680a1e] transition">
+                    <span className="text-base font-bold text-gray-700 mr-2">₹</span>
+                    <input
+                      type="number"
+                      placeholder="Enter Amount"
+                      value={amount}
+                      onChange={(e) => {
+                        setAmount(e.target.value);
+                        setError("");
+                      }}
+                      className="bg-transparent text-base w-full outline-hidden font-bold text-gray-900 placeholder:text-gray-400 placeholder:font-normal"
+                    />
+                  </div>
+
+                  {error && (
+                    <p className="text-red-600 text-xs font-semibold mt-1.5">{error}</p>
+                  )}
+                </div>
+
+                {/* Quick Add Chips */}
+                <div>
+                  <p className="text-xs font-bold text-gray-700 mb-2">Quick Add Amount</p>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    {QUICK_AMOUNTS.map((val) => (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => handleAddAmount(val)}
+                        className="py-2.5 rounded-xl border border-gray-200 bg-gray-50 hover:bg-red-50 hover:border-red-200 hover:text-[#680a1e] font-bold text-xs sm:text-sm text-gray-800 transition active:scale-95 cursor-pointer shadow-xs"
+                      >
+                        +₹{val.toLocaleString()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Submit button */}
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    className="w-full py-3.5 rounded-xl bg-[#680a1e] hover:bg-[#580718] text-white font-bold text-sm tracking-wide shadow-md active:scale-98 transition cursor-pointer"
+                  >
+                    PROCEED TO PAYMENT →
+                  </button>
+                </div>
+              </form>
+            </div>
+          ) : (
+            /* Transaction History View */
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-xs font-bold text-gray-700">Recent Deposit Records</span>
+                <button
+                  type="button"
+                  onClick={fetchTransactions}
+                  disabled={loadingHistory}
+                  className="text-xs font-bold text-[#680a1e] hover:underline cursor-pointer disabled:opacity-50"
+                >
+                  {loadingHistory ? "Refreshing..." : "↻ Refresh"}
+                </button>
+              </div>
+
+              {transactions.length === 0 ? (
+                <div className="text-center py-8 text-gray-400 text-xs sm:text-sm bg-gray-50 rounded-xl border border-dashed">
+                  No deposit records found
+                </div>
+              ) : (
+                <div className="overflow-x-auto rounded-xl border border-gray-200">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-gray-100 text-gray-700 border-b">
+                      <tr>
+                        <th className="p-2.5 font-bold">Date</th>
+                        <th className="p-2.5 font-bold">UTR / Mode</th>
+                        <th className="p-2.5 font-bold text-right">Amount</th>
+                        <th className="p-2.5 font-bold text-center">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {transactions.map((item, idx) => (
+                        <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                          <td className="p-2.5 text-gray-600 whitespace-nowrap">
+                            {item.createdAt
+                              ? new Date(item.createdAt).toLocaleDateString()
+                              : "N/A"}
+                          </td>
+                          <td className="p-2.5">
+                            <div className="font-bold text-gray-900 uppercase text-[11px]">
+                              {item.PaymentMode || "UPI"}
+                            </div>
+                            <div className="text-gray-400 text-[10px] font-mono">
+                              {item.UTR || "—"}
+                            </div>
+                          </td>
+                          <td className="p-2.5 text-right font-black text-green-700 whitespace-nowrap">
+                            ₹{Number(item.amount || 0).toLocaleString()}
+                          </td>
+                          <td className="p-2.5 text-center">
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold inline-block ${
+                                item.status === "Approved" || item.status === "approved"
+                                  ? "bg-green-100 text-green-800"
+                                  : item.status === "Rejected" || item.status === "rejected"
+                                  ? "bg-red-100 text-red-800"
+                                  : "bg-yellow-100 text-yellow-800"
+                              }`}
+                            >
+                              {item.status || "Pending ⏳"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

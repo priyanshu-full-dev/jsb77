@@ -67,13 +67,13 @@ let isResubscribing = false;
 
 export const socket = io(baseUrl, {
   auth: {
-    token: store.getState().user.token || "",
+    token: store.getState()?.user?.token || "",
   },
   reconnection: true,
   reconnectionDelay: 1000,
   reconnectionDelayMax: 5000,
   reconnectionAttempts: Infinity,
-  transports: ["polling", "websocket"],
+  transports: ["websocket"],
 });
 
 // Expose socket and logger globally for browser DevTools inspect

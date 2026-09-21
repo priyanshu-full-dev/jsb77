@@ -5,7 +5,7 @@ const SidebarDrawer = ({ isOpen, onClose, onOpenLogin, onOpenSignup }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-[100]">
       {/* Backdrop */}
       <div
         onClick={onClose}
@@ -14,7 +14,7 @@ const SidebarDrawer = ({ isOpen, onClose, onOpenLogin, onOpenSignup }) => {
       />
 
       {/* Drawer Content */}
-      <div className="fixed transition-all ease-in-out openDrawer origin-left top-0 left-0 z-50 w-[75%] max-w-sm h-full overflow-y-auto bg-bg_Quaternary-side-right shadow-2xl">
+      <div className="fixed transition-all ease-in-out openDrawer origin-left top-0 left-0 z-[100] w-[75%] max-w-sm h-full overflow-y-auto bg-bg_Quaternary-side-right shadow-2xl">
         <ul className="divide-y min-h-full pb-10 divide-divide_color_primary6 relative font-lato">
           {/* 1. Aviator */}
           <li className="flex items-center">

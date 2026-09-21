@@ -181,7 +181,7 @@ const LoginModal = ({ isOpen, onClose, onSwitchToSignup }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3">
       {/* Backdrop */}
       <div
         onClick={onClose}

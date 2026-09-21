@@ -227,6 +227,7 @@ export const getAffiliateData = (
 };
 export const generatePresignedUrlFromS3Url = (body) =>
   apiPOST(API_URL.generatePresignedUrlFromS3Url, body);
+export { generatePresignedUrl } from "../utils/helper/generatePresignedUrl";
 
 export const launcherUrl = (body) =>
   apiPOST("https://qt.asianexchange.club/api/v1/launcher/launch-url", body);

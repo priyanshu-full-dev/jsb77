@@ -297,9 +297,18 @@ export default function DepositPage() {
     setSubmitting(true);
     try {
       const res = await createPayment(payload);
-      if (res?.success || res?.statusCode === 200 || res?.status === 200) {
+      if (
+        res?.success ||
+        res?.data?.success ||
+        res?.statusCode === 200 ||
+        res?.status === 200 ||
+        res?.data?.message?.toLowerCase().includes("success") ||
+        res?.message?.toLowerCase().includes("success")
+      ) {
         toast.success(
-          "Deposit request submitted successfully! Funds will be credited after admin verification."
+          res?.data?.message ||
+            res?.message ||
+            "Deposit request submitted successfully! Funds will be credited after admin verification."
         );
         // Reset form
         setUtr("");

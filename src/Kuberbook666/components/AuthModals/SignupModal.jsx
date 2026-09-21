@@ -206,11 +206,37 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
       ) {
         toast.success(response?.data?.message || "Registration Successful!");
 
-        // Auto-login or redirect to login
+        // 1. Direct auto-login if token is already in signup response
+        const directToken = response?.data?.token || response?.token || response?.data?.userdata?.token;
+        const directUser = response?.data?.userdata || response?.userdata || response?.data?.user;
+        if (directToken && directUser) {
+          if (directToken) localStorage.setItem("token", directToken);
+          if (directUser?._id) localStorage.setItem("userId", directUser._id);
+
+          dispatch(
+            loginSuccess({
+              token: directToken,
+              userData: directUser,
+              loggedInType: "real",
+            })
+          );
+          dispatch(
+            setAccountType({
+              userData: directUser,
+              type: "real",
+            })
+          );
+
+          createLoginRecord({ userName: cleanPhone }).catch(() => {});
+          onClose();
+          return;
+        }
+
+        // 2. Instant Socket auto-login with cleanPhone
         try {
           const loginPayload = {
-            userName: username.trim(),
-            username: username.trim(),
+            userName: cleanPhone,
+            username: cleanPhone,
             password: password.trim(),
             x_panel_type: "user",
           };
@@ -223,9 +249,9 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
           }
 
           const loginData = loginRes?.data || loginRes;
-          if (loginData?.token || loginData?.userdata?.token) {
-            const token = loginData.token || loginData.userdata?.token;
-            const userdata = loginData.user || loginData.userdata || { username: username.trim() };
+          if (loginData?.token || loginData?.userdata?.token || loginRes?.success) {
+            const token = loginData.token || loginData.userdata?.token || loginRes?.token;
+            const userdata = loginData.user || loginData.userdata || loginRes?.userdata || { username: cleanPhone };
             if (token) localStorage.setItem("token", token);
             if (userdata?._id) localStorage.setItem("userId", userdata._id);
 
@@ -243,12 +269,12 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
               })
             );
 
-            createLoginRecord({ userName: username.trim() }).catch(() => {});
+            createLoginRecord({ userName: cleanPhone }).catch(() => {});
             onClose();
             return;
           }
-        } catch {
-          // If auto-login fails, switch to login modal
+        } catch (err) {
+          console.error("Auto login error after signup:", err);
         }
 
         onClose();
@@ -275,7 +301,7 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3">
       {/* Backdrop */}
       <div
         onClick={onClose}
