@@ -130,7 +130,9 @@ export default function Header({
               className="flex flex-col items-center cursor-pointer shrink-0"
             >
               <span className="text-white font-bold text-[12px] leading-tight mb-0.5">
-                {user.username || 'Demo'}
+                {user.isDemo || user.username?.toLowerCase().startsWith('demo') || user.userName?.toLowerCase().startsWith('demo')
+                  ? 'Demo'
+                  : (user.username || user.userName || 'Demo')}
               </span>
               <div className="flex flex-col bg-[#b88831] justify-center rounded-full px-3 py-[6px] leading-[1.1]">
                 <span className="text-white font-bold text-[11px] leading-[1.1]">

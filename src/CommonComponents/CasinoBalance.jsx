@@ -254,9 +254,8 @@ const CasinoBalance = ({ onClose, title, gameId, gameName, isLoggedIn }) => {
                 }}
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer yellow-thumb"
                 style={{
-                  backgroundImage: `linear-gradient(to right, #facc15 0%, #facc15 ${
-                    (amount / mainBalance) * 100
-                  }%, #e5e7eb ${(amount / mainBalance) * 100}%, #e5e7eb 100%)`,
+                  backgroundImage: `linear-gradient(to right, #facc15 0%, #facc15 ${(amount / mainBalance) * 100
+                    }%, #e5e7eb ${(amount / mainBalance) * 100}%, #e5e7eb 100%)`,
                 }}
               />
             </div>

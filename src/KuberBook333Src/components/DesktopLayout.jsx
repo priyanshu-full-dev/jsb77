@@ -20,6 +20,7 @@ import Mac88Section from './Mac88Section';
 
 export default function DesktopLayout({
   user,
+  setUser,
   activeSport,
   searchQuery,
   setSearchQuery,
@@ -184,7 +185,11 @@ export default function DesktopLayout({
               onClick={onProfileClick}
               className="h-[30px] px-3 bg-white/80 hover:bg-white border border-[#9c7128] rounded-[4px] text-black text-[12px] font-bold cursor-pointer flex items-center gap-1 shadow-xs transition-colors"
             >
-              <span>{user?.name || user?.username || 'Demo'}</span>
+              <span>
+                {user?.isDemo || user?.username?.toLowerCase().startsWith('demo') || user?.userName?.toLowerCase().startsWith('demo')
+                  ? 'Demo'
+                  : (user?.name || user?.username || user?.userName || 'Demo')}
+              </span>
               <ChevronDown size={14} className="text-neutral-700" />
             </button>
           </div>
@@ -386,6 +391,39 @@ export default function DesktopLayout({
                 match={currentMatch}
                 user={user}
                 onPlaceBetSuccess={(betInfo) => {
+                  const stake = parseFloat(betInfo.stake) || 0;
+                  if (setUser) {
+                    setUser((prev) => {
+                      if (!prev) {
+                        const fallbackUser = {
+                          username: 'Demo',
+                          balance: Math.max(0, 1500 - stake),
+                          exposure: stake,
+                        };
+                        try {
+                          localStorage.setItem('kuber_user', JSON.stringify(fallbackUser));
+                        } catch (e) {
+                          console.error(e);
+                        }
+                        return fallbackUser;
+                      }
+                      const prevBal = prev.balance !== undefined ? prev.balance : 1500;
+                      const newBal = Math.max(0, prevBal - stake);
+                      const newExp = (prev.exposure || 0) + stake;
+                      const updated = {
+                        ...prev,
+                        balance: newBal,
+                        availableBalance: newBal,
+                        exposure: newExp,
+                      };
+                      try {
+                        localStorage.setItem('kuber_user', JSON.stringify(updated));
+                      } catch (e) {
+                        console.error(e);
+                      }
+                      return updated;
+                    });
+                  }
                   setToast({
                     id: Date.now(),
                     type: 'add',

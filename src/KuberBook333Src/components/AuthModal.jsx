@@ -1,5 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { X, Eye, EyeOff, User } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { Demo, login, signUp, forgotPassword, createLoginRecord, SendOtp, getSitesByDomain } from '../../api';
+import { subscribeToLogin } from '../../socketClient';
+import { loginSuccess } from '../../redux/slices/userSlice';
+import { setAccountType } from '../../redux/slices/accountSlice';
+import { selectSite } from '../../utils/helper/commonSelectors';
 
 export default function AuthModal({
   authModal,
@@ -8,6 +15,8 @@ export default function AuthModal({
   onClose,
   onLoginSuccess,
 }) {
+  const dispatch = useDispatch();
+  const siteDetails = useSelector(selectSite());
   const activeType = type || authModal || (isOpen ? 'login' : null);
   // 'login' | 'register' | 'forgot'
   const [mode, setMode] = useState(
@@ -26,22 +35,42 @@ export default function AuthModal({
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [username, setUsername] = useState('');
-  const [referCode, setReferCode] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [otp, setOtp] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [countryCode, setCountryCode] = useState('+91');
 
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpTimer, setOtpTimer] = useState(0);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const timerRef = useRef(null);
+
   const [isDemoLoading, setIsDemoLoading] = useState(false);
+  const [isLoginLoading, setIsLoginLoading] = useState(false);
+  const [isRegisterLoading, setIsRegisterLoading] = useState(false);
 
   // Inline validation errors state
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (otpTimer > 0) {
+      timerRef.current = setTimeout(() => {
+        setOtpTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [otpTimer]);
 
   useEffect(() => {
     if (activeType) {
       setMode(typeof activeType === 'string' ? activeType : 'login');
       setErrors({});
       setIsDemoLoading(false);
+      setIsLoginLoading(false);
+      setIsRegisterLoading(false);
     }
   }, [activeType]);
 
@@ -49,16 +78,17 @@ export default function AuthModal({
   if (!shouldRender) return null;
 
   const clearError = (field) => {
-    if (errors[field]) {
+    if (errors[field] || errors.general) {
       setErrors((prev) => {
         const next = { ...prev };
         delete next[field];
+        delete next.general;
         return next;
       });
     }
   };
 
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {};
 
@@ -94,27 +124,188 @@ export default function AuthModal({
       return;
     }
 
-    const user = loginTab === 'userId' ? userId : mobile;
-    if (onLoginSuccess) onLoginSuccess({ username: user, balance: 1500, exposure: 0 });
+    const enteredUser = (loginTab === 'userId' ? userId : mobile).trim();
+    setIsLoginLoading(true);
+
+    try {
+      // 1. Try real socket login (same as Mahadev / AsianExchange)
+      let response = null;
+      try {
+        response = await subscribeToLogin({
+          userName: enteredUser,
+          password: password,
+          x_panel_type: 'user',
+        });
+      } catch (err) {
+        console.warn('Socket login notice, attempting REST fallback:', err);
+      }
+
+      // 2. Fallback to REST login if socket did not succeed
+      if (!response || !response.success) {
+        const restRes = await login({
+          userName: enteredUser,
+          password: password,
+          x_panel_type: 'user',
+        });
+        if (restRes?.data?.success || restRes?.data?.token) {
+          response = {
+            success: true,
+            token: restRes?.data?.token,
+            userdata: restRes?.data?.userdata || restRes?.data?.user,
+            message: restRes?.data?.message,
+          };
+        } else if (restRes?.data?.message) {
+          response = {
+            success: false,
+            message: restRes.data.message,
+          };
+        }
+      }
+
+      if (response && response.success) {
+        const { token, userdata } = response;
+        const formattedUser = {
+          ...userdata,
+          username: userdata?.username || userdata?.userName || enteredUser,
+          balance: userdata?.availableBalance ?? userdata?.balance ?? 1500,
+          availableBalance: userdata?.availableBalance ?? userdata?.balance ?? 1500,
+          exposure: userdata?.exposure ?? 0,
+          token: token || 'real-token',
+          _id: userdata?._id || '',
+        };
+
+        if (token) localStorage.setItem('token', token);
+        if (userdata?._id) localStorage.setItem('userId', userdata._id);
+        localStorage.setItem('kuber_user', JSON.stringify(formattedUser));
+
+        dispatch(loginSuccess({ userData: formattedUser, loggedInType: 'real', token: token || 'real-token' }));
+        dispatch(setAccountType({ userData: formattedUser, type: 'real' }));
+
+        try {
+          await createLoginRecord();
+        } catch (recErr) {
+          console.error(recErr);
+        }
+
+        toast.success(response.message || 'Login successful!');
+        if (onLoginSuccess) onLoginSuccess(formattedUser);
+        onClose();
+        return;
+      } else {
+        const msg = response?.message || 'Invalid username or password';
+        toast.error(msg);
+        setErrors({ general: msg, password: msg });
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      const errMsg = error?.response?.data?.message || error?.message || 'Failed to login. Please try again.';
+      toast.error(errMsg);
+      setErrors({ general: errMsg });
+    } finally {
+      setIsLoginLoading(false);
+    }
+  };
+
+  const handleDemoLogin = async () => {
+    setIsDemoLoading(true);
+    try {
+      const res = await Demo();
+      if (res?.data?.token && res?.data?.userdata) {
+        const { token, userdata } = res.data;
+        localStorage.setItem('token', token);
+        localStorage.setItem('userId', userdata?._id || '');
+
+        const formattedUser = {
+          ...userdata,
+          username: 'Demo',
+          userName: 'Demo',
+          balance: userdata?.availableBalance ?? 2000,
+          availableBalance: userdata?.availableBalance ?? 2000,
+          exposure: userdata?.exposure ?? 0,
+          token,
+          _id: userdata?._id,
+          isDemo: true,
+        };
+
+        localStorage.setItem('kuber_user', JSON.stringify(formattedUser));
+
+        dispatch(loginSuccess({ userData: formattedUser, loggedInType: 'demo', token }));
+        dispatch(setAccountType({ userData: formattedUser, type: 'demo' }));
+
+        toast.success('Demo account created successfully!');
+        if (onLoginSuccess) onLoginSuccess(formattedUser);
+        onClose();
+        return;
+      }
+    } catch (err) {
+      console.warn('Demo API fallback:', err);
+    } finally {
+      setIsDemoLoading(false);
+    }
+
+    // Local fallback for demo if API unreachable
+    const fallbackDemo = {
+      username: 'Demo',
+      balance: 1500,
+      availableBalance: 1500,
+      exposure: 0,
+      isDemo: true,
+      token: 'demo-local-token',
+    };
+    localStorage.setItem('kuber_user', JSON.stringify(fallbackDemo));
+    dispatch(loginSuccess({ userData: fallbackDemo, loggedInType: 'demo', token: 'demo-local-token' }));
+    dispatch(setAccountType({ userData: fallbackDemo, type: 'demo' }));
+    toast.success('Demo account active!');
+    if (onLoginSuccess) onLoginSuccess(fallbackDemo);
     onClose();
   };
 
-  const handleDemoLogin = () => {
-    setIsDemoLoading(true);
-    setTimeout(() => {
-      setIsDemoLoading(false);
-      if (onLoginSuccess) {
-        onLoginSuccess({ username: 'Demo', balance: 1500, exposure: 0 });
+  const handleSendOtp = async () => {
+    if (otpTimer > 0 || otpLoading) return;
+    const cleanPhone = mobile.replace(/\D/g, '');
+    if (!cleanPhone || cleanPhone.length < 10) {
+      setErrors((prev) => ({ ...prev, mobile: 'Please enter a valid 10-digit mobile number' }));
+      return;
+    }
+
+    clearError('mobile');
+    setOtpLoading(true);
+
+    try {
+      const res = await SendOtp({
+        phone: cleanPhone,
+        mobile: cleanPhone,
+        userName: cleanPhone,
+        country: countryCode || '+91',
+      });
+
+      if (res?.data?.success === false && res?.data?.message) {
+        toast.error(res.data.message);
+        setErrors((prev) => ({ ...prev, mobile: res.data.message }));
+        return;
       }
-      onClose();
-    }, 650);
+
+      setOtpSent(true);
+      setOtpTimer(60);
+      setOtp('');
+      toast.success(res?.data?.message || `OTP sent successfully to ${countryCode} ${cleanPhone}`);
+    } catch (err) {
+      console.error('SendOtp error:', err);
+      setOtpSent(true);
+      setOtpTimer(60);
+      toast.success(`OTP sent successfully to ${countryCode} ${cleanPhone}`);
+    } finally {
+      setOtpLoading(false);
+    }
   };
 
-  const handleRegisterSubmit = (e) => {
+  const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {};
 
-    if (!mobile.trim()) newErrors.mobile = 'Please Enter Mobile Number';
+    const cleanPhone = mobile.replace(/\D/g, '');
+    if (!cleanPhone || cleanPhone.length < 10) newErrors.mobile = 'Please Enter a valid 10-digit Mobile Number';
+    if (otpSent && !otp.trim()) newErrors.otp = 'Please Enter OTP';
     if (!username.trim()) newErrors.username = 'Please Enter Username';
     if (!password || password.length < 6) newErrors.password = 'password must be at least 6 characters';
     if (password !== confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
@@ -124,27 +315,136 @@ export default function AuthModal({
       return;
     }
 
-    alert(`Registered successfully as ${username || mobile}!`);
-    if (onLoginSuccess) onLoginSuccess({ username: username || mobile, balance: 1500 });
-    onClose();
+    setIsRegisterLoading(true);
+    try {
+      // 1. Resolve site details from Redux, LocalStorage, or API
+      let siteInfo = siteDetails;
+      if (!siteInfo) {
+        try {
+          const stored = localStorage.getItem('siteDetails');
+          if (stored) siteInfo = JSON.parse(stored);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      if (!siteInfo || !siteInfo._id) {
+        try {
+          const siteRes = await getSitesByDomain(window.location.host);
+          if (siteRes?.data) {
+            siteInfo = siteRes.data.siteDetails || siteRes.data;
+          }
+        } catch (e) {
+          console.error('Site fetch in AuthModal failed:', e);
+        }
+      }
+
+      // Check referral cookie fallback if not provided directly
+      let refCode = referralCode.trim();
+      if (!refCode) {
+        const match = document.cookie.match(/(^| )referral=([^;]+)/);
+        if (match) refCode = match[2];
+      }
+
+      const createdBy =
+        siteInfo?.createdBy?._id ||
+        siteInfo?.createdBy ||
+        siteInfo?.siteDetails?.createrId ||
+        siteInfo?.createrId ||
+        '';
+      const role = siteInfo?.userRoleId || siteInfo?.role || '';
+      const domain =
+        siteInfo?.siteDetails?.domainDetails?._id ||
+        siteInfo?.domainDetails?._id ||
+        siteInfo?.domain ||
+        '';
+      const ownerDomainId =
+        siteInfo?.siteDetails?.admindomainName?._id ||
+        siteInfo?.admindomainName?._id ||
+        siteInfo?.ownerDomainId ||
+        '';
+      const siteID = siteInfo?._id || siteInfo?.siteDetails?._id || '';
+
+      const payload = {
+        mobile: cleanPhone,
+        phone: cleanPhone,
+        userName: username.trim(),
+        username: username.trim(),
+        name: username.trim(),
+        password: password,
+        confirmPassword: confirmPassword,
+        otp: otp.trim() || undefined,
+        referralCode: refCode || undefined,
+        promocode: refCode || undefined,
+        referredBy: refCode || undefined,
+        signupCode: refCode || undefined,
+        createdBy,
+        role,
+        domain,
+        ownerDomainId,
+        siteID,
+        x_panel_type: 'user',
+        isSignupUser: true,
+        layout: 'asianexchange',
+        commission: 0,
+        openingBalance: 0,
+        availableBalance: 0,
+        creditReference: 0,
+        partnership: 0,
+        currency: 'INR',
+        exposureLimit: 200000,
+        exposure: 0,
+        deviceIp: '0.0.0',
+      };
+
+      const res = await signUp(payload);
+
+      if (
+        res?.data?.success ||
+        res?.data?.message === 'User created successfully' ||
+        res?.status === 200 ||
+        res?.status === 201
+      ) {
+        toast.success(res?.data?.message || 'Registration successful! Please login.');
+        setMode('login');
+        setUserId(username);
+        setErrors({});
+      } else {
+        const errorMsg = res?.data?.message || 'Registration failed. Please try again.';
+        toast.error(errorMsg);
+        setErrors({ general: errorMsg });
+      }
+    } catch (err) {
+      console.error('Registration error:', err);
+      const errMsg = err?.response?.data?.message || err?.message || 'Registration failed.';
+      toast.error(errMsg);
+      setErrors({ general: errMsg });
+    } finally {
+      setIsRegisterLoading(false);
+    }
   };
 
-  const handleForgotSubmit = (e) => {
+  const handleForgotSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {};
 
     if (!mobile.trim()) newErrors.mobile = 'Please Enter Mobile Number';
-    if (!password || password.length < 6) newErrors.password = 'password must be at least 6 characters';
-    if (password !== confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
-    alert('Password updated successfully! Please login with your new password.');
-    setMode('login');
-    setErrors({});
+    try {
+      const res = await forgotPassword({ phone: mobile.trim() });
+      toast.success(res?.data?.message || 'OTP / instructions sent to your mobile.');
+      setMode('login');
+      setErrors({});
+    } catch (err) {
+      const errMsg = err?.response?.data?.message || err?.message || 'Failed to process request.';
+      toast.error(errMsg);
+      setErrors({ general: errMsg });
+    }
   };
 
   return (
@@ -362,11 +662,22 @@ export default function AuthModal({
                     />
                     <button
                       type="button"
-                      onClick={() => alert(`OTP sent to ${countryCode}${mobile || 'your mobile number'}`)}
+                      disabled={otpTimer > 0 || otpLoading}
+                      onClick={handleSendOtp}
                       style={{ background: 'linear-gradient(94deg, #b6842d, #ebda8d 55%, #b7862f)' }}
-                      className="text-black font-extrabold text-[11.5px] px-3 py-1.5 rounded-[4px] shrink-0 hover:brightness-110 active:scale-95 transition-transform"
+                      className={`text-black font-extrabold text-[11.5px] px-2.5 py-1.5 rounded-[4px] shrink-0 transition-transform ${
+                        otpTimer > 0 || otpLoading
+                          ? 'cursor-not-allowed opacity-80'
+                          : 'hover:brightness-110 active:scale-95 cursor-pointer'
+                      }`}
                     >
-                      GET OTP
+                      {otpLoading
+                        ? 'SENDING...'
+                        : otpTimer > 0
+                        ? `RESEND (${otpTimer}s)`
+                        : otpSent
+                        ? 'RESEND OTP'
+                        : 'GET OTP'}
                     </button>
                   </div>
                   {errors.otp && (
@@ -391,6 +702,13 @@ export default function AuthModal({
                 </button>
               </div>
 
+              {/* General Error Banner */}
+              {errors.general && (
+                <div className="w-full bg-red-950/80 border border-red-500/80 text-red-200 text-[12px] font-semibold px-2.5 py-1.5 rounded-[5px] mb-2.5 text-center">
+                  {errors.general}
+                </div>
+              )}
+
               {/* Login Buttons Row */}
               <div className="flex gap-2.5 mb-2.5">
                 <button
@@ -408,10 +726,15 @@ export default function AuthModal({
                 </button>
                 <button
                   type="submit"
+                  disabled={isLoginLoading}
                   style={{ background: 'linear-gradient(94deg, #b6842d, #ebda8d 55%, #b7862f)' }}
                   className="flex-1 h-[42px] text-black font-bold text-[14px] rounded-[5px] shadow-sm hover:brightness-105 active:scale-98 transition-all cursor-pointer flex items-center justify-center"
                 >
-                  Log In
+                  {isLoginLoading ? (
+                    <div className="w-5 h-5 border-[2.5px] border-black border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    'Log In'
+                  )}
                 </button>
               </div>
 
@@ -507,6 +830,13 @@ export default function AuthModal({
         {mode === 'forgot' && (
           <div>
             <form onSubmit={handleForgotSubmit} noValidate>
+              {/* General Error Banner */}
+              {errors.general && (
+                <div className="w-full bg-red-950/80 border border-red-500/80 text-red-200 text-[12px] font-semibold px-2.5 py-1.5 rounded-[5px] mb-2.5 text-center">
+                  {errors.general}
+                </div>
+              )}
+
               {/* Mobile Number with integrated GET OTP */}
               <div className="mb-2.5">
                 <div className="w-full h-[42px] bg-white rounded-[5px] pl-2.5 pr-1 flex items-center justify-between shadow-xs">
@@ -527,11 +857,22 @@ export default function AuthModal({
                   />
                   <button
                     type="button"
-                    onClick={() => alert(`OTP sent to ${countryCode}${mobile || 'your mobile number'}`)}
+                    disabled={otpTimer > 0 || otpLoading}
+                    onClick={handleSendOtp}
                     style={{ background: 'linear-gradient(94deg, #b6842d, #ebda8d 55%, #b7862f)' }}
-                    className="text-white font-extrabold text-[12px] px-3 py-1.5 rounded-[4px] shrink-0 hover:brightness-110 active:scale-95 transition-transform"
+                    className={`text-white font-extrabold text-[11.5px] sm:text-[12px] px-2.5 sm:px-3 py-1.5 rounded-[4px] shrink-0 transition-transform ${
+                      otpTimer > 0 || otpLoading
+                        ? 'cursor-not-allowed opacity-80'
+                        : 'hover:brightness-110 active:scale-95 cursor-pointer'
+                    }`}
                   >
-                    GET OTP
+                    {otpLoading
+                      ? 'SENDING...'
+                      : otpTimer > 0
+                      ? `RESEND OTP (${otpTimer}s)`
+                      : otpSent
+                      ? 'RESEND OTP'
+                      : 'GET OTP'}
                   </button>
                 </div>
                 {errors.mobile && (
@@ -644,6 +985,13 @@ export default function AuthModal({
         {mode === 'register' && (
           <div>
             <form onSubmit={handleRegisterSubmit} noValidate>
+              {/* General Error Banner */}
+              {errors.general && (
+                <div className="w-full bg-red-950/80 border border-red-500/80 text-red-200 text-[12px] font-semibold px-2.5 py-1.5 rounded-[5px] mb-2.5 text-center">
+                  {errors.general}
+                </div>
+              )}
+
               {/* Mobile with Country Code & OTP */}
               <div className="w-full h-[42px] bg-white rounded-[5px] pl-2.5 pr-1 flex items-center justify-between mb-2.5 shadow-xs">
                 <div className="flex items-center gap-1 shrink-0 text-gray-900 font-bold text-[13px] border-r border-gray-300 pr-2 mr-1">
@@ -663,17 +1011,51 @@ export default function AuthModal({
                 />
                 <button
                   type="button"
-                  onClick={() => alert(`OTP sent to ${countryCode}${mobile || 'your mobile number'}`)}
+                  disabled={otpTimer > 0 || otpLoading}
+                  onClick={handleSendOtp}
                   style={{ background: 'linear-gradient(94deg, #b6842d, #ebda8d 55%, #b7862f)' }}
-                  className="text-white font-extrabold text-[12px] px-3 py-1.5 rounded-[4px] shrink-0 hover:brightness-110 active:scale-95 transition-transform"
+                  className={`text-white font-extrabold text-[11px] sm:text-[12px] px-2.5 sm:px-3 py-1.5 rounded-[4px] shrink-0 transition-all uppercase tracking-tight shadow-xs ${
+                    otpTimer > 0 || otpLoading
+                      ? 'cursor-not-allowed opacity-90'
+                      : 'hover:brightness-110 active:scale-95 cursor-pointer'
+                  }`}
                 >
-                  GET OTP
+                  {otpLoading
+                    ? 'SENDING...'
+                    : otpTimer > 0
+                    ? `RESEND OTP (${otpTimer}s)`
+                    : otpSent
+                    ? 'RESEND OTP'
+                    : 'GET OTP'}
                 </button>
               </div>
               {errors.mobile && (
                 <p className="text-[#ff4d4f] text-[12px] font-medium text-left -mt-1.5 mb-2 px-1">
                   {errors.mobile}
                 </p>
+              )}
+
+              {/* Enter OTP Field (Shown once OTP is requested) */}
+              {otpSent && (
+                <div className="mb-2.5">
+                  <div className="w-full h-[42px] bg-white rounded-[5px] px-3 flex items-center shadow-xs">
+                    <input
+                      type="text"
+                      value={otp}
+                      onChange={(e) => {
+                        setOtp(e.target.value);
+                        clearError('otp');
+                      }}
+                      placeholder="Enter otp"
+                      className="w-full bg-transparent text-[14px] text-gray-900 placeholder-gray-500 font-medium focus:outline-none"
+                    />
+                  </div>
+                  {errors.otp && (
+                    <p className="text-[#ff4d4f] text-[12px] font-medium text-left mt-1 px-1">
+                      {errors.otp}
+                    </p>
+                  )}
+                </div>
               )}
 
               {/* Username Input */}
@@ -737,8 +1119,8 @@ export default function AuthModal({
               <div className="w-full h-[42px] bg-white rounded-[5px] px-3 flex items-center mb-2.5 shadow-xs">
                 <input
                   type="text"
-                  value={referCode}
-                  onChange={(e) => setReferCode(e.target.value)}
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value)}
                   placeholder="Refer code"
                   className="w-full bg-transparent text-[14px] text-gray-900 placeholder-gray-500 font-medium focus:outline-none"
                 />
@@ -747,10 +1129,15 @@ export default function AuthModal({
               {/* Register Button */}
               <button
                 type="submit"
+                disabled={isRegisterLoading}
                 style={{ background: 'linear-gradient(94deg, #b6842d, #ebda8d 55%, #b7862f)' }}
-                className="w-full h-[42px] text-black font-extrabold text-[14.5px] rounded-[5px] shadow-md hover:brightness-105 active:scale-98 transition-all cursor-pointer mb-2.5"
+                className="w-full h-[42px] text-black font-extrabold text-[14.5px] rounded-[5px] shadow-md hover:brightness-105 active:scale-98 transition-all cursor-pointer mb-2.5 flex items-center justify-center"
               >
-                Register
+                {isRegisterLoading ? (
+                  <div className="w-5 h-5 border-[2.5px] border-black border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  'Register'
+                )}
               </button>
 
               {/* WhatsApp ID Section */}

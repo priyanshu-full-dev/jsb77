@@ -29,6 +29,10 @@ import {
   setMarketOddsData,
   setRunningData,
 } from '../../redux/slices/fullmarketSlice';
+import {
+  updateAvailableBalance,
+  updateExposureBalance,
+} from '../../redux/slices/userSlice';
 
 import Header from '../components/Header';
 import TickerMarquee from '../components/TickerMarquee';
@@ -454,6 +458,13 @@ export default function KuberBook333Page() {
       return null;
     }
   });
+
+  const isDemoUser = Boolean(
+    user?.isDemo ||
+    user?.username?.toLowerCase().startsWith('demo') ||
+    user?.userName?.toLowerCase().startsWith('demo') ||
+    user?.username === 'DEMO'
+  );
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
   const handleLoginSuccess = (userData) => {
@@ -736,8 +747,8 @@ export default function KuberBook333Page() {
             />
           )}
 
-          {/* Logged in User Deposit & Withdraw Action Bar */}
-          {user && activeSport !== 'deposit' && activeSport !== 'withdraw' && (
+          {/* Logged in User Deposit & Withdraw Action Bar (Hidden for Demo Users) */}
+          {user && !isDemoUser && activeSport !== 'deposit' && activeSport !== 'withdraw' && (
             <div className="w-full px-1 bg-white pt-0.5 pb-2 flex items-center gap-1">
               <button
                 type="button"
@@ -800,6 +811,43 @@ export default function KuberBook333Page() {
               match={currentMatch}
               user={user}
               onPlaceBetSuccess={(betInfo) => {
+                const stake = parseFloat(betInfo.stake) || 0;
+                setUser((prev) => {
+                  if (!prev) {
+                    const fallbackUser = {
+                      username: 'Demo',
+                      balance: Math.max(0, 1500 - stake),
+                      exposure: stake,
+                    };
+                    try {
+                      localStorage.setItem('kuber_user', JSON.stringify(fallbackUser));
+                    } catch (e) {
+                      console.error(e);
+                    }
+                    return fallbackUser;
+                  }
+                  const prevBal = prev.balance !== undefined ? prev.balance : 1500;
+                  const newBal = Math.max(0, prevBal - stake);
+                  const newExp = (prev.exposure || 0) + stake;
+                  const updated = {
+                    ...prev,
+                    balance: newBal,
+                    availableBalance: newBal,
+                    exposure: newExp,
+                  };
+                  try {
+                    localStorage.setItem('kuber_user', JSON.stringify(updated));
+                  } catch (e) {
+                    console.error(e);
+                  }
+                  return updated;
+                });
+
+                const currentBal = user?.balance !== undefined ? user.balance : 1500;
+                const currentExp = user?.exposure || 0;
+                dispatch(updateAvailableBalance(Math.max(0, currentBal - stake)));
+                dispatch(updateExposureBalance(currentExp + stake));
+
                 setToast({
                   id: Date.now(),
                   type: 'add',
@@ -992,6 +1040,7 @@ export default function KuberBook333Page() {
       <div className="hidden lg:flex flex-col w-full min-h-screen">
         <DesktopLayout
           user={user}
+          setUser={setUser}
           activeSport={activeSport}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}

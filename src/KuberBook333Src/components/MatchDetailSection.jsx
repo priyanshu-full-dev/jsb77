@@ -1,8 +1,9 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 import {
   socket,
+  placeBet,
   subscribeToMatchData,
   subscribeToMarketOddsData,
   subscribeToBookmakerData,
@@ -11,6 +12,7 @@ import {
   subscribeToGreyHoundOddsData,
   subscribeToKabaddiMatchesDataOdds,
 } from '../../socketClient';
+import { addLatestBet } from '../../redux/slices/accountSlice';
 import { fetchMarketOdds, setMarketOddsData, setRunningData, setMarketName } from '../../redux/slices/fullmarketSlice';
 import { fetchbookmakerOdds, setBookmakerData } from '../../redux/slices/bookmakerSlice';
 import { fetchfancyOdds, setFancyOddsData } from '../../redux/slices/fancySlice';
@@ -1243,11 +1245,19 @@ export default function MatchDetailSection({
     );
   };
 
-  const handleSelectBet = (marketType, runnerId, runnerName, type, oddVal) => {
+  const handleSelectBet = (
+    marketType,
+    runnerId,
+    runnerName,
+    type,
+    oddVal,
+    marketName = '',
+    selectionId = ''
+  ) => {
     if (
       activeBet &&
       activeBet.marketType === marketType &&
-      activeBet.runnerId === runnerId &&
+      (activeBet.runnerId === runnerId || activeBet.runnerName === runnerName) &&
       activeBet.type === type
     ) {
       // Toggle off if clicking the same box
@@ -1255,7 +1265,17 @@ export default function MatchDetailSection({
     } else {
       setActiveBet({
         marketType,
+        marketName:
+          marketName ||
+          (marketType === 'bookmaker'
+            ? 'Bookmaker'
+            : marketType === 'toss'
+            ? 'Toss'
+            : marketType === 'fancy'
+            ? 'Fancy'
+            : 'Match Odds'),
         runnerId,
+        selectionId: selectionId || runnerId,
         runnerName,
         type,
       });
@@ -1274,51 +1294,187 @@ export default function MatchDetailSection({
     setStakeValue(amount.toString());
   };
 
-  // Calculate projected profit/loss to display on runner (e.g. ">> 14,000")
-  const getProjectedPL = (marketType, runnerId) => {
-    if (!activeBet || activeBet.marketType !== marketType) return null;
-    const stakeNum = parseFloat(stakeValue) || 0;
-    if (stakeNum <= 0) return null;
-    const oddsNum = parseFloat(oddsValue) || 0;
+  // 1. Centralized Placed Bets (Synced from Redux and LocalStorage so socket updates never erase P&L)
+  const reduxPlacedBets = useSelector((state) => state?.account?.bets || []);
+  const [localBets, setLocalBets] = useState(() => {
+    try {
+      const stored = localStorage.getItem('kuber_placed_bets');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
 
-    const isActiveRunner = activeBet.runnerId === runnerId;
-
-    if (
-      marketType === 'match_odds' ||
-      marketType === 'bookmaker' ||
-      marketType === 'toss' ||
-      marketType === 'horse_racing' ||
-      String(marketType).startsWith('1.')
-    ) {
-      const isDecimal = oddsNum > 1;
-      const calcProfit = isDecimal
-        ? Math.round(stakeNum * (oddsNum - 1))
-        : Math.round(stakeNum * oddsNum);
-
-      if (activeBet.type === 'back') {
-        if (isActiveRunner) {
-          return { isPositive: true, text: calcProfit.toLocaleString() };
-        } else {
-          return { isPositive: false, text: `-${stakeNum.toLocaleString()}` };
-        }
-      } else if (activeBet.type === 'lay') {
-        if (isActiveRunner) {
-          return { isPositive: false, text: `-${calcProfit.toLocaleString()}` };
-        } else {
-          return { isPositive: true, text: stakeNum.toLocaleString() };
-        }
+  const allPlacedBets = useMemo(() => {
+    const combined = [...localBets];
+    reduxPlacedBets.forEach((rb) => {
+      if (!combined.some((cb) => cb.id === rb.id || (cb.time === rb.time && cb.runner === rb.runner && cb.stake === rb.stake))) {
+        combined.push(rb);
       }
-    } else if (marketType === 'fancy') {
-      if (isActiveRunner) {
-        const calcProfit =
-          oddsNum > 10
-            ? Math.round(stakeNum * (oddsNum / 100))
-            : oddsNum > 1
-            ? Math.round(stakeNum * (oddsNum - 1))
-            : Math.round(stakeNum * oddsNum);
-        return { isPositive: true, text: calcProfit.toLocaleString() };
+    });
+    return combined;
+  }, [localBets, reduxPlacedBets]);
+
+  // 2. Calculate confirmed P&L from placed bets for any runner in any market (Mahadev pattern)
+  const calculateBetValues = useCallback(
+    (runner, marketId, marketName) => {
+      const filteredBets = allPlacedBets.filter((pb) => {
+        const eventMatch =
+          !pb.eventId ||
+          !urlEventId ||
+          String(pb.eventId) === String(urlEventId) ||
+          String(pb.matchId) === String(urlEventId) ||
+          (currentMatch?.title && String(pb.match)?.toLowerCase() === String(currentMatch?.title)?.toLowerCase()) ||
+          (currentMatch?.title && String(pb.event)?.toLowerCase() === String(currentMatch?.title)?.toLowerCase());
+
+        const mktMatch =
+          !pb.marketId ||
+          !marketId ||
+          String(pb.marketId) === String(marketId) ||
+          (marketId === 'match_odds' && String(pb.marketId).startsWith('1.')) ||
+          (String(marketId).startsWith('1.') && pb.marketId === 'match_odds') ||
+          (marketName && String(pb.market)?.toLowerCase() === String(marketName).toLowerCase()) ||
+          (marketName && String(pb.markettype)?.toLowerCase() === String(marketName).toLowerCase());
+
+        return eventMatch && mktMatch;
+      });
+
+      if (filteredBets.length === 0) return null;
+
+      const runnerNameNorm = String(
+        runner?.name || runner?.runnerName || runner?.runner || runner?.selection || (typeof runner === 'string' ? runner : '')
+      ).toLowerCase().trim();
+
+      const runnerIdNorm = String(
+        runner?.selectionId || runner?.id || (typeof runner === 'string' || typeof runner === 'number' ? runner : '')
+      ).toLowerCase().trim();
+
+      const cleanRunnerId = runnerIdNorm.replace(/^runner_/, '').replace(/^runner_ou15_/, '').replace(/^runner_ou25_/, '');
+
+      const isThisRunner = (fb) => {
+        const fbNameNorm = String(fb?.runner || fb?.selection || fb?.runnerName || '').toLowerCase().trim();
+        const fbIdNorm = String(fb?.selectionId || fb?.id || '').toLowerCase().trim();
+        const cleanFbId = fbIdNorm.replace(/^runner_/, '').replace(/^runner_ou15_/, '').replace(/^runner_ou25_/, '');
+
+        const nameMatches = Boolean(
+          fbNameNorm &&
+          runnerNameNorm &&
+          (fbNameNorm === runnerNameNorm ||
+            fbNameNorm.includes(runnerNameNorm) ||
+            runnerNameNorm.includes(fbNameNorm))
+        );
+
+        const idMatches = Boolean(
+          (fbIdNorm && (fbIdNorm === runnerIdNorm || cleanFbId === cleanRunnerId)) ||
+          (runner?.selectionId && String(fb?.selectionId) === String(runner.selectionId))
+        );
+
+        return idMatches || nameMatches;
+      };
+
+      const fbOfThisRunner = filteredBets.filter(isThisRunner);
+      const fbOfOtherRunners = filteredBets.filter((fb) => !isThisRunner(fb));
+
+      const thisRunnerSum = fbOfThisRunner.reduce(
+        (acc, fbr) =>
+          acc +
+          (fbr.type === 'Back' || fbr.type === 'back'
+            ? Number(fbr.favourMargin || 0)
+            : -Number(fbr.againstMargin || 0)),
+        0
+      );
+
+      const otherRunnerSum = fbOfOtherRunners.reduce(
+        (acc, fbor) =>
+          acc +
+          (fbor.type === 'Back' || fbor.type === 'back'
+            ? -Number(fbor.againstMargin || 0)
+            : Number(fbor.favourMargin || 0)),
+        0
+      );
+
+      const total = Math.round(thisRunnerSum + otherRunnerSum);
+      if (total === 0) return null;
+
+      return {
+        isPositive: total > 0,
+        text: Math.abs(total).toLocaleString(),
+        val: total,
+      };
+    },
+    [allPlacedBets, urlEventId, currentMatch?.title]
+  );
+
+  // 3. Calculate live projected or confirmed P&L to display on runner
+  const getProjectedPL = (marketType, runner, marketName = '') => {
+    const rId = typeof runner === 'object' ? (runner.selectionId || runner.id) : runner;
+    const rName = typeof runner === 'object' ? (runner.name || runner.runnerName || runner.runner) : runner;
+
+    // A. Active Betslip Projection
+    if (
+      activeBet &&
+      (activeBet.marketType === marketType ||
+        (marketType === 'match_odds' &&
+          (activeBet.marketType === 'match_odds' || String(activeBet.marketType).startsWith('1.'))) ||
+        (String(marketType).startsWith('1.') &&
+          (activeBet.marketType === 'match_odds' || String(activeBet.marketType).startsWith('1.'))) ||
+        (activeBet.marketName &&
+          marketName &&
+          String(activeBet.marketName).toLowerCase() === String(marketName).toLowerCase()))
+    ) {
+      const stakeNum = parseFloat(stakeValue) || 0;
+      if (stakeNum > 0) {
+        const oddsNum = parseFloat(oddsValue) || 0;
+        const isDecimal = oddsNum > 1;
+        const calcProfit = isDecimal
+          ? Math.round(stakeNum * (oddsNum - 1))
+          : Math.round(stakeNum * oddsNum);
+
+        const activeRunnerNameNorm = String(activeBet.runnerName || activeBet.runner || '').toLowerCase().trim();
+        const activeRunnerIdNorm = String(activeBet.runnerId || activeBet.selectionId || '').toLowerCase().trim();
+        const curRunnerNameNorm = String(rName || '').toLowerCase().trim();
+        const curRunnerIdNorm = String(rId || '').toLowerCase().trim();
+
+        const isActiveRunner =
+          (activeRunnerIdNorm &&
+            (activeRunnerIdNorm === curRunnerIdNorm ||
+              activeRunnerIdNorm.replace(/^runner_/, '') === curRunnerIdNorm.replace(/^runner_/, ''))) ||
+          (activeRunnerNameNorm &&
+            curRunnerNameNorm &&
+            (activeRunnerNameNorm === curRunnerNameNorm ||
+              activeRunnerNameNorm.includes(curRunnerNameNorm) ||
+              curRunnerNameNorm.includes(activeRunnerNameNorm)));
+
+        const existingVal = calculateBetValues(runner, marketType, marketName)?.val || 0;
+
+        if (activeBet.type === 'back' || activeBet.type === 'Back') {
+          const total = isActiveRunner ? existingVal + calcProfit : existingVal - stakeNum;
+          return {
+            isPositive: total >= 0,
+            text: Math.abs(total).toLocaleString(),
+            isProjected: true,
+          };
+        } else if (activeBet.type === 'lay' || activeBet.type === 'Lay') {
+          const total = isActiveRunner ? existingVal - calcProfit : existingVal + stakeNum;
+          return {
+            isPositive: total >= 0,
+            text: Math.abs(total).toLocaleString(),
+            isProjected: true,
+          };
+        }
       }
     }
+
+    // B. Confirmed P&L from placed bets (never erases during socket updates)
+    const confirmed = calculateBetValues(runner, marketType, marketName);
+    if (confirmed) {
+      return {
+        isPositive: confirmed.isPositive,
+        text: confirmed.text,
+        isProjected: false,
+      };
+    }
+
     return null;
   };
 
@@ -1334,38 +1490,107 @@ export default function MatchDetailSection({
     }
   };
 
-  const handlePlaceBet = () => {
+  const [isPlacingBet, setIsPlacingBet] = useState(false);
+
+  const handlePlaceBet = async () => {
     const stakeNum = parseFloat(stakeValue) || 0;
     if (stakeNum <= 0) {
       alert('Please enter a valid stake amount.');
       return;
     }
 
+    const availableBal = user?.balance !== undefined ? user.balance : 1500;
+    if (stakeNum > availableBal) {
+      alert('Insufficient balance to place this bet.');
+      return;
+    }
+
+    setIsPlacingBet(true);
+
+    const oddsNum = parseFloat(oddsValue) || 0;
+    const isDecimal = oddsNum > 1;
+    const calcProfit = isDecimal
+      ? Math.round(stakeNum * (oddsNum - 1))
+      : Math.round(stakeNum * oddsNum);
+
+    const mktType = activeBet?.marketType;
+    const selRunnerId = activeBet?.selectionId || activeBet?.runnerId;
+    const selRunnerName = activeBet?.runnerName || activeBet?.runner || '';
+    const mktName =
+      activeBet?.marketName ||
+      (mktType === 'bookmaker'
+        ? 'Bookmaker'
+        : mktType === 'toss'
+        ? 'Toss'
+        : mktType === 'fancy'
+        ? 'Fancy'
+        : 'Match Odds');
+
     const newBet = {
       id: Date.now(),
-      match: currentMatch.title,
-      runner: activeBet?.runnerName,
-      type: activeBet?.type,
+      eventId: String(urlEventId),
+      matchId: String(urlEventId),
+      marketId: String(mktType),
+      market: mktName,
+      markettype: mktName,
+      selectionId: String(selRunnerId),
+      match: currentMatch?.title || 'Match',
+      event: currentMatch?.title || 'Match',
+      runner: selRunnerName,
+      runnerName: selRunnerName,
+      selection: selRunnerName,
+      type: activeBet?.type === 'lay' || activeBet?.type === 'Lay' ? 'Lay' : 'Back',
       odds: oddsValue,
-      stake: stakeValue,
+      price: oddsValue,
+      stake: String(stakeNum),
+      favourMargin: calcProfit,
+      againstMargin: stakeNum,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
-    setPlacedBets((prev) => [newBet, ...prev]);
+    // If logged in via Demo API / Real socket, also attempt socket placeBet
+    try {
+      if (localStorage.getItem('userId') || localStorage.getItem('token')) {
+        await placeBet({
+          ...newBet,
+          sportsName: urlSport || 'cricket',
+          eventType: urlEventType || 4,
+          legueId: urlCompetitionId || '12830953',
+          competitionId: urlCompetitionId || '12830953',
+        });
+      }
+    } catch (err) {
+      console.log('Socket placeBet notice (falling back to local state):', err);
+    }
+
+    setIsPlacingBet(false);
+
+    setLocalBets((prev) => {
+      const updated = [newBet, ...prev];
+      try {
+        localStorage.setItem('kuber_placed_bets', JSON.stringify(updated));
+      } catch (e) {
+        console.error(e);
+      }
+      return updated;
+    });
+
+    try {
+      dispatch(addLatestBet(newBet));
+    } catch (e) {
+      console.error(e);
+    }
 
     if (onPlaceBetSuccess) {
       onPlaceBetSuccess({
-        match: currentMatch.title,
-        runner: activeBet?.runnerName,
+        match: currentMatch?.title || 'Match',
+        runner: selRunnerName,
         type: activeBet?.type,
         odds: oddsValue,
         stake: stakeValue,
       });
-    } else {
-      alert(
-        `Bet Placed Successfully!\nMatch: ${currentMatch.title}\nSelection: ${activeBet?.runnerName} (${activeBet?.type?.toUpperCase()})\nOdds: ${oddsValue}\nStake: ₹${stakeValue}`
-      );
     }
+
     setActiveBet(null);
   };
 
@@ -1666,7 +1891,7 @@ export default function MatchDetailSection({
                           </div>
                         )}
                         {(() => {
-                          const pl = getProjectedPL('horse_racing', horse.id);
+                          const pl = getProjectedPL('horse_racing', horse, 'Horse Race');
                           if (!pl) return null;
                           return (
                             <span
@@ -1674,7 +1899,7 @@ export default function MatchDetailSection({
                                 pl.isPositive ? 'text-[#008a00]' : 'text-[#d32f2f]'
                               }`}
                             >
-                              &gt;&gt; {pl.text}
+                              {pl.isProjected ? '>> ' : ''}{pl.text}
                             </span>
                           );
                         })()}
@@ -1696,7 +1921,9 @@ export default function MatchDetailSection({
                                 horse.id,
                                 horse.name,
                                 'back',
-                                horse.back?.odd || '3.25'
+                                horse.back?.odd || '3.25',
+                                'Horse Race',
+                                horse.selectionId || horse.id
                               )
                             }
                             className="w-[76.13px] h-[45px] bg-[#aee1fc] shadow-xs hover:brightness-95 flex flex-col items-center justify-center cursor-pointer transition-all active:scale-[0.98]"
@@ -1718,7 +1945,9 @@ export default function MatchDetailSection({
                                 horse.id,
                                 horse.name,
                                 'lay',
-                                horse.lay?.odd || '3.4'
+                                horse.lay?.odd || '3.4',
+                                'Horse Race',
+                                horse.selectionId || horse.id
                               )
                             }
                             className="w-[76.13px] h-[45px] bg-[#fed5da] shadow-xs hover:brightness-95 flex flex-col items-center justify-center cursor-pointer transition-all active:scale-[0.98]"
@@ -1774,9 +2003,23 @@ export default function MatchDetailSection({
 
                   {/* Right: CASHOUT Badge */}
                   <div className="flex items-center">
-                    <span className="bg-[#67562d] ml-[-0.5px] text-[#e2cda6] text-[9.5px] font-black px-[3px] py-[5px] rounded-[4px] border border-[#e9d9b2] tracking-tighter leading-none">
-                      CASHOUT
-                    </span>
+                    {(() => {
+                      const runnerVals = marketObj.runners
+                        .map((r) => calculateBetValues(r, marketObj.marketId, marketObj.marketName)?.val)
+                        .filter((v) => v !== undefined && v !== null);
+                      const hasBets = runnerVals.length > 0 && runnerVals.some((v) => v !== 0);
+                      const cashoutVal = hasBets
+                        ? Math.round(runnerVals.reduce((a, b) => a + b, 0) / (runnerVals.length || 1))
+                        : null;
+
+                      return (
+                        <span className="bg-[#67562d] ml-[-0.5px] text-[#e2cda6] text-[9.5px] font-black px-[4px] py-[4px] rounded-[4px] border border-[#e9d9b2] tracking-tighter leading-none whitespace-nowrap">
+                          {hasBets
+                            ? `CASHOUT ${cashoutVal !== 0 ? (cashoutVal > 0 ? `+${cashoutVal}` : cashoutVal) : ''}`
+                            : 'CASHOUT'}
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
 
@@ -1804,7 +2047,7 @@ export default function MatchDetailSection({
                   const isSlipOpen =
                     activeBet &&
                     activeBet.marketType === marketObj.marketId &&
-                    activeBet.runnerId === runner.id;
+                    (activeBet.runnerId === runner.id || activeBet.runnerName === runner.name);
 
                   return (
                     <div key={runner.id} className="flex flex-col">
@@ -1815,7 +2058,7 @@ export default function MatchDetailSection({
                             {runner.name}
                           </span>
                           {(() => {
-                            const pl = getProjectedPL(marketObj.marketId, runner.id);
+                            const pl = getProjectedPL(marketObj.marketId, runner, marketObj.marketName);
                             if (!pl) return null;
                             return (
                               <span
@@ -1823,7 +2066,7 @@ export default function MatchDetailSection({
                                   pl.isPositive ? 'text-[#008a00]' : 'text-[#d32f2f]'
                                 }`}
                               >
-                                &gt;&gt; {pl.text}
+                                {pl.isProjected ? '>> ' : ''}{pl.text}
                               </span>
                             );
                           })()}
@@ -1844,7 +2087,9 @@ export default function MatchDetailSection({
                                     runner.id,
                                     runner.name,
                                     'back',
-                                    runner.back?.odd || '1.94'
+                                    runner.back?.odd || '1.94',
+                                    marketObj.marketName,
+                                    runner.selectionId || runner.id
                                   )
                                 }
                                 className="w-[76.13px] h-[45px] bg-[#aee1fc] shadow-xs hover:brightness-95 flex flex-col items-center justify-center cursor-pointer transition-all active:scale-[0.98]"
@@ -1866,7 +2111,9 @@ export default function MatchDetailSection({
                                     runner.id,
                                     runner.name,
                                     'lay',
-                                    runner.lay?.odd || '1.99'
+                                    runner.lay?.odd || '1.99',
+                                    marketObj.marketName,
+                                    runner.selectionId || runner.id
                                   )
                                 }
                                 className="w-[76.13px] h-[45px] bg-[#fed5da] shadow-xs hover:brightness-95 flex flex-col items-center justify-center cursor-pointer transition-all active:scale-[0.98]"
@@ -1919,9 +2166,23 @@ export default function MatchDetailSection({
 
                   {/* Right: CASHOUT Badge */}
                   <div className="flex items-center">
-                    <span className="bg-[#67562d] text-[#e2cda6] text-[9.5px] font-black px-[4px] py-[4px] rounded-[4px] border border-[#e9d9b2] tracking-tighter leading-none">
-                      CASHOUT
-                    </span>
+                    {(() => {
+                      const runnerVals = bookmakerRunners
+                        .map((r) => calculateBetValues(r, 'bookmaker', 'Bookmaker')?.val)
+                        .filter((v) => v !== undefined && v !== null);
+                      const hasBets = runnerVals.length > 0 && runnerVals.some((v) => v !== 0);
+                      const cashoutVal = hasBets
+                        ? Math.round(runnerVals.reduce((a, b) => a + b, 0) / (runnerVals.length || 1))
+                        : null;
+
+                      return (
+                        <span className="bg-[#67562d] text-[#e2cda6] text-[9.5px] font-black px-[4px] py-[4px] rounded-[4px] border border-[#e9d9b2] tracking-tighter leading-none whitespace-nowrap">
+                          {hasBets
+                            ? `CASHOUT ${cashoutVal !== 0 ? (cashoutVal > 0 ? `+${cashoutVal}` : cashoutVal) : ''}`
+                            : 'CASHOUT'}
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
 
@@ -1949,7 +2210,7 @@ export default function MatchDetailSection({
                   const isSlipOpen =
                     activeBet &&
                     activeBet.marketType === 'bookmaker' &&
-                    activeBet.runnerId === runner.id;
+                    (activeBet.runnerId === runner.id || activeBet.runnerName === runner.name);
 
                   return (
                     <div key={runner.id} className="flex flex-col">
@@ -1960,7 +2221,7 @@ export default function MatchDetailSection({
                             {runner.name}
                           </span>
                           {(() => {
-                            const pl = getProjectedPL('bookmaker', runner.id);
+                            const pl = getProjectedPL('bookmaker', runner, 'Bookmaker');
                             if (!pl) return null;
                             return (
                               <span
@@ -1968,7 +2229,7 @@ export default function MatchDetailSection({
                                   pl.isPositive ? 'text-[#008a00]' : 'text-[#d32f2f]'
                                 }`}
                               >
-                                &gt;&gt; {pl.text}
+                                {pl.isProjected ? '>> ' : ''}{pl.text}
                               </span>
                             );
                           })()}
@@ -1989,7 +2250,9 @@ export default function MatchDetailSection({
                                     runner.id,
                                     runner.name,
                                     'back',
-                                    runner.back?.odd || '294'
+                                    runner.back?.odd || '294',
+                                    'Bookmaker',
+                                    runner.selectionId || runner.id
                                   )
                                 }
                                 className="w-[76.13px] h-[45px] bg-[#aee1fc] shadow-xs hover:brightness-95 flex flex-col items-center justify-center cursor-pointer transition-all active:scale-[0.98]"
@@ -2011,7 +2274,9 @@ export default function MatchDetailSection({
                                     runner.id,
                                     runner.name,
                                     'lay',
-                                    runner.lay?.odd || '333'
+                                    runner.lay?.odd || '333',
+                                    'Bookmaker',
+                                    runner.selectionId || runner.id
                                   )
                                 }
                                 className="w-[76.13px] h-[45px] bg-[#fed5da] shadow-xs hover:brightness-95 flex flex-col items-center justify-center cursor-pointer transition-all active:scale-[0.98]"
@@ -2086,7 +2351,7 @@ export default function MatchDetailSection({
                   const isSlipOpen =
                     activeBet &&
                     activeBet.marketType === 'toss' &&
-                    activeBet.runnerId === runner.id;
+                    (activeBet.runnerId === runner.id || activeBet.runnerName === runner.name);
 
                   return (
                     <div key={runner.id} className="flex flex-col">
@@ -2097,7 +2362,7 @@ export default function MatchDetailSection({
                             {runner.name}
                           </span>
                           {(() => {
-                            const pl = getProjectedPL('toss', runner.id);
+                            const pl = getProjectedPL('toss', runner, 'Toss');
                             if (!pl) return null;
                             return (
                               <span
@@ -2105,7 +2370,7 @@ export default function MatchDetailSection({
                                   pl.isPositive ? 'text-[#008a00]' : 'text-[#d32f2f]'
                                 }`}
                               >
-                                &gt;&gt; {pl.text}
+                                {pl.isProjected ? '>> ' : ''}{pl.text}
                               </span>
                             );
                           })()}
@@ -2127,7 +2392,9 @@ export default function MatchDetailSection({
                                     runner.id,
                                     runner.name,
                                     'back',
-                                    runner.back?.odd || '1.95'
+                                    runner.back?.odd || '1.95',
+                                    'Toss',
+                                    runner.selectionId || runner.id
                                   )
                                 }
                                 className="w-[76.13px] h-[45px] bg-[#aee1fc] shadow-xs hover:brightness-95 flex flex-col items-center justify-center cursor-pointer transition-all active:scale-[0.98]"
@@ -2151,7 +2418,9 @@ export default function MatchDetailSection({
                                     runner.id,
                                     runner.name,
                                     'lay',
-                                    runner.lay?.odd || '1.95'
+                                    runner.lay?.odd || '1.95',
+                                    'Toss',
+                                    runner.selectionId || runner.id
                                   )
                                 }
                                 className={`w-[76.13px] h-[45px] ${
@@ -2182,7 +2451,7 @@ export default function MatchDetailSection({
           )}
 
           {/* ========================================================= */}
-          {/* 4. MARKET SECTION 3: FANCY (Cricket / Available Only)     */}
+          {/* 4. MARKET SECTION 3: FANCY ODDS (Cricket Only)            */}
           {/* ========================================================= */}
           {showFancySection && (
             <div className="w-full bg-[#f3f8fb] mt-3 shadow-[0_2px_4px_rgba(0,0,0,0.12)] relative z-10 flex flex-col">
@@ -2268,7 +2537,7 @@ export default function MatchDetailSection({
                   const isSlipOpen =
                     activeBet &&
                     activeBet.marketType === 'fancy' &&
-                    activeBet.runnerId === market.id;
+                    (activeBet.runnerId === market.id || activeBet.runnerName === market.title);
 
                   return (
                     <div key={market.id} className="flex flex-col">
@@ -2285,11 +2554,15 @@ export default function MatchDetailSection({
                               {market.title}
                             </span>
                             {(() => {
-                              const pl = getProjectedPL('fancy', market.id);
+                              const pl = getProjectedPL(
+                                'fancy',
+                                { id: market.id, name: market.title, runnerName: market.title, selectionId: market.id },
+                                'Fancy'
+                              );
                               if (!pl) return null;
                               return (
                                 <span className="text-[12.5px] font-bold text-[#008a00] leading-tight">
-                                  &gt;&gt; {pl.text}
+                                  {pl.isProjected ? '>> ' : ''}{pl.text}
                                 </span>
                               );
                             })()}
@@ -2313,7 +2586,9 @@ export default function MatchDetailSection({
                                     market.id,
                                     market.title,
                                     'no',
-                                    market.no?.rate || '0'
+                                    market.no?.rate || '0',
+                                    'Fancy',
+                                    market.id
                                   )
                                 }
                                 className="w-[76.13px] h-[45px] bg-[#fed5da] shadow-xs hover:brightness-95 flex flex-col items-center justify-center cursor-pointer transition-all active:scale-[0.98]"
@@ -2335,7 +2610,9 @@ export default function MatchDetailSection({
                                     market.id,
                                     market.title,
                                     'yes',
-                                    market.yes?.rate || '0'
+                                    market.yes?.rate || '0',
+                                    'Fancy',
+                                    market.id
                                   )
                                 }
                                 className="w-[76.13px] h-[45px] bg-[#aee1fc] shadow-xs hover:brightness-95 flex flex-col items-center justify-center cursor-pointer transition-all active:scale-[0.98]"
@@ -2551,10 +2828,15 @@ export default function MatchDetailSection({
           </button>
           <button
             type="button"
+            disabled={isPlacingBet}
             onClick={handlePlaceBet}
-            className="h-[38px] bg-[#009900] hover:bg-[#008000] rounded-[3px] font-bold text-[13.5px] text-white shadow-xs active:scale-95 transition-all cursor-pointer flex items-center justify-center tracking-wide uppercase"
+            className="h-[38px] bg-[#009900] hover:bg-[#008000] rounded-[3px] font-bold text-[13.5px] text-white shadow-xs active:scale-95 transition-all cursor-pointer flex items-center justify-center tracking-wide uppercase disabled:opacity-90"
           >
-            PLACE BET
+            {isPlacingBet ? (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              'PLACE BET'
+            )}
           </button>
         </div>
       </div>

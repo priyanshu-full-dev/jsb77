@@ -6,6 +6,13 @@ export default function DepositSection({ user, onToast, activeTab }) {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const isDemoUser = Boolean(
+    user?.isDemo ||
+    user?.username?.toLowerCase().startsWith('demo') ||
+    user?.userName?.toLowerCase().startsWith('demo') ||
+    user?.username === 'DEMO'
+  );
+
   // Determine if active view is withdraw or deposit
   const isWithdraw = activeTab === 'withdraw' || location.pathname.includes('/withdraw');
 
@@ -31,6 +38,29 @@ export default function DepositSection({ user, onToast, activeTab }) {
   // Requests history table filter
   const [filterStatus, setFilterStatus] = useState('All');
   const [transactionRequests, setTransactionRequests] = useState([]);
+
+  if (isDemoUser) {
+    return (
+      <div className="w-full bg-white rounded p-8 text-center text-gray-800 shadow-sm flex flex-col items-center justify-center my-4">
+        <div className="w-14 h-14 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-2xl font-bold mb-3">
+          ℹ️
+        </div>
+        <h3 className="text-lg font-bold text-gray-900 mb-1">
+          Demo Account Restriction
+        </h3>
+        <p className="text-sm text-gray-600 max-w-md mb-4">
+          Deposit and Withdrawal are not available for demo accounts. Please log in with a real account to deposit or withdraw funds.
+        </p>
+        <button
+          type="button"
+          onClick={() => navigate('/')}
+          className="px-5 py-2 bg-[linear-gradient(94deg,#b6842d,#ebda8d_55%,#b7862f)] text-black font-bold text-sm rounded shadow cursor-pointer hover:brightness-105 transition-all"
+        >
+          Back to Home
+        </button>
+      </div>
+    );
+  }
 
   // Handle Quick Add for Deposit
   const handleQuickAdd = (val) => {
