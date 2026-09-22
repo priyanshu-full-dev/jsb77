@@ -15,7 +15,7 @@ import { fetchNetworkDetails } from "./redux/slices/networkSlice";
 
 import "./App.css";
 
-import { KuberBook333Router } from "./KuberBook333Src/KuberBook333Routes";
+import { Kuberbook666Router } from "./Kuberbook666/Kuberbook666Routes";
 import PageSkeleton from "./Kuberbook666/components/Loader/PageSkeleton";
 
 /* =========================================================
@@ -366,14 +366,12 @@ const App = () => {
   }, [dispatch]);
 
   /* =========================================================
-     UI & FINAL ROUTER
+     UI & FINAL ROUTER (KUBERBOOK666)
   ========================================================= */
-
-  const activeRouter = SelectedRouter || KuberBook333Router;
 
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <RouterProvider router={activeRouter} />
+      <RouterProvider router={Kuberbook666Router} />
     </Suspense>
   );
 };

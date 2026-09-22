@@ -34,8 +34,10 @@ export default defineConfig({
       compressionOptions: { level: 9, timestamp: false }, // stable gzip (no timestamp)
     }),
 
-    visualizer({ open: true }), // bundle analyzer
-  ],
+  server: {
+    port: 5177,
+    host: true,
+  },
 
   resolve: {
     alias: {
