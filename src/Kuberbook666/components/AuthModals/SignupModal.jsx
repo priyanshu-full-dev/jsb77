@@ -1,93 +1,116 @@
-import React, { useState, useEffect, useRef } from "react";
-import { FaLock, FaTag, FaCommentDots } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { FaLock, FaTag, FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast } from "react-toastify";
-import { SendOtp, signUp } from "../../../api";
+import { getSitesByDomain, signUp, login, createLoginRecord } from "../../../api";
+import { selectSite } from "../../../utils/helper/commonSelectors";
+import { loginSuccess } from "../../../redux/slices/userSlice";
+import { setAccountType } from "../../../redux/slices/accountSlice";
+import { subscribeToLogin } from "../../../socketClient";
 
 const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
+  const dispatch = useDispatch();
+  const siteDetails = useSelector(selectSite());
+
   const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [promoCode, setPromoCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpLoading, setOtpLoading] = useState(false);
-  const [otpTimer, setOtpTimer] = useState(0);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const timerRef = useRef(null);
+  const [passwordError, setPasswordError] = useState("");
+  const [referral, setReferral] = useState("");
+  const [apiSiteData, setApiSiteData] = useState(null);
 
-  // Countdown timer for OTP (60s / 1 min cooldown)
+  // 1. Referral query & cookie tracking
   useEffect(() => {
-    if (otpTimer > 0) {
-      timerRef.current = setTimeout(() => {
-        setOtpTimer((prev) => prev - 1);
-      }, 1000);
+    try {
+      const queryParams = new URLSearchParams(window.location.search);
+      const ref = queryParams.get("referral");
+      if (ref) {
+        setReferral(ref);
+        document.cookie = `referral=${ref}; path=/`;
+      } else {
+        const match = document.cookie.match(/(^| )referral=([^;]+)/);
+        if (match) {
+          setReferral(match[2]);
+        }
+      }
+    } catch (err) {
+      console.error("Referral parse error:", err);
     }
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
+  }, []);
+
+  // 2. Fetch site metadata for real database user insertion (createdBy, role, domain, ownerDomainId)
+  useEffect(() => {
+    const fetchSiteDetails = async () => {
+      try {
+        const domainName =
+          window.location.host.includes("localhost") ||
+          window.location.host.includes("127.0.0.1")
+            ? "asianexchange.club"
+            : window.location.host;
+        const response = await getSitesByDomain(domainName);
+        if (response?.data) {
+          setApiSiteData(response.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch site details for signup:", err);
+      }
     };
-  }, [otpTimer]);
+    fetchSiteDetails();
+  }, []);
+
+  // Reset states when modal opens/closes
+  useEffect(() => {
+    if (!isOpen) {
+      setError("");
+      setPasswordError("");
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const handleSendOtp = async () => {
-    if (otpTimer > 0) {
-      toast.info(`Please wait ${otpTimer} seconds before requesting a new OTP.`);
-      return;
-    }
-    const cleanPhone = phone.replace(/\D/g, "");
-    if (!cleanPhone || cleanPhone.length < 10) {
-      setError("Please enter a valid 10-digit mobile number");
-      return;
-    }
-
-    setError("");
-    setOtpLoading(true);
-
-    try {
-      // Send OTP via real API
-      const otpRes = await SendOtp({
-        phone: cleanPhone,
-        mobile: cleanPhone,
-        userName: cleanPhone,
-        country: "+91",
-      });
-
-      if (otpRes?.data?.success === false && otpRes?.data?.message) {
-        setError(otpRes.data.message);
-        toast.error(otpRes.data.message);
-        return;
-      }
-
-      setOtpSent(true);
-      setOtpTimer(60); // 1 minute cooldown
-      setOtp(""); // Do NOT auto-fill fake OTP. User will enter the real SMS OTP.
-      toast.success(otpRes?.data?.message || `OTP sent successfully to +91 ${cleanPhone}`);
-    } catch (err) {
-      console.error("SendOtp Error:", err);
-      const errMsg = err?.response?.data?.message || err?.message || "Failed to send OTP. Please try again.";
-      setError(errMsg);
-      toast.error(errMsg);
-    } finally {
-      setOtpLoading(false);
+  // Password validation helper
+  const handlePasswordChange = (val) => {
+    setPassword(val);
+    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&#]{6,}$/;
+    if (val.length < 6) {
+      setPasswordError("Password must be at least 6 characters long.");
+    } else if (!strongPasswordRegex.test(val)) {
+      setPasswordError("Include uppercase, lowercase and a number.");
+    } else {
+      setPasswordError("");
     }
   };
 
+  // Submit Registration To Real Database (No OTP - Exact Mahadev Real Flow)
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!username.trim() || !phone.trim() || !password.trim() || !confirmPassword.trim()) {
-      setError("Please fill in all required fields");
+    const cleanPhone = phone.replace(/\D/g, "").slice(-10);
+
+    if (!cleanPhone || cleanPhone.length < 10) {
+      setError("Phone No is mandatory (10 digits)");
+      return;
+    }
+    if (!password.trim()) {
+      setError("Password is mandatory");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+    if (!confirmPassword.trim()) {
+      setError("Confirm Password is mandatory");
       return;
     }
     if (password !== confirmPassword) {
       setError("Passwords do not match");
-      return;
-    }
-    if (!otp.trim()) {
-      setError("Please enter the OTP sent to your phone");
       return;
     }
 
@@ -95,30 +118,181 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
     setLoading(true);
 
     try {
+      let cachedSite = null;
+      try {
+        cachedSite = JSON.parse(localStorage.getItem("siteDetails") || "{}");
+      } catch {
+        cachedSite = {};
+      }
+
+      const createdById =
+        apiSiteData?.createdBy?._id ||
+        apiSiteData?.siteDetails?.createrId ||
+        siteDetails?.createdBy?._id ||
+        siteDetails?.createrId ||
+        siteDetails?.siteDetails?.createrId ||
+        cachedSite?.createdBy?._id ||
+        cachedSite?.createrId ||
+        "6a8d85907a10e78fbbcd5cee";
+
+      const roleId =
+        apiSiteData?.userRoleId ||
+        siteDetails?.userRoleId ||
+        siteDetails?.siteDetails?.userRoleId ||
+        cachedSite?.userRoleId ||
+        "6a8553b2e180c5acfc1e3fc3";
+
+      const domainId =
+        apiSiteData?.siteDetails?.domainDetails?._id ||
+        apiSiteData?.domainDetails?._id ||
+        siteDetails?.domainDetails?._id ||
+        siteDetails?.siteDetails?.domainDetails?._id ||
+        cachedSite?.domainDetails?._id ||
+        "6a85553b526a2dbeb187f070";
+
+      const ownerDomainId =
+        apiSiteData?.siteDetails?.admindomainName?._id ||
+        apiSiteData?.admindomainName?._id ||
+        siteDetails?.admindomainName?._id ||
+        siteDetails?.siteDetails?.admindomainName?._id ||
+        cachedSite?.admindomainName?._id ||
+        "6a85553b526a2dbeb187f071";
+
+      const siteId =
+        apiSiteData?.siteDetails?._id ||
+        apiSiteData?._id ||
+        siteDetails?.siteDetails?._id ||
+        siteDetails?._id ||
+        cachedSite?.siteDetails?._id ||
+        cachedSite?._id ||
+        "6a859c4209b8c3333c187921";
+
+      // Build full database payload matching Mahadev's exact structure
       const payload = {
-        username: username.trim(),
-        userName: username.trim(),
-        phone: phone.trim(),
-        mobile: phone.trim(),
+        mobile: cleanPhone,
+        userName: cleanPhone, // Backend expects 10-digit mobile number as userName
+        name: cleanPhone,
         password: password.trim(),
-        otp: otp.trim(),
-        promocode: promoCode.trim(),
+        confirmPassword: confirmPassword.trim(),
+        otp: "",
+        x_panel_type: "user",
+        commission: 0,
+        openingBalance: 0,
+        availableBalance: 0,
+        creditReference: 0,
+        partnership: 0,
+        currency: "INR",
+        exposureLimit: 200000,
+        exposure: 0,
+        createdBy: createdById,
+        referredBy: promoCode.trim() || referral || "",
+        deviceIp: "0.0.0",
+        role: roleId,
+        domain: domainId,
+        ownerDomainId: ownerDomainId || domainId,
+        siteID: siteId,
+        isSignupUser: true,
+        layout: apiSiteData?.siteDetails?.layout || siteDetails?.layout || "asianexchange",
       };
 
-      const res = await signUp(payload);
+      console.log("Signup Payload before sending:", payload);
 
-      if (res?.success || res?.data?.message === "User created successfully" || res?.data?.success) {
-        toast.success(res?.data?.message || "Registration successful! Please login.");
+      const response = await signUp(payload);
+
+      if (
+        response?.data?.message === "User created successfully" ||
+        response?.data?.success ||
+        response?.success
+      ) {
+        toast.success(response?.data?.message || "Registration Successful!");
+
+        // 1. Direct auto-login if token is already in signup response
+        const directToken = response?.data?.token || response?.token || response?.data?.userdata?.token;
+        const directUser = response?.data?.userdata || response?.userdata || response?.data?.user;
+        if (directToken && directUser) {
+          if (directToken) localStorage.setItem("token", directToken);
+          if (directUser?._id) localStorage.setItem("userId", directUser._id);
+
+          dispatch(
+            loginSuccess({
+              token: directToken,
+              userData: directUser,
+              loggedInType: "real",
+            })
+          );
+          dispatch(
+            setAccountType({
+              userData: directUser,
+              type: "real",
+            })
+          );
+
+          createLoginRecord({ userName: cleanPhone }).catch(() => {});
+          onClose();
+          return;
+        }
+
+        // 2. Instant Socket auto-login with cleanPhone
+        try {
+          const loginPayload = {
+            userName: cleanPhone,
+            username: cleanPhone,
+            password: password.trim(),
+            x_panel_type: "user",
+          };
+
+          let loginRes = null;
+          try {
+            loginRes = await subscribeToLogin(loginPayload);
+          } catch {
+            loginRes = await login(loginPayload);
+          }
+
+          const loginData = loginRes?.data || loginRes;
+          if (loginData?.token || loginData?.userdata?.token || loginRes?.success) {
+            const token = loginData.token || loginData.userdata?.token || loginRes?.token;
+            const userdata = loginData.user || loginData.userdata || loginRes?.userdata || { username: cleanPhone };
+            if (token) localStorage.setItem("token", token);
+            if (userdata?._id) localStorage.setItem("userId", userdata._id);
+
+            dispatch(
+              loginSuccess({
+                token: token,
+                userData: userdata,
+                loggedInType: "real",
+              })
+            );
+            dispatch(
+              setAccountType({
+                userData: userdata,
+                type: "real",
+              })
+            );
+
+            createLoginRecord({ userName: cleanPhone }).catch(() => {});
+            onClose();
+            return;
+          }
+        } catch (err) {
+          console.error("Auto login error after signup:", err);
+        }
+
         onClose();
-        onSwitchToLogin();
+        if (onSwitchToLogin) onSwitchToLogin();
       } else {
-        const errorMsg = res?.data?.message || "Registration failed. Please check your details.";
+        const errorMsg =
+          response?.data?.message ||
+          response?.message ||
+          "Registration failed. Please check your details.";
         setError(errorMsg);
         toast.error(errorMsg);
       }
     } catch (err) {
       console.error("signUp API error:", err);
-      const errMsg = err?.response?.data?.message || err?.message || "Registration failed";
+      const errMsg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Registration failed. Please try again.";
       setError(errMsg);
       toast.error(errMsg);
     } finally {
@@ -127,7 +301,7 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3">
       {/* Backdrop */}
       <div
         onClick={onClose}
@@ -164,20 +338,11 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="space-y-3">
-          {/* 1. Username Field */}
-          <div className="bg-[#f2f4f8] border border-gray-200 rounded-xl px-4 py-2.5 focus-within:border-red-600 transition">
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter Username"
-              className="bg-transparent text-sm w-full outline-hidden font-medium text-gray-900 placeholder:text-gray-400"
-              required
-            />
-          </div>
-
-          {/* 2. Phone Number Field + Counter */}
+          {/* 1. Phone Number Field + Counter */}
           <div>
+            <label className="block text-[11px] font-bold text-gray-800 uppercase tracking-wide mb-1">
+              Phone Number
+            </label>
             <div className="flex items-center gap-2 bg-[#f2f4f8] border border-gray-200 rounded-xl px-3 py-2.5 focus-within:border-red-600 transition">
               <span className="text-sm font-bold text-gray-800">+91</span>
               <span className="text-base leading-none">🇮🇳</span>
@@ -192,7 +357,7 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                 maxLength={10}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                placeholder="895XX6XXXX"
+                placeholder="Phone Number (10 digits)"
                 className="bg-transparent text-sm w-full outline-hidden font-medium text-gray-900 placeholder:text-gray-400"
                 required
               />
@@ -202,141 +367,123 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
             </div>
           </div>
 
-          {/* 3. OTP Action Button */}
-          <button
-            type="button"
-            disabled={otpTimer > 0 || otpLoading}
-            onClick={handleSendOtp}
-            className={`w-full py-2.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 transition active:scale-98 shadow-xs cursor-pointer ${
-              otpTimer > 0 || otpLoading
-                ? "bg-gray-400 cursor-not-allowed opacity-75"
-                : "bg-[#9c6a74] hover:bg-[#8b5c65]"
-            }`}
-          >
-            <FaCommentDots className="text-base" />
-            <span>
-              {otpLoading
-                ? "Sending OTP..."
-                : otpTimer > 0
-                ? `Resend OTP in ${otpTimer}s`
-                : otpSent
-                ? "Resend OTP"
-                : "Send OTP"}
-            </span>
-          </button>
-
-          {/* 4. OTP Input Field */}
-          <div className="bg-[#f2f4f8] border border-gray-200 rounded-xl px-4 py-2.5 focus-within:border-red-600 transition">
-            <input
-              type="text"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              placeholder="OTP"
-              className="bg-transparent text-sm w-full outline-hidden font-medium text-gray-900 placeholder:text-gray-400"
-            />
-          </div>
-
-          {/* 5. Password Field */}
-          <div className="flex items-center justify-between bg-[#f2f4f8] border border-gray-200 rounded-xl px-3 py-2.5 focus-within:border-red-600 transition">
-            <div className="flex items-center gap-2.5 w-full">
-              <FaLock className="text-[#c10931] text-xs flex-shrink-0" />
+          {/* 2. Username Field */}
+          <div>
+            <label className="block text-[11px] font-bold text-gray-800 uppercase tracking-wide mb-1">
+              Username
+            </label>
+            <div className="bg-[#f2f4f8] border border-gray-200 rounded-xl px-4 py-2.5 focus-within:border-red-600 transition">
               <input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter Username"
                 className="bg-transparent text-sm w-full outline-hidden font-medium text-gray-900 placeholder:text-gray-400"
                 required
               />
             </div>
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="text-[#c10931] hover:opacity-80 p-0.5 focus:outline-hidden cursor-pointer"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-            </button>
           </div>
 
-          {/* 6. Confirm Password Field */}
-          <div className="flex items-center justify-between bg-[#f2f4f8] border border-gray-200 rounded-xl px-3 py-2.5 focus-within:border-red-600 transition">
-            <div className="flex items-center gap-2.5 w-full">
-              <FaLock className="text-[#c10931] text-xs flex-shrink-0" />
+          {/* 3. Password Field */}
+          <div>
+            <label className="block text-[11px] font-bold text-gray-800 uppercase tracking-wide mb-1">
+              Password
+            </label>
+            <div className="flex items-center justify-between bg-[#f2f4f8] border border-gray-200 rounded-xl px-3 py-2.5 focus-within:border-red-600 transition">
+              <div className="flex items-center gap-2.5 w-full">
+                <FaLock className="text-[#c10931] text-xs flex-shrink-0" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => handlePasswordChange(e.target.value)}
+                  placeholder="Password (Min 6 chars)"
+                  className="bg-transparent text-sm w-full outline-hidden font-medium text-gray-900 placeholder:text-gray-400"
+                  required
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="text-[#c10931] hover:opacity-80 p-0.5 focus:outline-hidden cursor-pointer"
+              >
+                {showPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
+              </button>
+            </div>
+            {passwordError && (
+              <p className="text-red-600 text-[11px] font-semibold pl-1 mt-0.5">
+                {passwordError}
+              </p>
+            )}
+          </div>
+
+          {/* 4. Confirm Password Field */}
+          <div>
+            <label className="block text-[11px] font-bold text-gray-800 uppercase tracking-wide mb-1">
+              Confirm Password
+            </label>
+            <div className="flex items-center justify-between bg-[#f2f4f8] border border-gray-200 rounded-xl px-3 py-2.5 focus-within:border-red-600 transition">
+              <div className="flex items-center gap-2.5 w-full">
+                <FaLock className="text-[#c10931] text-xs flex-shrink-0" />
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm Password"
+                  className="bg-transparent text-sm w-full outline-hidden font-medium text-gray-900 placeholder:text-gray-400"
+                  required
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="text-[#c10931] hover:opacity-80 p-0.5 focus:outline-hidden cursor-pointer"
+              >
+                {showConfirmPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
+              </button>
+            </div>
+          </div>
+
+          {/* 5. Promo Code Field */}
+          <div>
+            <label className="block text-[11px] font-bold text-gray-800 uppercase tracking-wide mb-1">
+              Promocode (Optional)
+            </label>
+            <div className="flex items-center gap-2.5 bg-[#f2f4f8] border border-gray-200 rounded-xl px-3 py-2.5 focus-within:border-red-600 transition">
+              <FaTag className="text-[#c10931] text-xs flex-shrink-0" />
               <input
-                type={showConfirmPassword ? "text" : "password"}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm Password"
+                type="text"
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value)}
+                placeholder="Enter Promocode (Optional)"
                 className="bg-transparent text-sm w-full outline-hidden font-medium text-gray-900 placeholder:text-gray-400"
-                required
               />
             </div>
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="text-[#c10931] hover:opacity-80 p-0.5 focus:outline-hidden cursor-pointer"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-            </button>
           </div>
 
-          {/* 7. Promo Code Field */}
-          <div className="flex items-center gap-2.5 bg-[#f2f4f8] border border-gray-200 rounded-xl px-3 py-2.5 focus-within:border-red-600 transition">
-            <FaTag className="text-[#c10931] text-xs flex-shrink-0" />
-            <input
-              type="text"
-              value={promoCode}
-              onChange={(e) => setPromoCode(e.target.value)}
-              placeholder="Enter Promocode(Optional)"
-              className="bg-transparent text-sm w-full outline-hidden font-medium text-gray-900 placeholder:text-gray-400"
-            />
-          </div>
+          {/* Terms Note */}
+          <p className="text-gray-500 text-[10px] leading-tight px-1">
+            By clicking &apos;Sign Up&apos;, you confirm that you are of legal age (18+) and accept our terms and conditions.
+          </p>
 
-          {/* 8. Submit Button */}
-          <div className="pt-2">
+          {/* Submit Button */}
+          <div className="pt-1">
             <button
               type="submit"
               disabled={loading}
               className="w-full py-3 rounded-xl bg-[#680a1e] hover:bg-[#580718] text-white font-bold text-base tracking-wide shadow-md active:scale-98 transition disabled:opacity-50 cursor-pointer"
             >
-              {loading ? "Submitting..." : "Submit"}
+              {loading ? "Creating Account..." : "Sign Up"}
             </button>
           </div>
 
-          {/* 9. Footer Link */}
+          {/* Footer Link */}
           <div className="text-center pt-2 text-xs text-gray-800 font-medium">
             Already have an account?{" "}
             <button
               type="button"
               onClick={() => {
                 onClose();
-                onSwitchToLogin();
+                if (onSwitchToLogin) onSwitchToLogin();
               }}
               className="text-[#680a1e] font-bold underline hover:text-red-700 cursor-pointer"
             >

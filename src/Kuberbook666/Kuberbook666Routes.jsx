@@ -1,7 +1,8 @@
-import React, { lazy, Suspense, Component } from "react";
+import { lazy, Suspense, Component } from "react";
+import PropTypes from "prop-types";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import AppLayout from "./components/AppLayout";
-import PageSkeleton from "./components/Loader/PageSkeleton";
+import KuberScreenLoader from "./components/Loader/KuberScreenLoader";
 
 // ==========================================================================
 // ADVANCED INDUSTRY-GRADE ERROR BOUNDARY & LAZY LOADER (0.1% ZERO JANK)
@@ -18,28 +19,28 @@ class RouteErrorBoundary extends Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error("Kuberbook666 Route Error:", error, errorInfo);
+    console.error("ErrorBoundary caught an error in Route:", error, errorInfo);
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-[60vh] flex flex-col items-center justify-center p-6 text-center text-white">
-          <div className="w-14 h-14 rounded-full bg-red-950/80 border border-red-700 flex items-center justify-center text-2xl text-red-500 mb-3">
-            ⚠️
+        <div className="min-h-[50vh] flex flex-col items-center justify-center p-6 text-center">
+          <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-3">
+            <span className="text-red-500 text-2xl font-bold">!</span>
           </div>
-          <h2 className="text-lg font-black tracking-tight text-white mb-1">
+          <h3 className="text-base font-bold text-gray-800 dark:text-gray-200 mb-1">
             Section Temporarily Unavailable
-          </h2>
-          <p className="text-xs text-gray-400 max-w-sm mb-4">
-            {this.state.error?.message || "An unexpected error occurred while loading this page."}
+          </h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 max-w-xs mb-4">
+            {this.state.error?.message || "An unexpected error occurred while loading this section."}
           </p>
           <button
             onClick={() => {
               this.setState({ hasError: false, error: null });
               window.location.reload();
             }}
-            className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-xs font-black text-white shadow transition"
+            className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition"
           >
             Reload Page
           </button>
@@ -50,10 +51,14 @@ class RouteErrorBoundary extends Component {
   }
 }
 
+RouteErrorBoundary.propTypes = {
+  children: PropTypes.node.isRequired,
+};
+
 /**
  * Higher-order loadable component with Lazy Loading, Suspense Fallback & Preload capability
  */
-export const loadable = (importFn, Fallback = PageSkeleton) => {
+export const loadable = (importFn) => {
   const LazyComponent = lazy(importFn);
 
   // Expose preload method so routes can be pre-fetched on hover
@@ -61,7 +66,7 @@ export const loadable = (importFn, Fallback = PageSkeleton) => {
 
   const Element = (props) => (
     <RouteErrorBoundary>
-      <Suspense fallback={<Fallback />}>
+      <Suspense fallback={<KuberScreenLoader />}>
         <LazyComponent {...props} />
       </Suspense>
     </RouteErrorBoundary>
@@ -71,15 +76,69 @@ export const loadable = (importFn, Fallback = PageSkeleton) => {
 };
 
 // ==========================================================================
-// CODE-SPLIT PAGES (PREFETCHABLE CHUNKS)
+// CODE-SPLIT PAGES WITH WEBPACK PREFETCHING (PREFETCHABLE CHUNKS)
 // ==========================================================================
-const Home = loadable(() => import("./pages/Home/Home"));
-const SportsPage = loadable(() => import("./pages/Sports/SportsPage"));
-const CasinoPage = loadable(() => import("./pages/Casino/CasinoPage"));
-const LiveCasinoPage = loadable(() => import("./pages/LiveCasino/LiveCasinoPage"));
-const InPlayPage = loadable(() => import("./pages/InPlay/InPlayPage"));
-const ProfilePage = loadable(() => import("./pages/Account/ProfilePage"));
-const MarketPage = loadable(() => import("./pages/Market/MarketPage"));
+const Home = loadable(() => import(/* webpackPrefetch: true */ "./pages/Home/Home"));
+const SportsPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Sports/SportsPage"));
+const CasinoPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Casino/CasinoPage"));
+const LiveCasinoPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/LiveCasino/LiveCasinoPage"));
+const InPlayPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/InPlay/InPlayPage"));
+const ProfilePage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Account/ProfilePage"));
+const MarketPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Market/MarketPage"));
+const GameLobby = loadable(() => import(/* webpackPrefetch: true */ "./pages/GameLobby/GameLobby"));
+const RacePage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Racing/RacePage"));
+const ElectionPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Election/ElectionPage"));
+const MaintenancePage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Maintenance/MaintenancePage"));
+const AffiliatePage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Account/AffiliatePage"));
+const AffiliateUserListPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Account/AffiliateUserListPage"));
+const AffiliateProfitLossPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Account/AffiliateProfitLossPage"));
+const AffiliateReportPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Account/AffiliateReportPage"));
+const ReferEarnPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Account/ReferEarnPage"));
+const TransactionsPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Account/TransactionsPage"));
+const BonusPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Account/BonusPage"));
+const OpenBetsPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Account/OpenBetsPage"));
+const BettingProfitLossPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Account/BettingProfitLossPage"));
+const AccountStatementPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Account/AccountStatementPage"));
+const BonusStatementPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Account/BonusStatementPage"));
+const BonusRulesPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Account/BonusRulesPage"));
+const TransferStatementPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Account/TransferStatementPage"));
+const TimeSettingPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Account/TimeSettingPage"));
+const SettingsPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Account/SettingsPage"));
+const WithdrawalPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Account/WithdrawalPage"));
+const DepositPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Account/DepositPage"));
+const ChangePasswordPage = loadable(() => import(/* webpackPrefetch: true */ "./pages/Account/ChangePasswordPage"));
+
+export const preloadRoute = (name) => {
+  try {
+    switch (name) {
+      case "home":
+        Home.Lazy.preload?.();
+        break;
+      case "sports":
+        SportsPage.Lazy.preload?.();
+        break;
+      case "casino":
+        CasinoPage.Lazy.preload?.();
+        break;
+      case "live-casino":
+        LiveCasinoPage.Lazy.preload?.();
+        break;
+      case "inplay":
+        InPlayPage.Lazy.preload?.();
+        break;
+      case "account":
+        ProfilePage.Lazy.preload?.();
+        break;
+      case "market":
+        MarketPage.Lazy.preload?.();
+        break;
+      default:
+        break;
+    }
+  } catch {
+    // silent catch for preloading
+  }
+};
 
 // ==========================================================================
 // ROUTE CONFIGURATION
@@ -107,12 +166,48 @@ export const Kuberbook666Router = createBrowserRouter([
         element: <SportsPage.Element />,
       },
       {
+        path: "sports/:sport",
+        element: <SportsPage.Element />,
+      },
+      {
+        path: "sports/:sport/:type",
+        element: <SportsPage.Element />,
+      },
+      {
+        path: "sports-page/*",
+        element: <SportsPage.Element />,
+      },
+      {
+        path: "horse-racing",
+        element: <RacePage.Element raceType="horse" />,
+      },
+      {
+        path: "horseRacing",
+        element: <RacePage.Element raceType="horse" />,
+      },
+      {
+        path: "greyhound-racing",
+        element: <RacePage.Element raceType="greyhound" />,
+      },
+      {
+        path: "greyhoundRacing",
+        element: <RacePage.Element raceType="greyhound" />,
+      },
+      {
+        path: "election",
+        element: <ElectionPage.Element />,
+      },
+      {
         path: "full-market",
         element: <MarketPage.Element />,
       },
       {
         path: "market/:eventId",
         element: <MarketPage.Element />,
+      },
+      {
+        path: "casino",
+        element: <CasinoPage.Element />,
       },
       {
         path: "aura",
@@ -147,6 +242,18 @@ export const Kuberbook666Router = createBrowserRouter([
         element: <CasinoPage.Element />,
       },
       {
+        path: "multiplayer",
+        element: <CasinoPage.Element />,
+      },
+      {
+        path: "color-game",
+        element: <CasinoPage.Element />,
+      },
+      {
+        path: "aviator",
+        element: <CasinoPage.Element />,
+      },
+      {
         path: "inplay",
         element: <InPlayPage.Element />,
       },
@@ -155,10 +262,210 @@ export const Kuberbook666Router = createBrowserRouter([
         element: <ProfilePage.Element />,
       },
       {
+        path: "affiliate",
+        element: <AffiliatePage.Element />,
+      },
+      {
+        path: "affiliate/user-list",
+        element: <AffiliateUserListPage.Element />,
+      },
+      {
+        path: "affiliate/user-profit-loss",
+        element: <AffiliateProfitLossPage.Element />,
+      },
+      {
+        path: "affiliate/report",
+        element: <AffiliateReportPage.Element />,
+      },
+      {
+        path: "refer-earn",
+        element: <ReferEarnPage.Element />,
+      },
+      {
+        path: "transactions",
+        element: <TransactionsPage.Element />,
+      },
+      {
+        path: "transactions-report",
+        element: <TransactionsPage.Element />,
+      },
+      {
+        path: "bonuses",
+        element: <BonusPage.Element />,
+      },
+      {
+        path: "bonus",
+        element: <BonusPage.Element />,
+      },
+      {
+        path: "open-bets",
+        element: <OpenBetsPage.Element />,
+      },
+      {
+        path: "betting-profit-loss",
+        element: <BettingProfitLossPage.Element />,
+      },
+      {
+        path: "profit-loss-report",
+        element: <BettingProfitLossPage.Element />,
+      },
+      {
+        path: "profit-loss",
+        element: <BettingProfitLossPage.Element />,
+      },
+      {
+        path: "account-statement",
+        element: <AccountStatementPage.Element />,
+      },
+      {
+        path: "account_statement",
+        element: <AccountStatementPage.Element />,
+      },
+      {
+        path: "account-statements",
+        element: <AccountStatementPage.Element />,
+      },
+      {
+        path: "bonus-statement",
+        element: <BonusStatementPage.Element />,
+      },
+      {
+        path: "bonus_statement",
+        element: <BonusStatementPage.Element />,
+      },
+      {
+        path: "bonus-rules",
+        element: <BonusRulesPage.Element />,
+      },
+      {
+        path: "bonus_rules",
+        element: <BonusRulesPage.Element />,
+      },
+      {
+        path: "bonus-rule",
+        element: <BonusRulesPage.Element />,
+      },
+      {
+        path: "transfer-statement",
+        element: <TransferStatementPage.Element />,
+      },
+      {
+        path: "transfer_statement",
+        element: <TransferStatementPage.Element />,
+      },
+      {
+        path: "transfer-statements",
+        element: <TransferStatementPage.Element />,
+      },
+      {
+        path: "time-setting",
+        element: <TimeSettingPage.Element />,
+      },
+      {
+        path: "time_setting",
+        element: <TimeSettingPage.Element />,
+      },
+      {
+        path: "time-settings",
+        element: <TimeSettingPage.Element />,
+      },
+      {
+        path: "time_settings",
+        element: <TimeSettingPage.Element />,
+      },
+      {
+        path: "settings",
+        element: <SettingsPage.Element />,
+      },
+      {
+        path: "setting",
+        element: <SettingsPage.Element />,
+      },
+      {
+        path: "withdraw",
+        element: <WithdrawalPage.Element />,
+      },
+      {
+        path: "withdrawal",
+        element: <WithdrawalPage.Element />,
+      },
+      {
+        path: "withdraw-funds",
+        element: <WithdrawalPage.Element />,
+      },
+      {
+        path: "withdraw_funds",
+        element: <WithdrawalPage.Element />,
+      },
+      {
+        path: "deposit",
+        element: <DepositPage.Element />,
+      },
+      {
+        path: "deposit-funds",
+        element: <DepositPage.Element />,
+      },
+      {
+        path: "deposit_funds",
+        element: <DepositPage.Element />,
+      },
+      {
+        path: "change-password",
+        element: <ChangePasswordPage.Element />,
+      },
+      {
+        path: "change_password",
+        element: <ChangePasswordPage.Element />,
+      },
+      {
+        path: "changePassword",
+        element: <ChangePasswordPage.Element />,
+      },
+      {
+        path: "download-apk",
+        element: <MaintenancePage.Element title="Download APK" />,
+      },
+      {
+        path: "blogs-news",
+        element: <MaintenancePage.Element title="Blogs & News" />,
+      },
+      {
+        path: "blogs",
+        element: <MaintenancePage.Element title="Blogs & News" />,
+      },
+      {
+        path: "news",
+        element: <MaintenancePage.Element title="Blogs & News" />,
+      },
+      {
+        path: "responsible-gambling",
+        element: <MaintenancePage.Element title="Responsible Gambling" />,
+      },
+      {
+        path: "privacy-policy",
+        element: <MaintenancePage.Element title="Privacy Policy" />,
+      },
+      {
+        path: "exclusion-policy",
+        element: <MaintenancePage.Element title="Exclusion Policy" />,
+      },
+      {
+        path: "rules-regulations",
+        element: <MaintenancePage.Element title="Rules & Regulations" />,
+      },
+      {
+        path: "maintenance",
+        element: <MaintenancePage.Element />,
+      },
+      {
         path: "kuber/*",
         element: <Navigate to="/" replace />,
       },
     ],
+  },
+  {
+    path: "/game-lobby",
+    element: <GameLobby.Element />,
   },
 ]);
 

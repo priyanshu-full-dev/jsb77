@@ -1,10 +1,25 @@
+import PropTypes from "prop-types";
 import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { TRENDING_GAMES_DATA } from "../data/trendingGamesData";
 
-export default function Trendinggame() {
+export default function Trendinggame({ games = [], onGameClick }) {
   const navigate = useNavigate();
   const scrollRef = useRef(null);
+
+  const displayGames = Array.isArray(games) && games.length > 0 ? games : [];
+
+  const handleCardClick = (game) => {
+    if (onGameClick) {
+      onGameClick(game);
+    } else {
+      navigate("/crash");
+    }
+  };
+
+  if (!displayGames || displayGames.length === 0) {
+    return null;
+  }
 
   return (
     <div title="Trending Game" className="py-1 px-[6px] w-full">
@@ -44,28 +59,38 @@ export default function Trendinggame() {
           className="py-2.5 px-2.5 transition-all ease-in-out duration-200 w-full h-max overflow-x-auto no-scrollbar scrollSmooth"
         >
           <div className="grid grid-rows-2 grid-flow-col gap-1 w-max md:w-full">
-            {TRENDING_GAMES_DATA.map((game) => (
-              <div
-                key={game.id}
-                onClick={() => navigate(`/casino-play/${game.id}`)}
-                className="w-[108px] sm:w-[215px] aspect-[0.79] bg-transparent flex flex-col transition-all ease-in-out duration-200 relative overflow-hidden rounded-[4px] cursor-pointer"
-              >
-                <div className="aspect-[0.79] h-full">
-                  <img
-                    src={game.image}
-                    width="500"
-                    height="auto"
-                    className="w-full h-full object-cover rounded-[6px] hover:scale-[103%] transition-all ease-in-out duration-200"
-                    alt={game.title}
-                    loading="lazy"
-                    title={game.title}
-                  />
+            {displayGames.map((game, idx) => {
+              const gameImg = game.image || game.img || "/placeholder.svg";
+              return (
+                <div
+                  key={game.id || game.gameId || idx}
+                  onClick={() => handleCardClick(game)}
+                  className="w-[108px] sm:w-[215px] aspect-[0.79] bg-transparent flex flex-col transition-all ease-in-out duration-200 relative overflow-hidden rounded-[4px] cursor-pointer"
+                >
+                  <div className="aspect-[0.79] h-full">
+                    <img
+                      src={gameImg}
+                      width="500"
+                      height="auto"
+                      className="w-full h-full object-cover rounded-[6px] hover:scale-[103%] transition-all ease-in-out duration-200"
+                      alt={game.name || game.title || "Trending Game"}
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.src = "/assets/aviator.png";
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
     </div>
   );
 }
+
+Trendinggame.propTypes = {
+  games: PropTypes.array,
+  onGameClick: PropTypes.func,
+};

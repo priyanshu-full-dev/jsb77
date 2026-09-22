@@ -1,22 +1,89 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { placeBet } from "../../socketClient";
 import { handleCancelPlaceBet } from "../../redux/slices/placeBetSlice";
 import { updateAvailableBalance, updateExposureBalance } from "../../redux/slices/userSlice";
+import { fetchBets } from "../../redux/slices/betsSlice";
+import { useTheme } from "../context/ThemeContext";
 
-const STAKE_PRESETS = [
-  { label: "+ 100", value: 100 },
-  { label: "+ 200", value: 200 },
-  { label: "+ 500", value: 500 },
-  { label: "+ 1,000", value: 1000 },
-  { label: "+ 2,500", value: 2500 },
-  { label: "+ 5,000", value: 5000 },
-  { label: "+ 10,000", value: 10000 },
-  { label: "+ 25,000", value: 25000 },
-  { label: "+ 50,000", value: 50000 },
-  { label: "+ 1,00,000", value: 100000 },
-];
+export function calculateMargins(markettype, betType, selectedOdds, betStake, betSize = 100) {
+  const stake = Number(betStake);
+  const odds = Number(selectedOdds);
+  let favourMargin = 0;
+  let againstMargin = 0;
+  const isBack = String(betType || "").toLowerCase() === "back";
+
+  if (
+    markettype === "Match Odds" ||
+    markettype === "Horse Race" ||
+    markettype === "Greyhound Race" ||
+    markettype === "Winner"
+  ) {
+    if (isBack) {
+      favourMargin = Number(((odds - 1) * stake).toFixed(2));
+      againstMargin = -stake;
+    } else {
+      favourMargin = stake;
+      againstMargin = Number((-((odds - 1) * stake)).toFixed(2));
+    }
+  } else if (markettype === "Bookmaker") {
+    if (isBack) {
+      favourMargin = Number(((odds * stake) / 100).toFixed(2));
+      againstMargin = -stake;
+    } else {
+      favourMargin = stake;
+      againstMargin = Number((-((odds * stake) / 100)).toFixed(2));
+    }
+  } else if (markettype === "Fancy") {
+    const pl = (parseFloat(betSize) / 100) * stake;
+    if (isBack) {
+      favourMargin = Number(pl.toFixed(2));
+      againstMargin = -stake;
+    } else {
+      favourMargin = stake;
+      againstMargin = Number((-pl).toFixed(2));
+    }
+  } else if (markettype === "Casino") {
+    if (isBack) {
+      favourMargin = Number(((odds - 1) * stake).toFixed(2));
+      againstMargin = -stake;
+    } else {
+      favourMargin = stake;
+      againstMargin = Number((-((odds - 1) * stake)).toFixed(2));
+    }
+  } else {
+    if (isBack) {
+      favourMargin = Number(((odds - 1) * stake).toFixed(2));
+      againstMargin = -stake;
+    } else {
+      favourMargin = stake;
+      againstMargin = Number((-((odds - 1) * stake)).toFixed(2));
+    }
+  }
+  return { favourMargin, againstMargin };
+}
+
+const DEFAULT_STAKE_PRESETS = [50, 200, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000];
+
+const getStoredStakes = () => {
+  try {
+    const saved = localStorage.getItem("kuber_user_stakes");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {
+    // fallback
+  }
+  return DEFAULT_STAKE_PRESETS;
+};
+
+const formatStakeLabel = (val) => {
+  const num = Number(val);
+  return `+ ${num.toLocaleString("en-IN")}`;
+};
 
 const BetSlip = ({
   activeBet,
@@ -34,12 +101,30 @@ const BetSlip = ({
   const isBack = activeBet?.betType === "Back";
   const initialOdds = activeBet?.odds || "1.00";
 
+  // Granular Redux Selectors (Leaf / Primitive nodes)
+  const availableBalance = useSelector((state) => state.user?.userData?.availableBalance ?? 0);
+  const exposureBalance = useSelector((state) => state.user?.exposureBalance ?? 0);
+  const isUserLoggedInState = useSelector((state) => Boolean(state.user?.token || state.user?.userData?.token));
+
   const [odds, setOdds] = useState(initialOdds);
   const [stake, setStake] = useState("");
   const [confirmBet, setConfirmBet] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [countdown, setCountdown] = useState(7);
-  const [isCountingDown, setIsCountingDown] = useState(false);
+  const [, setIsCountingDown] = useState(false);
+  const [userStakes, setUserStakes] = useState(getStoredStakes);
+  const { isDark } = useTheme();
+
+  useEffect(() => {
+    const handleStakesUpdate = () => {
+      setUserStakes(getStoredStakes());
+    };
+    window.addEventListener("kuber_stakes_updated", handleStakesUpdate);
+    window.addEventListener("storage", handleStakesUpdate);
+    return () => {
+      window.removeEventListener("kuber_stakes_updated", handleStakesUpdate);
+      window.removeEventListener("storage", handleStakesUpdate);
+    };
+  }, []);
 
   useEffect(() => {
     const nextOdds = activeBet?.odds || "1.00";
@@ -49,22 +134,22 @@ const BetSlip = ({
     }
   }, [activeBet?.odds, activeBet?.betKey]);
 
-  const updateOdds = (newOdds) => {
+  const updateOdds = useCallback((newOdds) => {
     setOdds(newOdds);
     if (onBetChange) {
       onBetChange({ odds: newOdds, stake });
     }
-  };
+  }, [onBetChange, stake]);
 
-  const updateStake = (newStake) => {
+  const updateStake = useCallback((newStake) => {
     setStake(newStake);
     if (onBetChange) {
       onBetChange({ odds, stake: newStake });
     }
-  };
+  }, [onBetChange, odds]);
 
   // Decrement Odds handler
-  const handleDecrementOdds = () => {
+  const handleDecrementOdds = useCallback(() => {
     const val = parseFloat(odds) || 0;
     if (val <= 1.01) return;
     let nextVal;
@@ -90,10 +175,10 @@ const BetSlip = ({
       nextVal = (val - 10).toFixed(0);
     }
     updateOdds(nextVal);
-  };
+  }, [odds, updateOdds]);
 
   // Increment Odds handler
-  const handleIncrementOdds = () => {
+  const handleIncrementOdds = useCallback(() => {
     const val = parseFloat(odds) || 0;
     let nextVal;
     if (val < 2) {
@@ -118,58 +203,97 @@ const BetSlip = ({
       nextVal = (val + 10).toFixed(0);
     }
     updateOdds(nextVal);
-  };
+  }, [odds, updateOdds]);
 
   // Handle stake additions
-  const handleAddStake = (val) => {
+  const handleAddStake = useCallback((val) => {
     const curr = Number(stake) || 0;
     const nextStake = String(curr + val);
     updateStake(nextStake);
-  };
+  }, [stake, updateStake]);
 
   // Min, Max, Clear
-  const handleMin = () => updateStake(String(activeBet?.min || min || 100));
-  const handleMax = () => updateStake(String(activeBet?.max || max || 100000));
-  const handleClear = () => updateStake("");
+  const handleMin = useCallback(() => updateStake(String(activeBet?.min || min || 100)), [activeBet?.min, min, updateStake]);
+  const handleMax = useCallback(() => updateStake(String(activeBet?.max || max || 100000)), [activeBet?.max, max, updateStake]);
+  const handleClear = useCallback(() => updateStake(""), [updateStake]);
 
-  // Profit / Exposure Calculation
-  const profit = useMemo(() => {
+  // Live Profit and Liability Calculation (Back & Lay, Fancy, Bookmaker, Casino, Racing)
+  const { profit, liability, favourMargin, againstMargin } = useMemo(() => {
     const numStake = Number(stake) || 0;
     const numOdds = parseFloat(odds) || 0;
-    if (numStake <= 0 || numOdds <= 0) return 0;
-
-    const mType = activeBet?.marketType || "Match Odds";
-    if (mType === "Bookmaker") {
-      return isBack ? (numOdds * numStake) / 100 : numStake;
-    } else if (mType === "Fancy") {
-      const sizeVal = parseFloat(activeBet?.size) || 100;
-      return isBack ? (sizeVal / 100) * numStake : numStake;
-    } else {
-      // Match Odds / Toss
-      return isBack ? (numOdds - 1) * numStake : numStake;
+    if (numStake <= 0 || numOdds <= 0) {
+      return { profit: 0, liability: 0, favourMargin: 0, againstMargin: 0 };
     }
-  }, [stake, odds, isBack, activeBet?.marketType, activeBet?.size]);
 
-  // Place Bet submission
+    const mType = activeBet?.marketType || activeBet?.markettype || activeBet?.market || "Match Odds";
+    const bType = isBack ? "Back" : "Lay";
+    const bSize = parseFloat(activeBet?.size) || 100;
+
+    const margins = calculateMargins(mType, bType, numOdds, numStake, bSize);
+    return {
+      profit: margins.favourMargin,
+      liability: Math.abs(margins.againstMargin),
+      favourMargin: margins.favourMargin,
+      againstMargin: margins.againstMargin,
+    };
+  }, [stake, odds, isBack, activeBet?.marketType, activeBet?.markettype, activeBet?.market, activeBet?.size]);
+
+  // Place Bet submission with Strict Pre-Flight Validations
   const handlePlaceBet = async () => {
-    const numStake = Number(stake) || 0;
-    const minVal = activeBet?.min || min || 100;
-    const maxVal = activeBet?.max || max || 100000;
+    // 1. Market Suspended Pre-flight Check
+    if (activeBet?.isSuspended || activeBet?.status === "SUSPENDED" || activeBet?.status === "BALL RUNNING") {
+      toast.warning("Market is currently suspended or inactive");
+      return;
+    }
 
+    const numStake = Number(stake) || 0;
+    const numOdds = parseFloat(odds) || 0;
+    const minVal = Number(activeBet?.min || min || 100);
+    const maxVal = Number(activeBet?.max || max || 100000);
+
+    // 2. Stake Amount Validity
     if (!numStake || numStake <= 0) {
       toast.warning("Please enter a valid stake amount");
       return;
     }
 
+    // 3. Min & Max Limits Check
     if (numStake < minVal || numStake > maxVal) {
-      toast.warning(`Bet must be between ${minVal.toLocaleString()} - ${maxVal.toLocaleString()}`);
+      toast.warning(`Bet must be between ₹${minVal.toLocaleString()} - ₹${maxVal.toLocaleString()}`);
       return;
     }
 
+    // 4. Sport-wise Max Odds Limits (Cricket: 20, Soccer: 15, Tennis: 10)
+    const sType = String(sportId || activeBet?.sportId || "4");
+    const maxAllowedOdds = sType === "4" ? 20 : sType === "1" ? 15 : sType === "2" ? 10 : 50;
+    if (numOdds > maxAllowedOdds && activeBet?.marketType === "Match Odds") {
+      toast.warning(`Maximum odds allowed for this sport is ${maxAllowedOdds}`);
+      return;
+    }
+
+    // 5. User Authentication Pre-flight Check
     const token = localStorage.getItem("token") || localStorage.getItem("userId");
-    if (!token) {
-      toast.info("Please login to place bets");
+    if (!token && !isUserLoggedInState) {
+      toast.error("Please login to place bet");
       window.dispatchEvent(new Event("kuber_open_login"));
+      return;
+    }
+
+    // 6. Strict Balance & Liability Validation
+    const numAvail = Number(availableBalance) || 0;
+    const numExpo = Number(exposureBalance) || 0;
+    const usableBalance = numAvail - numExpo;
+    const requiredAmount = isBack ? numStake : (liability || (numOdds - 1) * numStake);
+
+    if (numAvail <= 0 || usableBalance <= 0) {
+      toast.error("Insufficient Balance. Please deposit funds to play.");
+      return;
+    }
+
+    if (usableBalance < requiredAmount) {
+      toast.error(
+        `Insufficient Balance! Required: ₹${requiredAmount.toFixed(2)}, Available: ₹${Math.max(0, usableBalance).toFixed(2)}`
+      );
       return;
     }
 
@@ -183,24 +307,31 @@ const BetSlip = ({
 
     try {
       const betPayload = {
-        type: activeBet?.betType,
-        event: eventName || activeBet?.eventName,
-        eventId: eventId || activeBet?.eventId,
-        eventType: sportId || activeBet?.sportId || "4",
-        sportsName: currentSport || "cricket",
-        market: activeBet?.marketType || "Match Odds",
-        markettype: activeBet?.marketType || "Match Odds",
-        marketId: activeBet?.marketId || `${sportId}-${eventId}`,
-        selectionId: activeBet?.selectionId,
-        selection: activeBet?.runnerName,
-        price: odds,
-        oddsReq: odds,
+        type: isBack ? "Back" : "Lay",
+        event: eventName || activeBet?.eventName || activeBet?.event,
+        eventId: String(eventId || activeBet?.eventId || ""),
+        matchId: String(eventId || activeBet?.eventId || ""),
+        eventType: String(sportId || activeBet?.sportId || activeBet?.eventType || "4"),
+        sportsName: currentSport || activeBet?.sportsName || "cricket",
+        market: activeBet?.marketType || activeBet?.market || "Match Odds",
+        markettype: activeBet?.marketType || activeBet?.markettype || "Match Odds",
+        marketId: String(activeBet?.marketId || `${sportId}-${eventId}`),
+        legueId: String(activeBet?.competitionId || competitionId || activeBet?.legueId || "0"),
+        selectionId: String(activeBet?.selectionId ?? ""),
+        selection: activeBet?.runnerName || activeBet?.selection || "",
+        price: String(odds),
+        oddsReq: String(odds),
         stake: String(numStake),
+        againstMargin: String(Math.abs(againstMargin)),
+        favourMargin: String(favourMargin),
+        roundId: activeBet?.roundId || activeBet?.mid || "",
+        runners: activeBet?.runners || [],
+        runnersCount: activeBet?.runnersCount || 0,
         placeTime: new Date().toISOString(),
       };
 
       const res = await placeBet(betPayload);
-      if (res?.success) {
+      if (res?.success || res?.statusCode === 200 || res?.status === "success") {
         toast.success(res?.message || "Bet placed successfully!");
         if (res?.userData?.availableBalance !== undefined) {
           dispatch(updateAvailableBalance(res.userData.availableBalance));
@@ -208,14 +339,17 @@ const BetSlip = ({
         if (res?.exposure !== undefined) {
           dispatch(updateExposureBalance(res.exposure));
         }
+        
+        // Refresh open bets list immediately so open bets count updates from 0 to 1, 2, etc.
+        dispatch(fetchBets());
+
         dispatch(handleCancelPlaceBet());
         if (onClose) onClose();
       } else {
-        toast.error(res?.message || "Failed to place bet. Please try again.");
+        toast.warning(res?.message || "Failed to place bet. Please try again.");
       }
     } catch (err) {
       console.warn("Place bet error:", err);
-      // If socket failed, give feedback
       toast.error(err?.message || "Bet could not be placed. Check connection or balance.");
     } finally {
       setLoading(false);
@@ -230,34 +364,60 @@ const BetSlip = ({
 
   const isStakeValid = Number(stake) > 0;
 
+  const maxStakeDisplay = useMemo(() => {
+    const raw = activeBet?.max ?? max ?? 100000;
+    const num = Number(raw);
+    return isNaN(num) || num <= 0 ? "100,000" : num.toLocaleString();
+  }, [activeBet?.max, max]);
+
   return (
     <span className="col-span-12 h-max w-full">
       <div
         title="Bet Slip"
         id="betSlipPlaceorder"
-        className={`w-full bg-white dark:bg-[#1c1f2b] text-selection-none border-[2px] border-b-[5px] font-lato origin-top transition-all ease-in-out p-3 rounded-sm scaleVerticalOpen ${
+        style={{
+          backgroundColor: isDark ? "#1c1f2b" : "#ffffff",
+          color: isDark ? "#ffffff" : "#111827",
+        }}
+        className={`w-full text-selection-none border-[2px] border-b-[5px] font-lato origin-top transition-all ease-in-out p-3 rounded-sm scaleVerticalOpen ${
           isBack ? "border-backBtn" : "border-layBtn"
         }`}
       >
         {/* Top Part: ODDS & STAKE inputs */}
         <div id="topPartOfBetSlip" title="Bet Slip Top Part" className="grid grid-cols-12 pt-[2px] gap-x-[15px]">
-          <span className="col-span-6 text-[10px] text-text_Ternary-new dark:text-gray-300 font-normal">ODDS</span>
+          <span
+            style={{ color: isDark ? "#cbd5e1" : "#1f2937" }}
+            className="col-span-6 text-[10px] font-bold uppercase tracking-wider"
+          >
+            ODDS
+          </span>
           <div className="col-span-6 w-full flex items-center justify-between">
-            <span className="text-[10px] text-text_Ternary-new dark:text-gray-300 font-normal text-start pl-1">STAKE</span>
+            <span
+              style={{ color: isDark ? "#cbd5e1" : "#1f2937" }}
+              className="text-[10px] font-bold uppercase tracking-wider text-start pl-1"
+            >
+              STAKE
+            </span>
           </div>
 
-          {/* Odds Stepper: [-] [1.04] [+] */}
+          {/* Odds Stepper: [-] [60] [+] */}
           <span title="Odds" className="col-span-6 pt-1.5 w-full">
             <div className="grid grid-cols-12 min-h-[35px]">
               <span className="col-span-12 h-full pr-1 overflow-hidden">
-                <div className="flex items-center justify-center bg-[#dedede] dark:bg-[#252836] rounded-[4px] overflow-hidden h-[36px]">
+                <div
+                  style={{
+                    backgroundColor: isDark ? "#252836" : "#ffffff",
+                    borderColor: isDark ? "#323647" : "#94a3b8",
+                  }}
+                  className="flex items-center justify-center border rounded-[4px] overflow-hidden h-[36px]"
+                >
                   <button
                     onClick={handleDecrementOdds}
                     type="button"
                     title="Decrease Odds"
-                    className="relative rounded-l-[4px] h-full w-[42px] min-w-[38px] flex items-center justify-center bg-placeBetBtnGrd text-white cursor-pointer active:opacity-80 transition select-none"
+                    className="relative rounded-l-[3px] h-full w-[36px] min-w-[32px] flex items-center justify-center bg-placeBetBtnGrd text-white cursor-pointer active:opacity-80 transition select-none"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="4" viewBox="0 0 18 4" fill="none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="3" viewBox="0 0 18 4" fill="none">
                       <path
                         d="M16.3363 3.1535H1.66367C1.02639 3.1535 0.51001 2.63713 0.51001 1.99985C0.51001 1.36257 1.02639 0.846191 1.66367 0.846191H16.3363C16.9736 0.846191 17.49 1.36257 17.49 1.99985C17.49 2.63713 16.9736 3.1535 16.3363 3.1535Z"
                         fill="#ffffff"
@@ -269,7 +429,8 @@ const BetSlip = ({
                     id="odd-input"
                     aria-label="Odds input"
                     inputMode="decimal"
-                    className="block w-full focus:outline-none bg-transparent text-sm md:text-base font-bold text-center text-gray-900 dark:text-white border-0 py-1"
+                    style={{ color: isDark ? "#ffffff" : "#111827" }}
+                    className="block w-full focus:outline-none bg-transparent text-sm md:text-base font-bold text-center border-0 py-1"
                     autoComplete="off"
                     type="number"
                     step="0.01"
@@ -280,9 +441,9 @@ const BetSlip = ({
                     onClick={handleIncrementOdds}
                     type="button"
                     title="Increase Odds"
-                    className="relative rounded-r-[4px] h-full w-[42px] min-w-[38px] flex items-center justify-center bg-placeBetBtnGrd text-white cursor-pointer active:opacity-80 transition select-none"
+                    className="relative rounded-r-[3px] h-full w-[36px] min-w-[32px] flex items-center justify-center bg-placeBetBtnGrd text-white cursor-pointer active:opacity-80 transition select-none"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 18 18" fill="none">
                       <path
                         d="M8.99997 17.4897C8.36269 17.4897 7.84631 16.9734 7.84631 16.3361V1.66342C7.84631 1.02614 8.36269 0.509766 8.99997 0.509766C9.63725 0.509766 10.1536 1.02614 10.1536 1.66342V16.3361C10.1536 16.9734 9.63725 17.4897 8.99997 17.4897Z"
                         fill="#ffffff"
@@ -303,8 +464,13 @@ const BetSlip = ({
             <input
               id="stakeInput"
               inputMode="numeric"
-              className="focus:outline-none bg-[#dedede] dark:bg-[#252836] text-sm md:text-base font-bold w-full h-[36px] text-center flex items-center justify-center border border-transparent text-gray-900 dark:text-white rounded-[4px] placeholder:text-gray-500 focus:border-[#c10931] active:border-[#c10931]"
-              placeholder={`Max : ${(activeBet?.max || max || 100000).toLocaleString()}`}
+              style={{
+                backgroundColor: isDark ? "#252836" : "#e2e8f0",
+                borderColor: isDark ? "#323647" : "transparent",
+                color: isDark ? "#ffffff" : "#111827",
+              }}
+              className="focus:outline-none border text-sm md:text-base font-bold w-full h-[36px] text-center flex items-center justify-center rounded-[4px] placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-[#c10931] active:border-[#c10931]"
+              placeholder={`Max : ${maxStakeDisplay}`}
               autoComplete="off"
               pattern="\d*"
               type="number"
@@ -315,16 +481,22 @@ const BetSlip = ({
         </div>
 
         {/* Quick Stake Preset Buttons Grid */}
-        <div className="mt-[15px] p-2.5 rounded-md border border-[#d1d5db] dark:border-[#2e3344] bg-[#e5e7eb] dark:bg-[#1a1d29]">
+        <div
+          style={{
+            backgroundColor: isDark ? "#1a1d29" : "#e4e7ec",
+            borderColor: isDark ? "#2e3344" : "#cbd5e1",
+          }}
+          className="mt-[15px] p-2.5 rounded-md border"
+        >
           <div className="grid grid-cols-12 gap-x-1.5 gap-y-1.5">
-            {STAKE_PRESETS.map((preset) => (
+            {userStakes.map((val, idx) => (
               <button
-                key={preset.value}
-                onClick={() => handleAddStake(preset.value)}
-                className="inline-block leading-normal relative transition duration-150 ease-in-out col-span-4 w-full overflow-hidden text-[12px] font-bold rounded-[4px] bg-bg_text_brand_primary-new text-white text-center py-2 cursor-pointer active:scale-95 shadow-sm"
+                key={`${val}-${idx}`}
+                onClick={() => handleAddStake(Number(val))}
+                className="inline-block leading-normal relative transition duration-150 ease-in-out col-span-4 w-full overflow-hidden text-[12px] font-bold rounded-[4px] bg-[#9e092f] hover:bg-[#830827] text-white text-center py-2 cursor-pointer active:scale-95 shadow-sm"
                 type="button"
               >
-                <span>{preset.label}</span>
+                <span>{formatStakeLabel(val)}</span>
               </button>
             ))}
           </div>
@@ -347,8 +519,7 @@ const BetSlip = ({
             </button>
             <button
               onClick={() => {
-                const custom = window.prompt("Enter quick stake amount:", "1000");
-                if (custom && !isNaN(custom)) handleAddStake(Number(custom));
+                window.location.href = "/settings";
               }}
               className="inline-block leading-normal relative overflow-hidden transition duration-150 ease-in-out col-span-3 w-full text-[11px] font-bold rounded-[4px] text-white py-2 bg-editStakesGrd cursor-pointer active:scale-95 shadow-sm"
               type="button"
@@ -371,9 +542,14 @@ const BetSlip = ({
           <button
             type="button"
             onClick={handleCancel}
-            className="leading-normal relative overflow-hidden transition duration-150 ease-in-out px-5 py-2.5 w-[50%] flex items-center justify-center min-h-[46px] text-sm bg-white dark:bg-transparent text-[#737373] font-bold border-[1.5px] border-[#e90038] rounded-md cursor-pointer hover:bg-red-50 dark:hover:bg-red-500/10 active:scale-95"
+            style={{
+              backgroundColor: isDark ? "transparent" : "#ffffff",
+              color: isDark ? "#cbd5e1" : "#64748b",
+              borderColor: "#e11d48",
+            }}
+            className="leading-normal relative overflow-hidden transition duration-150 ease-in-out px-5 py-2.5 w-[50%] flex items-center justify-center min-h-[46px] text-sm font-bold border-[1.5px] rounded-md cursor-pointer hover:bg-red-50 dark:hover:bg-red-500/10 active:scale-95"
           >
-            <span className="text-[#737373] dark:text-gray-300 font-bold text-base leading-5">Cancel Bet</span>
+            <span className="font-bold text-base leading-5">Cancel Bet</span>
           </button>
 
           <div className="w-[50%] h-max">
@@ -381,10 +557,15 @@ const BetSlip = ({
               disabled={!isStakeValid || loading}
               onClick={handlePlaceBet}
               type="button"
-              className={`leading-normal overflow-hidden transition duration-150 ease-in-out py-1 relative w-full flex min-h-[46px] px-3 rounded-md font-medium border-0 flex-row items-center justify-between bg-placeBetBtnGrd ${
+              style={
+                !isStakeValid || loading
+                  ? { backgroundColor: isDark ? "#475569" : "#94a3b8" }
+                  : {}
+              }
+              className={`leading-normal overflow-hidden transition duration-150 ease-in-out py-1 relative w-full flex min-h-[46px] px-3 rounded-md font-medium border-0 flex-row items-center justify-between ${
                 isStakeValid && !loading
-                  ? "cursor-pointer hover:brightness-110 active:scale-95"
-                  : "opacity-90 cursor-pointer"
+                  ? "bg-placeBetBtnGrd cursor-pointer hover:brightness-110 active:scale-95 shadow-md"
+                  : "opacity-90 cursor-not-allowed"
               }`}
             >
               <div className="flex items-start justify-start flex-col">
@@ -394,13 +575,13 @@ const BetSlip = ({
                 <span className="text-xs text-white">
                   <div>
                     <span>Profit : </span>
-                    <span className="font-semibold">{profit.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</span>
+                    <span className="font-semibold">{profit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                 </span>
               </div>
 
               {/* Stopwatch countdown icon & text in white */}
-              <span className="text-xs flex items-center justify-center gap-x-1 text-white">
+              <span className="text-xs flex items-center justify-center gap-x-1 text-white opacity-80">
                 <span>
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 12 12" fill="none">
                     <g clipPath="url(#clip0_2144_3162)">
@@ -416,7 +597,7 @@ const BetSlip = ({
                     </defs>
                   </svg>
                 </span>
-                <span className="font-bold text-sm text-white">7s</span>
+                <span className="font-bold text-sm text-white">0s</span>
               </span>
             </button>
           </div>
@@ -424,7 +605,12 @@ const BetSlip = ({
 
         {/* Toggle Switch: Confirm bet before placing */}
         <div className="flex items-center justify-between w-full px-1 pt-3.5">
-          <span className="text-[13px] text-gray-800 dark:text-gray-200 font-medium">Confirm bet before placing</span>
+          <span
+            style={{ color: isDark ? "#e2e8f0" : "#1f2937" }}
+            className="text-[13px] font-medium"
+          >
+            Confirm bet before placing
+          </span>
           <label className="inline-flex items-center cursor-pointer relative">
             <input
               className="sr-only peer"
@@ -432,12 +618,31 @@ const BetSlip = ({
               checked={confirmBet}
               onChange={(e) => setConfirmBet(e.target.checked)}
             />
-            <div className={`relative border-[0.5px] font-lato rounded-full h-7 w-14 transition-colors duration-200 ${
-              confirmBet ? "bg-[#40af52] border-[#40af52]" : "bg-white dark:bg-gray-700 border-gray-400"
-            }`}>
+            <div
+              style={{
+                backgroundColor: confirmBet
+                  ? "#40af52"
+                  : isDark
+                    ? "#374151"
+                    : "#ffffff",
+                borderColor: confirmBet
+                  ? "#40af52"
+                  : isDark
+                    ? "#6b7280"
+                    : "#9ca3af",
+              }}
+              className="relative border-[0.5px] font-lato rounded-full h-7 w-14 transition-colors duration-200"
+            >
               <span
+                style={{
+                  color: confirmBet
+                    ? "#ffffff"
+                    : isDark
+                      ? "#d1d5db"
+                      : "#374151",
+                }}
                 className={`absolute top-1/2 transform -translate-y-1/2 font-bold text-[10px] ${
-                  confirmBet ? "left-[7px] text-white" : "right-[6px] text-gray-600 dark:text-gray-300"
+                  confirmBet ? "left-[7px]" : "right-[6px]"
                 }`}
               >
                 {confirmBet ? "ON" : "OFF"}
@@ -453,6 +658,19 @@ const BetSlip = ({
       </div>
     </span>
   );
+};
+
+BetSlip.propTypes = {
+  activeBet: PropTypes.any,
+  onClose: PropTypes.func,
+  onBetChange: PropTypes.func,
+  min: PropTypes.number,
+  max: PropTypes.number,
+  sportId: PropTypes.any,
+  competitionId: PropTypes.any,
+  eventId: PropTypes.any,
+  eventName: PropTypes.string,
+  currentSport: PropTypes.string,
 };
 
 export default BetSlip;

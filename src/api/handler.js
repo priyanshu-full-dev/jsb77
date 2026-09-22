@@ -7,9 +7,13 @@ export const apiGET = async (endPoint, params, cancelToken) => {
         const res = await API.get(endPoint, config);
         return { data: res.data, success: true };
     } catch (error) {
-        const data = error?.response?.data ?? { message: error?.message };
         const code = error?.response?.status;
-        console.error("GET request error:", error);  // Optional: logging for debugging
+        // 404 is normal for empty lists / new users with zero transactions
+        if (code === 404) {
+            return { data: [], success: true, code: 404 };
+        }
+        const data = error?.response?.data ?? { message: error?.message };
+        console.error("GET request error:", error);
         return { success: false, data, code };
     }
 };

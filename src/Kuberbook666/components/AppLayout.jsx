@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import Header from "./Header";
 import TopNavChips from "./TopNavChips";
@@ -12,8 +12,9 @@ import LoginModal from "./AuthModals/LoginModal";
 import SignupModal from "./AuthModals/SignupModal";
 import Footer from "./Footer";
 import "../styles/kuber.css";
+import { ThemeProvider, useTheme } from "../context/ThemeContext";
 
-import { fetchMatchesByEventId } from "../../redux/slices/matchSlice";
+import { fetchAllMatchesFast } from "../../redux/slices/matchSlice";
 import {
   subscribeToMatchData,
   subscribeToKabaddiMatchesData,
@@ -24,9 +25,10 @@ import {
 } from "../../socketClient";
 import { getUserId } from "../../utils/helper/commonSelectors";
 
-const AppLayout = () => {
+const AppLayoutContent = () => {
   const dispatch = useDispatch();
   const location = useLocation();
+  const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [profileDrawerOpen, setProfileDrawerOpen] = useState(false);
   const [depositModalOpen, setDepositModalOpen] = useState(false);
@@ -35,21 +37,16 @@ const AppLayout = () => {
 
   const isLoggedIn = useSelector((state) => state?.user?.isLoggedIn);
   const currentUserId = useSelector(getUserId());
-
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem("kuber_theme") || "dark";
-  });
+  const { theme, toggleTheme } = useTheme();
 
   // Log active route for developer inspection
   useEffect(() => {
     console.log(`📍 [KUBER ACTIVE ROUTE]: "${location.pathname}"`);
   }, [location.pathname]);
 
-  // Fast REST fetch for instant zero-latency loading
+  // Ultra-fast parallel fetch for instant zero-latency loading
   useEffect(() => {
-    dispatch(fetchMatchesByEventId({ eventId: 4, sport: "cricket" }));
-    dispatch(fetchMatchesByEventId({ eventId: 1, sport: "soccer" }));
-    dispatch(fetchMatchesByEventId({ eventId: 2, sport: "tennis" }));
+    dispatch(fetchAllMatchesFast());
   }, [dispatch]);
 
   // Real-time Socket.IO subscriptions for live in-play odds and events
@@ -92,16 +89,25 @@ const AppLayout = () => {
     }
   }, [currentUserId]);
 
+  // Non-blocking background storage using requestIdleCallback
   useEffect(() => {
-    localStorage.setItem("kuber_theme", theme);
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-      document.documentElement.setAttribute("data-theme", "dark");
+    const initBackgroundSettings = () => {
+      try {
+        if (!localStorage.getItem("kuber_settings")) {
+          const defaultSettings = { defaultStake: 100, oddsHighlight: true };
+          localStorage.setItem("kuber_settings", JSON.stringify(defaultSettings));
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    if ("requestIdleCallback" in window) {
+      window.requestIdleCallback(initBackgroundSettings);
     } else {
-      document.documentElement.classList.remove("dark");
-      document.documentElement.setAttribute("data-theme", "light");
+      setTimeout(initBackgroundSettings, 1000);
     }
-  }, [theme]);
+  }, []);
 
   useEffect(() => {
     const handleOpenLogin = () => setLoginOpen(true);
@@ -121,10 +127,6 @@ const AppLayout = () => {
       window.removeEventListener("kuber_open_profile", handleOpenProfile);
     };
   }, []);
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
-  };
 
   return (
     <div
@@ -155,17 +157,19 @@ const AppLayout = () => {
       {/* Floating Support (WhatsApp & Telegram) */}
       <FloatingSupport />
 
-      {/* Mobile Bottom Navigation */}
-      <BottomNav
-        onOpenMenu={() => setDrawerOpen(true)}
-        onOpenProfile={() => {
-          if (isLoggedIn) {
-            setProfileDrawerOpen(true);
-          } else {
-            setLoginOpen(true);
-          }
-        }}
-      />
+      {/* Mobile Bottom Navigation (Hidden on Affiliate Pages which have their own special mobile footer) */}
+      {!(location.pathname.startsWith("/affiliate") || location.pathname.startsWith("/refer-earn")) && (
+        <BottomNav
+          onOpenMenu={() => setDrawerOpen(true)}
+          onOpenProfile={() => {
+            if (isLoggedIn) {
+              setProfileDrawerOpen(true);
+            } else {
+              setLoginOpen(true);
+            }
+          }}
+        />
+      )}
 
       {/* Left Slide-out Sidebar Drawer (Hamburger) */}
       <SidebarDrawer
@@ -186,7 +190,10 @@ const AppLayout = () => {
         isOpen={profileDrawerOpen}
         onClose={() => setProfileDrawerOpen(false)}
         onOpenDeposit={() => setDepositModalOpen(true)}
-        onOpenWithdraw={() => alert("Withdraw modal / transfer")}
+        onOpenWithdraw={() => {
+          setProfileDrawerOpen(false);
+          navigate("/withdraw");
+        }}
       />
 
       {/* Deposit Modal */}
@@ -214,6 +221,14 @@ const AppLayout = () => {
         }}
       />
     </div>
+  );
+};
+
+const AppLayout = () => {
+  return (
+    <ThemeProvider>
+      <AppLayoutContent />
+    </ThemeProvider>
   );
 };
 

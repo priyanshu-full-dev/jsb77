@@ -7,6 +7,7 @@ const ProfileDrawer = ({ isOpen, onClose, onOpenDeposit, onOpenWithdraw }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const userData = useSelector((state) => state?.user?.userData);
+  const exposureBalance = useSelector((state) => state?.user?.exposureBalance);
 
   const username = userData?.username || userData?.name || "wasimkhan";
   const phone = userData?.mobile || userData?.phone || "+91-8292463648";
@@ -17,7 +18,11 @@ const ProfileDrawer = ({ isOpen, onClose, onOpenDeposit, onOpenWithdraw }) => {
         ? userData.balance
         : 0.0;
   const exposure =
-    typeof userData?.exposure === "number" ? userData.exposure : 0.0;
+    typeof exposureBalance === "number"
+      ? exposureBalance
+      : typeof userData?.exposure === "number"
+        ? userData.exposure
+        : 0.0;
 
   // Close drawer on ESC key
   useEffect(() => {
@@ -52,20 +57,15 @@ const ProfileDrawer = ({ isOpen, onClose, onOpenDeposit, onOpenWithdraw }) => {
 
   const handleDepositClick = () => {
     onClose();
-    if (onOpenDeposit) {
-      onOpenDeposit();
-    } else {
-      navigate("/transactions");
-    }
+    navigate("/deposit");
   };
 
   const handleWithdrawClick = () => {
     onClose();
     if (onOpenWithdraw) {
       onOpenWithdraw();
-    } else {
-      navigate("/transactions");
     }
+    navigate("/withdraw");
   };
 
   const handleLinkClick = () => {
@@ -78,14 +78,14 @@ const ProfileDrawer = ({ isOpen, onClose, onOpenDeposit, onOpenWithdraw }) => {
     <>
       {/* Backdrop overlay */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-[2px] z-50 transition-opacity duration-200"
+        className="fixed inset-0 bg-black/60 backdrop-blur-[2px] z-[100] transition-opacity duration-200"
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Right Drawer */}
-      <div className="fixed transition-all ease-in-out openDrawerFromRight origin-left top-0 right-0 z-50 w-[70%] max-w-sm h-full overflow-y-auto bg-bg_Quaternary-side-right shadow-lg">
-        <ul className="overflow-y-auto h-max divide-y">
+      <div className="fixed transition-all ease-in-out openDrawerFromRight origin-left top-0 right-0 z-[100] w-[80%] sm:w-[70%] max-w-sm h-full overflow-y-auto bg-bg_Quaternary-side-right shadow-2xl pb-10">
+        <ul className="overflow-y-auto h-max divide-y pb-16">
           {/* User Mobile & Close Button */}
           <li className="px-3 py-2 flex items-center justify-between">
             <div className="flex items-center justify-start gap-x-1.5">

@@ -23,12 +23,9 @@ const persistConfig = {
   whitelist: [
     "account",
     "user",
-    "marketOdds",
-    "bookmakerOdds",
     "horse",
     "greyhound",
     "site",
-    "matches",
     "betSettingsSlice",
     "intCasino",
     "timezone",
@@ -56,10 +53,13 @@ const persistedReducer = persistReducer(persistConfig, rootReducer);
 const store = configureStore({
   reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({ serializableCheck: false })
+    getDefaultMiddleware({
+      serializableCheck: false,
+      immutableCheck: false,
+    })
       .concat(logoutMiddleware)
       .concat(sagaMiddleware),
-      devTools: import.meta.env.PROD ? false : true,
+  devTools: !import.meta.env.PROD,
 });
 
 export const persistor = persistStore(store);

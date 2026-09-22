@@ -164,8 +164,10 @@ export const ReCallCasinoBalance = (body) =>
   apiPOST(API_URL.ReCallCasinoBalance, body);
 export const createPayment = (body) => apiPOST(API_URL.createPayment, body);
 export const uploadMedia = (body) => apiPOST(API_URL.upload_media, body);
-export const getPaymentsByUserId = (userID) =>
-  apiGET(API_URL.getPaymentsByUserId(userID));
+export const getPaymentsByUserId = (userID) => {
+  if (!userID || userID === "undefined") return Promise.resolve({ data: [], success: true });
+  return apiGET(API_URL.getPaymentsByUserId(userID));
+};
 export const getCasinoList = () => apiGET(API_URL.getListUrl("casino"));
 export const getCasinoData = (casinoType, eventID) =>
   apiGET(API_URL.getCasinoData(casinoType, eventID));
@@ -217,6 +219,7 @@ export const getAffiliateData = (
 };
 export const generatePresignedUrlFromS3Url = (body) =>
   apiPOST(API_URL.generatePresignedUrlFromS3Url, body);
+export { generatePresignedUrl } from "../utils/helper/generatePresignedUrl";
 
 export const launcherUrl = (body) =>
   apiPOST("https://qt.asianexchange.club/api/v1/launcher/launch-url", body);

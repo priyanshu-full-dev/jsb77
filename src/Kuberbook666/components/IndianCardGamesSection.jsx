@@ -1,10 +1,13 @@
+import PropTypes from "prop-types";
 import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { INDIAN_CARD_GAMES_DATA } from "../data/indianCardGamesData";
 
-export default function IndianCardGamesSection() {
+export default function IndianCardGamesSection({ games = [], onGameClick }) {
   const navigate = useNavigate();
   const scrollRef = useRef(null);
+
+  const displayGames = Array.isArray(games) && games.length > 0 ? games : [];
 
   const handleScroll = (direction) => {
     if (scrollRef.current) {
@@ -12,6 +15,18 @@ export default function IndianCardGamesSection() {
       scrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
     }
   };
+
+  const handleCardClick = (game) => {
+    if (onGameClick) {
+      onGameClick(game);
+    } else {
+      navigate("/aura");
+    }
+  };
+
+  if (!displayGames || displayGames.length === 0) {
+    return null;
+  }
 
   return (
     <div title="Indian Card Games" className="py-1 px-[6px] w-full">
@@ -44,7 +59,7 @@ export default function IndianCardGamesSection() {
             </span>
             <div className="flex w-[108.75px] items-center justify-end gap-[5px]">
               <button
-                onClick={() => navigate("/live-casino")}
+                onClick={() => navigate("/aura")}
                 className="inline-block leading-normal relative overflow-hidden transition duration-150 ease-in-out font-lato text-[#6e091d] dark:text-[#ff6b8b] hover:opacity-80 font-bold text-[13px] leading-[18px] cursor-pointer"
                 type="button"
               >
@@ -102,30 +117,54 @@ export default function IndianCardGamesSection() {
           ref={scrollRef}
           className="py-2.5 px-2.5 transition-all ease-in-out duration-200 w-full h-max overflow-x-auto no-scrollbar scrollSmooth"
         >
-          <div className="grid grid-rows-3 grid-flow-col gap-1 w-max md:w-full">
-            {INDIAN_CARD_GAMES_DATA.map((game) => (
-              <div
-                key={game.id}
-                onClick={() => navigate("/live-casino")}
-                className="min-w-[120px] sm:min-w-[140px] md:min-w-[160px] lg:min-w-[180px] xl:min-w-[200px] 2xl:min-w-[220px] flex aspect-square flex-col items-center justify-center cursor-pointer transition-all ease-in-out duration-100"
-              >
-                <div className="min-w-[120px] sm:min-w-[140px] md:min-w-[160px] lg:min-w-[180px] xl:min-w-[200px] 2xl:min-w-[220px] aspect-square max-w-[120px] sm:max-w-[140px] md:max-w-[160px] lg:max-w-[180px] xl:max-w-[200px] 2xl:max-w-[220px] bg-transparent flex flex-col transition-all ease-in-out duration-200 relative overflow-hidden rounded-[4px]">
-                  <div className="min-w-[120px] sm:min-w-[140px] md:min-w-[160px] lg:min-w-[180px] xl:min-w-[200px] 2xl:min-w-[220px] aspect-square">
-                    <img
-                      src={game.image}
-                      alt={game.name}
-                      width="500"
-                      height="auto"
-                      className="w-full h-full object-cover rounded-[6px] hover:scale-[103%] transition-all ease-in-out duration-200"
-                      loading="lazy"
-                    />
-                  </div>
+          {displayGames.length === 0 ? (
+            <div className="grid grid-rows-3 grid-flow-col gap-1.5 w-max">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+                <div
+                  key={n}
+                  className="w-[120px] sm:w-[140px] md:w-[160px] aspect-square rounded-[6px] bg-gray-200 dark:bg-gray-800/60 animate-pulse relative overflow-hidden flex items-center justify-center border border-gray-100 dark:border-gray-800"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent animate-[shimmer_1.5s_infinite]" />
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-rows-3 grid-flow-col gap-1 w-max md:w-full">
+              {displayGames.map((game, idx) => {
+                const gameImg = game.image || game.img || "/placeholder.svg";
+                return (
+                  <div
+                    key={game.id || game.gameId || idx}
+                    onClick={() => handleCardClick(game)}
+                    className="min-w-[120px] sm:min-w-[140px] md:min-w-[160px] lg:min-w-[180px] xl:min-w-[200px] 2xl:min-w-[220px] flex aspect-square flex-col items-center justify-center cursor-pointer transition-all ease-in-out duration-100"
+                  >
+                    <div className="min-w-[120px] sm:min-w-[140px] md:min-w-[160px] lg:min-w-[180px] xl:min-w-[200px] 2xl:min-w-[220px] aspect-square max-w-[120px] sm:max-w-[140px] md:max-w-[160px] lg:max-w-[180px] xl:max-w-[200px] 2xl:max-w-[220px] bg-transparent flex flex-col transition-all ease-in-out duration-200 relative overflow-hidden rounded-[4px]">
+                      <div className="min-w-[120px] sm:min-w-[140px] md:min-w-[160px] lg:min-w-[180px] xl:min-w-[200px] 2xl:min-w-[220px] aspect-square">
+                        <img
+                          src={gameImg}
+                          alt={game.name || game.title || "Card Game"}
+                          width="500"
+                          height="auto"
+                          className="w-full h-full object-cover rounded-[6px] hover:scale-[103%] transition-all ease-in-out duration-200"
+                          loading="lazy"
+                          onError={(e) => {
+                            e.currentTarget.src = "/assets/teenpatti.png";
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
+
+IndianCardGamesSection.propTypes = {
+  games: PropTypes.array,
+  onGameClick: PropTypes.func,
+};

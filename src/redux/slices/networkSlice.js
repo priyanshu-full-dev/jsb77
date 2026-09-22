@@ -3,26 +3,38 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 // Fetch network info (IP, ISP, country, state, city, etc.)
 export const fetchNetworkDetails = createAsyncThunk(
   "network/fetchDetails",
-  async () => {
-    const response = await fetch("https://ipapi.co/json/");
-    const data = await response.json();
+  async (_, thunkAPI) => {
+    try {
+      const response = await fetch("https://ipapi.co/json/");
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const data = await response.json();
 
-    return {
-      ip: data.ip,
-      isp: data.org, // ISP / Organization
-      city: data.city,
-      region: data.region,
-      country: data.country_name,
-      countryCode: data.country_code,
-      timezone: data.timezone,
-      postal: data.postal,
-      latitude: data.latitude,
-      longitude: data.longitude,
-      online: navigator.onLine,
-      type: navigator.connection?.effectiveType || "unknown",
-      downlink: navigator.connection?.downlink || null,
-      timestamp: new Date().toISOString(),
-    };
+      return {
+        ip: data.ip,
+        isp: data.org, // ISP / Organization
+        city: data.city,
+        region: data.region,
+        country: data.country_name,
+        countryCode: data.country_code,
+        timezone: data.timezone,
+        postal: data.postal,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        online: navigator.onLine,
+        type: navigator.connection?.effectiveType || "unknown",
+        downlink: navigator.connection?.downlink || null,
+        timestamp: new Date().toISOString(),
+      };
+    } catch {
+      return {
+        online: navigator.onLine,
+        type: navigator.connection?.effectiveType || "unknown",
+        downlink: navigator.connection?.downlink || null,
+        timestamp: new Date().toISOString(),
+      };
+    }
   }
 );
 

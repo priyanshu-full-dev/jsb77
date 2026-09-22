@@ -185,11 +185,11 @@ const Footer = () => {
         {/* Third Row: App Download Action Buttons (Flex Side-by-Side) */}
         <div className="border-b-[0.5px] border-border_color_primary1 w-full px-3 py-4 flex flex-row items-center justify-center gap-3 sm:gap-4">
           {/* Android App Button */}
-          <button
+          <Link
+            to="/download-apk"
             title="Android App"
             className="flex-1 max-w-[280px] min-h-[52px] flex items-center justify-between p-2 pr-3 bg-bg_scoreAndAndroidAppBtn rounded-lg shadow-lg active:scale-[98%] transition-all duration-300 cursor-pointer"
             aria-label="Download Android App"
-            type="button"
             style={{ backgroundImage: "var(--footer-down-bg-color)" }}
           >
             <div className="flex items-center gap-x-2 min-w-0">
@@ -235,14 +235,14 @@ const Footer = () => {
                 <path d="M5.3673 11.2346L0 5.8673L5.3673 0.5L6.32 1.4527L1.90539 5.8673L6.32 10.2819L5.3673 11.2346Z" fill="#fff"></path>
               </svg>
             </span>
-          </button>
+          </Link>
 
           {/* Score App Button */}
-          <button
+          <Link
+            to="/download-apk"
             title="Score App"
             className="flex-1 max-w-[280px] min-h-[52px] flex items-center justify-between p-2 pr-3 bg-bg_scoreAndAndroidAppBtn rounded-lg shadow-lg active:scale-[98%] transition-all duration-300 cursor-pointer"
             aria-label="Download Score App"
-            type="button"
             style={{ backgroundImage: "var(--footer-down-bg-color)" }}
           >
             <div className="flex items-center gap-x-2 min-w-0">
@@ -276,7 +276,7 @@ const Footer = () => {
                 <path d="M5.3673 11.2346L0 5.8673L5.3673 0.5L6.32 1.4527L1.90539 5.8673L6.32 10.2819L5.3673 11.2346Z" fill="#fff"></path>
               </svg>
             </span>
-          </button>
+          </Link>
         </div>
 
         {/* Fourth Row: Quick Links (2-Column Grid as in screenshot) */}

@@ -7,8 +7,20 @@ export const fetchbookmakerOdds = createAsyncThunk(
       return thunkAPI.rejectWithValue("Missing required params");
     }
     try {
+      const token =
+        localStorage.getItem("token") ||
+        localStorage.getItem("userToken") ||
+        "";
+      const headers = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       const response = await fetch(
-        `https://api.professor.monster/api/v1/fetch-bookmaker-odds/${eventType}/${competitionId}/${eventId}`
+        `https://api.professor.monster/api/v1/fetch-bookmaker-odds/${eventType}/${competitionId}/${eventId}`,
+        { headers }
       );
       if (!response.ok) {
         return thunkAPI.rejectWithValue(`HTTP ${response.status}`);

@@ -5,6 +5,10 @@ import "./App.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import store from "./redux/store";
 import { Provider } from "react-redux";
+import { injectStore } from "./socketClient";
+
+// Inject Redux store into socketClient to prevent circular dependency TDZ errors
+injectStore(store);
 
 const ToastWrapper = React.lazy(() => import("./ToastWrapper"));
 const App = React.lazy(() => import("./App"));

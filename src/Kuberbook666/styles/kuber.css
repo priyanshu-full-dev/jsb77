@@ -6,22 +6,22 @@
   --color-primary: #c10831;
   --color-primary-new: #c10931;
   --color-bg-headerBg-casino: linear-gradient(90deg, #6e081d, #c10931);
-  --color-text-secondary-game: #ffffff;
-  --color-text-ternary2: #9ca3af;
-  --color-bg-quaternary: #1c1f2b;
-  --color-bg-quaternary-new: #151822;
-  --color-bg-quaternary1: #1f2230;
-  --color-bg-foundation: #282c3c;
+  --color-text-secondary-game: #111827;
+  --color-text-ternary2: #6b7280;
+  --color-bg-quaternary: #ffffff;
+  --color-bg-quaternary-new: #f8fafc;
+  --color-bg-quaternary1: #f1f5f9;
+  --color-bg-foundation: #e2e8f0;
   --kb-primary-red: #7c0a0a;
   --kb-primary-dark: #580606;
   --kb-header-gradient: linear-gradient(90deg, #6e081d, #c10931);
   --kb-gold: #f5b300;
   --kb-gold-gradient: linear-gradient(135deg, #ffd700 0%, #ffae00 100%);
-  --kb-body-bg: #0d0e14;
-  --kb-card-bg: #151622;
-  --kb-text-primary: #ffffff;
-  --kb-text-secondary: #9ca3af;
-  --kb-border-color: #272733;
+  --kb-body-bg: #f0f2f5;
+  --kb-card-bg: #ffffff;
+  --kb-text-primary: #111827;
+  --kb-text-secondary: #4b5563;
+  --kb-border-color: #e5e7eb;
   --kb-green: #10b981;
   --kb-blue-odds: #72bbef;
   --kb-pink-odds: #f9a9ba;
@@ -44,6 +44,12 @@
 }
 
 [data-theme="dark"] {
+  --color-text-secondary-game: #ffffff;
+  --color-text-ternary2: #9ca3af;
+  --color-bg-quaternary: #1c1f2b;
+  --color-bg-quaternary-new: #151822;
+  --color-bg-quaternary1: #1f2230;
+  --color-bg-foundation: #282c3c;
   --kb-body-bg: #0d0e14;
   --kb-card-bg: #151622;
   --kb-text-primary: #ffffff;
@@ -118,9 +124,59 @@ div::-webkit-scrollbar {
 }
 
 .kb-skeleton {
-  background: linear-gradient(90deg, #23242e 25%, #2f313f 50%, #23242e 75%);
+  background: linear-gradient(90deg, #181b24 25%, #2a2e3d 50%, #181b24 75%);
   background-size: 200% 100%;
-  animation: kb-shimmer 1.5s infinite;
+  animation: kb-shimmer 1.4s infinite;
+}
+
+[data-theme="light"] .kb-skeleton {
+  background: linear-gradient(90deg, #e2e8f0 25%, #cbd5e1 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: kb-shimmer 1.4s infinite;
+}
+
+@keyframes kb-glow-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 15px rgba(193, 9, 49, 0.4),
+      0 0 30px rgba(245, 179, 0, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 25px rgba(193, 9, 49, 0.8),
+      0 0 50px rgba(245, 179, 0, 0.4);
+  }
+}
+
+.kb-glow-loader {
+  animation: kb-glow-pulse 2s infinite ease-in-out;
+}
+
+@keyframes kb-spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes kb-spin-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+.kb-spin-slow {
+  animation: kb-spin-slow 3s linear infinite;
+}
+
+.kb-spin-reverse {
+  animation: kb-spin-reverse 2s linear infinite;
 }
 
 /* Quick Buttons & Banner helpers */
@@ -420,9 +476,8 @@ div::-webkit-scrollbar {
 }
 
 .bg-bg_ballRunning {
-  background: linear-gradient(90deg, #a5d8ff 0%, #ffc2d1 100%) !important;
+  background: linear-gradient(90deg, #a7d8fd, #f9c9d4) !important;
   color: #111827 !important;
-  font-weight: 700 !important;
   letter-spacing: 0.5px;
 }
 
