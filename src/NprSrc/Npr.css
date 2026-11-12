@@ -1,0 +1,172 @@
+/* =========================================================
+   NPR77 Premium Theme Styles (Pixel-Perfect npr77.live/m/home)
+========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
+
+:root {
+  --npr-blue-header: #003da5;
+  --npr-blue-primary: #0047ba;
+  --npr-blue-dark: #002d7a;
+  --npr-blue-active: #0056df;
+  --npr-blue-light: #eef5ff;
+  --npr-red: #e51b24;
+  --npr-gold: #ffbe18;
+}
+
+.npr-font {
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Background canvas */
+.npr-canvas {
+  background-color: #f4f7fb;
+  min-height: 100vh;
+  color: #1e293b;
+}
+
+/* App Download Bar */
+.npr-download-bar {
+  background: linear-gradient(90deg, #072658 0%, #003c96 100%);
+  color: #ffffff;
+}
+
+/* Header Logo Styling */
+.npr-logo-text {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.5px;
+}
+
+/* Jackpot 3D styling (White face with red 3D extrusion) */
+.npr-jackpot-3d {
+  font-family: 'Impact', 'Arial Black', sans-serif;
+  color: #ffffff;
+  text-shadow: 
+    0 1px 0 #d91c1c,
+    0 2px 0 #c21313,
+    0 3px 0 #a80d0d,
+    0 4px 0 #8f0707,
+    0 5px 0 #730303,
+    0 6px 4px rgba(0, 0, 0, 0.45);
+  letter-spacing: 2px;
+}
+
+.npr-digit-box {
+  background: linear-gradient(180deg, #1d72f2 0%, #0040ad 100%);
+  border: 1px solid #5aa1ff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 2px 4px rgba(0, 0, 0, 0.25);
+  border-radius: 4px;
+  color: #ffffff;
+  font-weight: 900;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Left Category Pill active / inactive */
+.npr-cat-btn {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.npr-cat-btn.active {
+  background: linear-gradient(135deg, #0062ff 0%, #0041c4 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 71, 186, 0.35);
+}
+
+.npr-cat-btn.inactive {
+  background-color: #ffffff;
+  color: #0047ba;
+  border: 1px solid #d5e5ff;
+}
+
+.npr-cat-btn.inactive:hover {
+  background-color: #f0f6ff;
+}
+
+/* Game Card */
+.npr-game-card {
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  user-select: none;
+}
+
+.npr-game-card:active {
+  transform: scale(0.96);
+}
+
+/* Floating Center Invite Button */
+.npr-invite-btn {
+  background: linear-gradient(135deg, #007bff 0%, #0043c7 100%);
+  box-shadow: 0 -2px 10px rgba(0, 68, 181, 0.4), 0 4px 12px rgba(0, 0, 0, 0.2);
+  border: 3px solid #ffffff;
+}
+
+/* Marquee / News Ticker animation (Seamless infinite loop, immediately visible) */
+@keyframes npr-ticker {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-npr-ticker {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: npr-ticker 35s linear infinite;
+}
+
+.animate-npr-ticker:hover {
+  animation-play-state: paused;
+}
+
+/* Custom scrollbars */
+.npr-no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.npr-no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Pulse glow for floating widget */
+@keyframes npr-float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-5px) rotate(2deg); }
+}
+
+.npr-floating-featured {
+  animation: npr-float 3.5s ease-in-out infinite;
+}
+
+/* Right-to-Left Slide Animation for Drawer */
+@keyframes nprSlideFromRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-drawer-right {
+  animation: nprSlideFromRight 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Left-to-Right Slide Animation for Side Redeem */
+@keyframes nprSlideFromLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-side-redeem-in {
+  animation: nprSlideFromLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

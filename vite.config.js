@@ -33,6 +33,7 @@ export default defineConfig({
       deleteOriginFile: false,
       compressionOptions: { level: 9, timestamp: false }, // stable gzip (no timestamp)
     }),
+  ],
 
   server: {
     port: 5177,

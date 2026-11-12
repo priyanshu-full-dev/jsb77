@@ -15,7 +15,8 @@ import { fetchNetworkDetails } from "./redux/slices/networkSlice";
 
 import "./App.css";
 
-import { Kuberbook666Router } from "./Kuberbook666/Kuberbook666Routes";
+import { NprRouter } from "./NprSrc/NprRoutes";
+import { KuberBook333Router } from "./KuberBook333Src/KuberBook333Routes";
 import PageSkeleton from "./Kuberbook666/components/Loader/PageSkeleton";
 
 /* =========================================================
@@ -41,6 +42,11 @@ const routerLoaders = {
   asianexchange: () =>
     import("./KuberBook333Src/KuberBook333Routes").then(
       (module) => module.KuberBook333Router,
+    ),
+
+  npr: () =>
+    import("./NprSrc/NprRoutes").then(
+      (module) => module.NprRouter,
     ),
 };
 
@@ -147,7 +153,10 @@ const App = () => {
   --------------------------------------------------------- */
 
   const domainName = useMemo(() => {
-    return window.location.host;
+    return window.location.host.includes("localhost") ||
+      window.location.host.includes("127.0.0.1")
+      ? "asianexchange.club"
+      : window.location.host;
   }, []);
 
   /* =========================================================
@@ -158,7 +167,15 @@ const App = () => {
     let active = true;
 
     const loadRouter = async () => {
-      const layout = siteDetails?.layout;
+      const searchParams = new URLSearchParams(window.location.search);
+      const urlLayout =
+        searchParams.get("project") || searchParams.get("layout");
+      const isPort5177 =
+        window.location.port === "5177" ||
+        window.location.host.includes("5177");
+      const domainLayout =
+        domainName.toLowerCase().includes("npr") || isPort5177 ? "npr" : null;
+      const layout = urlLayout || domainLayout || siteDetails?.layout;
 
       if (!layout) {
         return;
@@ -190,7 +207,7 @@ const App = () => {
     return () => {
       active = false;
     };
-  }, [siteDetails?.layout]);
+  }, [domainName, siteDetails?.layout]);
 
   /* =========================================================
      FETCH SITE META DATA
@@ -366,12 +383,12 @@ const App = () => {
   }, [dispatch]);
 
   /* =========================================================
-     UI & FINAL ROUTER (KUBERBOOK666)
+     UI & FINAL ROUTER (NPR77)
   ========================================================= */
 
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <RouterProvider router={Kuberbook666Router} />
+      <RouterProvider router={NprRouter} />
     </Suspense>
   );
 };
