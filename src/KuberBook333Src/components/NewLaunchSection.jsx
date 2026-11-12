@@ -56,7 +56,7 @@ export default function NewLaunchSection({ onGameClick }) {
         {launches.map((item) => (
           <div
             key={item.id}
-            onClick={() => onGameClick(item.id)}
+            onClick={() => onGameClick && onGameClick(item)}
             className={`w-[calc(33.333%-2px)] min-w-[calc(33.333%-2px)] max-w-[calc(33.333%-2px)] sm:w-[calc(25%-2px)] sm:min-w-[calc(25%-2px)] sm:max-w-[calc(25%-2px)] aspect-[5/7] shrink-0 overflow-hidden border ${item.border} shadow-sm cursor-pointer hover:brightness-105 active:scale-95 transition-all snap-start ${item.bg}`}
           >
             {item.image ? (

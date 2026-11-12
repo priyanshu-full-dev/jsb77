@@ -291,7 +291,21 @@ export default function UserProfileMenu({
       </div>
 
       {/* Wallet Amount */}
-      <div className="px-[10px] py-[5px] flex items-center justify-between text-[14px]">
+      <div
+        onClick={() => {
+          const isDemo = Boolean(
+            user?.isDemo ||
+            user?.username?.toLowerCase().startsWith('demo') ||
+            user?.userName?.toLowerCase().startsWith('demo') ||
+            user?.username === 'DEMO'
+          );
+          if (!isDemo) {
+            onClose();
+            navigate('/wallet');
+          }
+        }}
+        className="px-[10px] py-[5px] flex items-center justify-between text-[14px] cursor-pointer hover:bg-gray-100 transition-colors"
+      >
         <span className="text-black leading-4 font-medium">Wallet Amount</span>
         <span className="text-black font-bold text-[13px]">
           {user?.balance ?? 1500}

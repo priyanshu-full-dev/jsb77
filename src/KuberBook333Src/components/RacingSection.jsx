@@ -1,6 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import {
+  subscribeToHorseMatchesData,
+  subscribeToGreyhoundMatchesData,
+} from '../../socketClient';
 
 // TV Monitor Icon
 const TvMonitorIcon = () => (
@@ -18,271 +22,152 @@ export default function RacingSection({ sport = 'horse' }) {
   const navigate = useNavigate();
   const isHorse = sport === 'horse';
 
-  // Redux Selectors for live socket racing data
+  // 1. Subscribe to live socket stream
+  useEffect(() => {
+    const unsub = isHorse
+      ? subscribeToHorseMatchesData()
+      : subscribeToGreyhoundMatchesData();
+    return () => {
+      if (typeof unsub === 'function') unsub();
+    };
+  }, [isHorse]);
+
+  // Redux Selectors for live socket racing data (100% Real Socket Stream)
   const reduxHorseRaceList = useSelector((state) => state?.horse?.horseRaceList);
   const reduxGreyhoundRaceList = useSelector((state) => state?.greyhound?.greyhoundRaceList);
 
-  // Country tabs matching reference: US, ZA, GB, FR, IE
-  const countries = isHorse
-    ? [
-      { id: 'US', label: 'US' },
-      { id: 'ZA', label: 'ZA' },
-      { id: 'GB', label: 'GB' },
-      { id: 'FR', label: 'FR' },
-      { id: 'IE', label: 'IE' },
-    ]
-    : [
-      { id: 'GB', label: 'GB' },
-      { id: 'AU', label: 'AU' },
-      { id: 'IE', label: 'IE' },
-      { id: 'FR', label: 'FR' },
-      { id: 'US', label: 'US' },
-    ];
+  const rawList = isHorse ? reduxHorseRaceList : reduxGreyhoundRaceList;
 
-  const [activeCountry, setActiveCountry] = useState(isHorse ? 'US' : 'GB');
+  // 2. Extract dynamic countries directly from live socket data
+  const countries = useMemo(() => {
+    if (!Array.isArray(rawList) || rawList.length === 0) {
+      return [];
+    }
+    const countrySet = new Set();
+    rawList.forEach((group) => {
+      const code = (group?.cname || group?.countryCode || '').toUpperCase().trim();
+      if (code) countrySet.add(code);
+    });
+    return Array.from(countrySet).map((c) => ({ id: c, label: c }));
+  }, [rawList]);
 
-  React.useEffect(() => {
-    setActiveCountry(isHorse ? 'US' : 'GB');
-  }, [sport, isHorse]);
+  const [activeCountry, setActiveCountry] = useState('');
 
-  // Horse racing data by country
-  const horseRacingData = {
-    US: [
-      {
-        id: 'charles_town',
-        venue: 'Charles Town',
-        hasTv: false,
-        races: ['06:32'],
-      },
-    ],
-    ZA: [
-      {
-        id: 'turffontein',
-        venue: 'Turffontein',
-        hasTv: true,
-        races: ['15:10', '15:45', '16:20', '16:55', '17:30'],
-      },
-    ],
-    FR: [
-      {
-        id: 'lyon_parilly',
-        venue: 'Lyon-Parilly',
-        hasTv: true,
-        races: ['16:57', '17:42', '18:17', '18:52', '19:27'],
-      },
-      {
-        id: 'auteuil',
-        venue: 'Auteuil',
-        hasTv: false,
-        races: ['18:00', '18:35', '19:10', '19:45', '20:20', '20:55', '21:30', '22:08'],
-      },
-    ],
-    AU: [
-      {
-        id: 'flemington',
-        venue: 'Flemington',
-        hasTv: true,
-        races: ['11:15', '11:50', '12:25', '13:00', '13:35', '14:10', '14:45', '15:20'],
-      },
-      {
-        id: 'randwick',
-        venue: 'Randwick',
-        hasTv: true,
-        races: ['12:05', '12:40', '13:15', '13:50', '14:25', '15:00', '15:35'],
-      },
-      {
-        id: 'doomben',
-        venue: 'Doomben',
-        hasTv: false,
-        races: ['13:18', '13:54', '14:30', '15:06', '15:42', '16:18'],
-      },
-    ],
-    GB: [
-      {
-        id: 'ascot',
-        venue: 'Ascot',
-        hasTv: true,
-        races: ['13:30', '14:05', '14:40', '15:15', '15:50', '16:25', '17:00'],
-      },
-      {
-        id: 'sandown',
-        venue: 'Sandown',
-        hasTv: false,
-        races: ['14:15', '14:50', '15:25', '16:00', '16:35', '17:10', '17:45'],
-      },
-      {
-        id: 'newmarket',
-        venue: 'Newmarket',
-        hasTv: false,
-        races: ['13:10', '13:45', '14:20', '14:55', '15:30', '16:05'],
-      },
-      {
-        id: 'kempton',
-        venue: 'Kempton',
-        hasTv: false,
-        races: ['17:30', '18:00', '18:30', '19:00', '19:30', '20:00', '20:30'],
-      },
-    ],
-    IE: [
-      {
-        id: 'curragh',
-        venue: 'Curragh',
-        hasTv: true,
-        races: ['13:45', '14:20', '14:55', '15:30', '16:05', '16:40', '17:15'],
-      },
-      {
-        id: 'leopardstown',
-        venue: 'Leopardstown',
-        hasTv: false,
-        races: ['14:00', '14:35', '15:10', '15:45', '16:20', '16:55'],
-      },
-      {
-        id: 'fairyhouse',
-        venue: 'Fairyhouse',
-        hasTv: false,
-        races: ['15:05', '15:40', '16:15', '16:50', '17:25', '18:00'],
-      },
-    ],
-  };
-
-  // Greyhound racing data by country
-  const greyhoundRacingData = {
-    GB: [
-      {
-        id: 'romford',
-        venue: 'Romford',
-        hasTv: true,
-        races: ['18:09', '18:28', '18:43', '19:01', '19:16', '19:34', '19:51', '20:08', '20:26'],
-      },
-      {
-        id: 'crayford',
-        venue: 'Crayford',
-        hasTv: false,
-        races: ['18:17', '18:33', '18:48', '19:07', '19:24', '19:44', '20:03', '20:21'],
-      },
-      {
-        id: 'sheffield',
-        venue: 'Sheffield',
-        hasTv: false,
-        races: ['14:04', '14:19', '14:36', '14:54', '15:09', '15:27', '15:44', '16:02'],
-      },
-      {
-        id: 'hove',
-        venue: 'Hove',
-        hasTv: false,
-        races: ['18:08', '18:24', '18:41', '18:59', '19:17', '19:36', '19:54', '20:12'],
-      },
-    ],
-    AU: [
-      {
-        id: 'wentworth_park',
-        venue: 'Wentworth Park',
-        hasTv: true,
-        races: ['18:12', '18:34', '18:55', '19:15', '19:38', '20:01', '20:22'],
-      },
-      {
-        id: 'albion_park',
-        venue: 'Albion Park',
-        hasTv: false,
-        races: ['18:20', '18:42', '19:03', '19:25', '19:47', '20:10'],
-      },
-    ],
-    IE: [
-      {
-        id: 'shelbourne_park',
-        venue: 'Shelbourne Park',
-        hasTv: true,
-        races: ['19:30', '19:48', '20:06', '20:24', '20:42', '21:00'],
-      },
-      {
-        id: 'curraheen_park',
-        venue: 'Curraheen Park',
-        hasTv: false,
-        races: ['19:40', '19:58', '20:16', '20:34', '20:52', '21:10'],
-      },
-    ],
-    FR: [
-      {
-        id: 'lyon_parilly_dogs',
-        venue: 'Lyon-Parilly',
-        hasTv: true,
-        races: ['15:21', '15:53', '16:25', '16:57', '17:42', '18:17', '18:52'],
-      },
-    ],
-    US: [
-      {
-        id: 'derby_lane',
-        venue: 'Derby Lane',
-        hasTv: false,
-        races: ['19:30', '19:45', '20:00'],
-      },
-    ],
-  };
-
-  const currentDataset = isHorse ? horseRacingData : greyhoundRacingData;
-
-  const venues = useMemo(() => {
-    const rawList = isHorse ? reduxHorseRaceList : reduxGreyhoundRaceList;
-    const defaultVenues = currentDataset[activeCountry] || [];
-
-    if (Array.isArray(rawList) && rawList.length > 0) {
-      const countryMatches = rawList.filter(
-        (r) => (r?.cname || '').toUpperCase() === activeCountry.toUpperCase()
-      );
-      if (countryMatches.length > 0) {
-        const liveVenues = countryMatches.map((item, idx) => ({
-          id: item?.gmid || `live_${idx}`,
-          venue: item?.venue || item?.event_name || 'Live Venue',
-          hasTv: Boolean(item?.tv || item?.hasTv),
-          gmid: item?.gmid,
-          races: Array.isArray(item?.races)
-            ? item.races.map((rc) => rc?.time || rc)
-            : [item?.time || 'Live'],
-        }));
-        return liveVenues;
+  // Auto-select first available live country
+  useEffect(() => {
+    if (countries.length > 0) {
+      if (!activeCountry || !countries.some((c) => c.id === activeCountry)) {
+        setActiveCountry(countries[0].id);
       }
+    } else {
+      setActiveCountry('');
+    }
+  }, [countries, activeCountry]);
+
+  // 3. Extract real live venues & race times for the active country
+  const venues = useMemo(() => {
+    if (!Array.isArray(rawList) || rawList.length === 0 || !activeCountry) {
+      return [];
     }
 
-    return defaultVenues;
-  }, [isHorse, activeCountry, reduxHorseRaceList, reduxGreyhoundRaceList, currentDataset]);
+    const countryGroups = rawList.filter(
+      (r) => (r?.cname || r?.countryCode || '').toUpperCase().trim() === activeCountry.toUpperCase()
+    );
 
-  const handleRaceClick = (venueName, raceTime, gmid) => {
-    const raceId = `race_${venueName.toLowerCase().replace(/\s+/g, '_')}_${raceTime.replace(':', '')}`;
-    const effectiveGmid = gmid || raceId;
+    const parsedVenues = [];
+
+    countryGroups.forEach((group) => {
+      const trackChildren = group?.children || group?.childs || (group?.ename ? [group] : []);
+
+      trackChildren.forEach((trackObj, tIdx) => {
+        const venueName = trackObj?.ename || trackObj?.venue || trackObj?.name || 'Track';
+        const raceList = trackObj?.children || trackObj?.childs || [];
+
+        const validRaces = [];
+        raceList.forEach((rc) => {
+          if (rc?.gOdds?.status === 'CLOSED') return;
+          const stime = rc?.stime || rc?.startTime || rc?.openDate || rc?.time;
+          let timeDisplay = '';
+          if (stime) {
+            try {
+              const d = new Date(stime);
+              if (!isNaN(d.getTime())) {
+                timeDisplay = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+              } else {
+                timeDisplay = String(stime);
+              }
+            } catch {
+              timeDisplay = String(stime);
+            }
+          }
+          if (!timeDisplay && rc?.time) timeDisplay = String(rc.time);
+
+          if (timeDisplay) {
+            validRaces.push({
+              gmid: String(rc?.gmid || rc?.marketId || rc?.eventId || `${activeCountry}_${tIdx}_${timeDisplay}`),
+              time: timeDisplay,
+              raw: rc,
+            });
+          }
+        });
+
+        if (validRaces.length > 0) {
+          parsedVenues.push({
+            id: String(trackObj?.gmid || `${activeCountry}_${venueName}_${tIdx}`),
+            venue: venueName,
+            hasTv: Boolean(trackObj?.tv || trackObj?.hasTv),
+            races: validRaces,
+          });
+        }
+      });
+    });
+
+    return parsedVenues;
+  }, [rawList, activeCountry]);
+
+  const handleRaceClick = (venueName, raceItem) => {
+    const effectiveGmid = raceItem.gmid;
+    const timeStr = raceItem.time;
     const sportType = isHorse ? 'horse' : 'greyhound';
-    navigate(`/match/${raceId}?eventId=${effectiveGmid}&marketId=${effectiveGmid}&gmid=${effectiveGmid}&eventType=7&sport=${sportType}&eventName=${encodeURIComponent(venueName + ' - ' + raceTime)}`);
+    const eventType = isHorse ? '7' : '43';
+    navigate(
+      `/match/${effectiveGmid}?eventId=${effectiveGmid}&marketId=${effectiveGmid}&gmid=${effectiveGmid}&eventType=${eventType}&sport=${sportType}&eventName=${encodeURIComponent(venueName + ' - ' + timeStr)}`
+    );
   };
 
   return (
-    <div className="w-full bg-white select-none flex flex-col p-[16px] pt-[20px]  min-h-[500px]">
-      {/* 1. Country Filter Tabs (US, FR, AU, IE, GB) */}
-      <div className="flex items-center gap-1 mb-1 overflow-x-auto no-scrollbar">
-        {countries.map((c) => {
-          const isActive = activeCountry === c.id;
-          return (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => setActiveCountry(c.id)}
-              style={
-                isActive
-                  ? {
-                    background: 'linear-gradient(94deg,#b6842d,#ebda8d 55%,#b7862f)',
-                  }
-                  : {
-                    background: '#f1f1f1',
-                  }
-              }
-              className={`w-[52px] h-[40px] rounded-[4px] font-extrabold text-[16px] text-black flex items-center justify-center cursor-pointer transition-all active:scale-95 select-none shrink-0 ${isActive ? 'shadow-xs' : 'hover:bg-[#e4e7ec]'
+    <div className="w-full bg-white select-none flex flex-col p-[16px] pt-[20px] min-h-[500px]">
+      {/* 1. Country Filter Tabs from Live Socket */}
+      {countries.length > 0 ? (
+        <div className="flex items-center gap-1 mb-1 overflow-x-auto no-scrollbar">
+          {countries.map((c) => {
+            const isActive = activeCountry === c.id;
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => setActiveCountry(c.id)}
+                style={
+                  isActive
+                    ? {
+                      background: 'linear-gradient(94deg,#b6842d,#ebda8d 55%,#b7862f)',
+                    }
+                    : {
+                      background: '#f1f1f1',
+                    }
+                }
+                className={`w-[52px] h-[40px] rounded-[4px] font-extrabold text-[16px] text-black flex items-center justify-center cursor-pointer transition-all active:scale-95 select-none shrink-0 ${
+                  isActive ? 'shadow-xs' : 'hover:bg-[#e4e7ec]'
                 }`}
-            >
-              {c.label}
-            </button>
-          );
-        })}
-      </div>
+              >
+                {c.label}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
 
-      {/* 2. White Card Container with Racing Venues */}
+      {/* 2. White Card Container with Live Racing Venues */}
       <div className="bg-white rounded-[6px] p-4 shadow-[0_1px_3px_0_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)] border border-[#e8ecf0] flex flex-col">
         {venues.length > 0 ? (
           venues.map((venueItem, idx) => (
@@ -297,14 +182,14 @@ export default function RacingSection({ sport = 'horse' }) {
 
               {/* Race Timings */}
               <div className="flex flex-wrap gap-2 mb-1">
-                {venueItem.races.map((timeStr) => (
+                {venueItem.races.map((raceItem) => (
                   <button
-                    key={timeStr}
+                    key={raceItem.gmid || raceItem.time}
                     type="button"
-                    onClick={() => handleRaceClick(venueItem.venue, timeStr, venueItem.gmid)}
+                    onClick={() => handleRaceClick(venueItem.venue, raceItem)}
                     className="h-[32px] px-3.5 bg-[#5e6368] hover:bg-[#4f5358] cursor-pointer text-white rounded-[5px] text-[13.5px] font-bold flex items-center justify-center transition-all active:scale-95 shadow-2xs"
                   >
-                    {timeStr}
+                    {raceItem.time}
                   </button>
                 ))}
               </div>
@@ -316,8 +201,10 @@ export default function RacingSection({ sport = 'horse' }) {
             </div>
           ))
         ) : (
-          <div className="py-10 text-center text-gray-500 font-bold text-[13px]">
-            No races scheduled for {activeCountry} today.
+          <div className="py-12 text-center text-gray-500 font-bold text-[13px]">
+            {countries.length === 0
+              ? `Loading live ${isHorse ? 'horse' : 'greyhound'} racing schedule...`
+              : `No scheduled races active for ${activeCountry} right now.`}
           </div>
         )}
       </div>

@@ -40,6 +40,11 @@ export default function StakeSettingsSection({ onToast }) {
     if (e) e.preventDefault();
     try {
       localStorage.setItem('kuber_stakes', JSON.stringify(stakes));
+      localStorage.setItem(
+        'kuber_user_stakes',
+        JSON.stringify(stakes.map((s) => Number(s.value) || 0))
+      );
+      window.dispatchEvent(new Event('kuber_stakes_updated'));
       if (onToast) {
         onToast({
           id: Date.now(),

@@ -857,8 +857,23 @@ export const generatePresignedUrlFromS3Url = (s3Url) => {
 
 export const subscribeToLogin = (payload) => {
   return new Promise((resolve) => {
+    const state = getReduxState();
+    let siteObj = state?.site?.siteDetails;
+    if (!siteObj || !siteObj._id) {
+      try {
+        siteObj = JSON.parse(localStorage.getItem("siteDetails") || "{}");
+      } catch {
+        siteObj = {};
+      }
+    }
     const domainId =
-      getReduxState()?.site?.siteDetails?.domainDetails?._id || "";
+      payload?.domainid ||
+      payload?.domainId ||
+      siteObj?.siteDetails?.domainDetails?._id ||
+      siteObj?.domainDetails?._id ||
+      siteObj?.domain ||
+      "6a85553b526a2dbeb187f070";
+
     socket.emit("login", { ...payload, domainid: domainId }, (response) => {
       resolve(response);
     });

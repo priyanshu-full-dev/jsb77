@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+// Module-level in-memory cache to persist API data across navigation & back button
+let globalIntCasinoCache = null;
+
 export default function CasinoGamesSection({ onGameClick }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -15,6 +18,65 @@ export default function CasinoGamesSection({ onGameClick }) {
   const [activeSubCategory, setActiveSubCategory] = useState('all');
   const [activeThirdTab, setActiveThirdTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  const [intCasinoData, setIntCasinoData] = useState(() => {
+    if (globalIntCasinoCache && globalIntCasinoCache.length > 0) {
+      return globalIntCasinoCache;
+    }
+    try {
+      const stored = sessionStorage.getItem('kuber_int_casino_cache');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          globalIntCasinoCache = parsed;
+          return parsed;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return [];
+  });
+
+  const [isLoadingIntCasinos, setIsLoadingIntCasinos] = useState(
+    () => !(globalIntCasinoCache && globalIntCasinoCache.length > 0)
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+    if (globalIntCasinoCache && globalIntCasinoCache.length > 0) {
+      setIsLoadingIntCasinos(false);
+      return;
+    }
+
+    const fetchIntCasinos = async () => {
+      try {
+        if (!intCasinoData || intCasinoData.length === 0) {
+          setIsLoadingIntCasinos(true);
+        }
+        const res = await fetch('https://api.professor.monster/api/int/getIntCasinos');
+        const data = await res.json();
+        if (isMounted && Array.isArray(data)) {
+          globalIntCasinoCache = data;
+          setIntCasinoData(data);
+          try {
+            sessionStorage.setItem('kuber_int_casino_cache', JSON.stringify(data));
+          } catch {
+            // ignore
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch international casinos:', err);
+      } finally {
+        if (isMounted) setIsLoadingIntCasinos(false);
+      }
+    };
+
+    fetchIntCasinos();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     const path = location.pathname.toLowerCase();
@@ -96,464 +158,135 @@ export default function CasinoGamesSection({ onGameClick }) {
       ? auraSubCategories
       : liveCasinoSubCategories;
 
-  // Games dataset for Aura Gaming (Matching Aura Screenshots using /games/casino/aura/ images)
-  const auraGames = [
-    // --- Live Dealer Games ---
-    {
-      id: 'aura_tp_t20',
-      title: 'TEEN PATTI T20',
-      category: ['all', 'teenpatti'],
-      image: '/games/casino/aura/teenpatti_t20.jpg',
-    },
-    {
-      id: 'aura_tp_oneday',
-      title: 'TEEN PATTI ONE DAY',
-      category: ['all', 'teenpatti'],
-      image: '/games/casino/aura/teenpatti_1_day.jpg',
-    },
-    {
-      id: 'aura_dt',
-      title: 'DRAGON TIGER',
-      category: ['all', 'dragontiger'],
-      image: '/games/casino/aura/dragon_tiger.jpg',
-    },
-    {
-      id: 'aura_7updown',
-      title: '7 UP DOWN',
-      category: ['all', 'lucky7', 'others'],
-      image: '/games/casino/aura/7_up_down.jpg',
-    },
-    {
-      id: 'aura_highlow',
-      title: 'HIGH LOW',
-      category: ['all', 'others'],
-      image: '/games/casino/aura/hi_low.jpg',
-    },
-    {
-      id: 'aura_aaa',
-      title: 'AMAR AKBAR ANTHONY',
-      category: ['all', 'teenpatti', 'roulette', 'others'],
-      image: '/games/casino/aura/amar_akbar_anthony.jpg',
-    },
-    {
-      id: 'aura_ab',
-      title: 'ANDAR BAHAR',
-      category: ['all', 'andarbahar'],
-      image: '/games/casino/aura/andar_bahar.jpg',
-    },
-    {
-      id: 'aura_2card_tp',
-      title: '2 CARD TEENPATTI',
-      category: ['all', 'teenpatti'],
-      image: '/games/casino/aura/2_card_teenpatti.jpg',
-    },
-    {
-      id: 'aura_muflis_tp',
-      title: 'MUFLIS TEENPATTI',
-      category: ['all', 'teenpatti'],
-      image: '/games/casino/aura/muflis_teenpatti.jpg',
-    },
-    {
-      id: 'aura_tp_test',
-      title: 'TEENPATTI TEST',
-      category: ['all', 'teenpatti'],
-      image: '/games/casino/aura/teenpatti_open.jpg',
-    },
-    {
-      id: 'aura_3card_judgement',
-      title: '3 CARD JUDGEMENT',
-      category: ['all', 'teenpatti'],
-      image: '/games/casino/aura/3_cards_judgement.jpg',
-    },
-    {
-      id: 'aura_roulette',
-      title: 'ROULETTE',
-      category: ['all', 'roulette'],
-      image: '/games/casino/aura/roulette.jpg',
-    },
-    {
-      id: 'aura_29card_baccarat',
-      title: '29 CARD BACCARAT',
-      category: ['all', 'baccarat'],
-      image: '/games/casino/aura/29_card_baccarat.jpg',
-    },
-    {
-      id: 'aura_baccarat',
-      title: 'BACCARAT',
-      category: ['all', 'baccarat'],
-      image: '/games/casino/aura/baccarat.jpg',
-    },
-    {
-      id: 'aura_poker_2020',
-      title: 'POKER 20-20',
-      category: ['all', 'poker'],
-      image: '/games/casino/aura/poker_2020.jpg',
-    },
-    {
-      id: 'aura_queen_race',
-      title: 'QUEEN RACE',
-      category: ['all', 'queen', 'race'],
-      image: '/games/casino/aura/queen_race.jpg',
-    },
-    {
-      id: 'aura_bollywood_casino',
-      title: 'BOLLYWOOD CASINO',
-      category: ['all', 'bollywood'],
-      image: '/games/casino/aura/bollywood_casino.jpg',
-    },
-    {
-      id: 'aura_race_to_17',
-      title: 'RACE TO 17',
-      category: ['all', 'race', 'queen'],
-      image: '/games/casino/aura/race_to_17.jpg',
-    },
-    {
-      id: 'aura_sicbo',
-      title: 'SICBO',
-      category: ['all', 'others'],
-      image: '/games/casino/aura/sicbo.jpg',
-    },
-    {
-      id: 'aura_matka',
-      title: 'MATKA',
-      category: ['all', 'worli'],
-      image: '/games/casino/aura/matka.jpg',
-    },
-    {
-      id: 'aura_32card_casino',
-      title: '32 CARD CASINO',
-      category: ['all', '32cards'],
-      image: '/games/casino/aura/32_cards_casino.jpg',
-    },
-    {
-      id: 'aura_super_over',
-      title: 'SUPER OVER',
-      category: ['all', 'others'],
-      image: '/games/casino/aura/super_over.jpg',
-    },
-    {
-      id: 'aura_poker',
-      title: 'POKER',
-      category: ['all', 'poker'],
-      image: '/games/casino/aura/poker.jpg',
-    },
+  const apiGamesList = React.useMemo(() => {
+    if (!intCasinoData || !Array.isArray(intCasinoData) || intCasinoData.length === 0) {
+      return [];
+    }
+    const gamesMap = new Map();
+    intCasinoData.forEach((item) => {
+      const providerObj = item?.provider;
+      if (!providerObj || providerObj.isAllowed === false) return;
+      const pName = (providerObj.name || '').toLowerCase();
+      const list = providerObj.gameList || [];
+      list.forEach((game) => {
+        if (!game || !game.gameId || game.gameId.startsWith('DMD')) return;
+        if (gamesMap.has(game.gameId)) return;
 
-    // --- Virtual Games (VR) ---
-    {
-      id: 'aura_tp_vr',
-      title: 'TEEN PATTI VR',
-      category: ['all', 'teenpatti'],
-      image: '/games/casino/aura/teenpatti_t20_vr.jpg',
-    },
-    {
-      id: 'aura_tp_oneday_vr',
-      title: 'TEEN PATTI ONE DAY VR',
-      category: ['all', 'teenpatti'],
-      image: '/games/casino/aura/teenpatti_1_day_vr.jpg',
-    },
-    {
-      id: 'aura_7updown_vr',
-      title: '7 UP DOWN VR',
-      category: ['all', 'lucky7', 'others'],
-      image: '/games/casino/aura/7_up_down_vr.jpg',
-    },
-    {
-      id: 'aura_dt_vr',
-      title: 'DRAGON TIGER VR',
-      category: ['all', 'dragontiger'],
-      image: '/games/casino/aura/dragon_tiger_vr.jpg',
-    },
-    {
-      id: 'aura_hi_low_vr',
-      title: 'HI LOW VR',
-      category: ['all', 'others'],
-      image: '/games/casino/aura/hi_low_vr.jpg',
-    },
-    {
-      id: 'aura_muflis_tp_vr',
-      title: 'MUFLIS TEEN PATTI VR',
-      category: ['all', 'teenpatti'],
-      image: '/games/casino/aura/muflis_teenpatti_vr.jpg',
-    },
-    {
-      id: 'aura_aaa_vr',
-      title: 'AMAR AKBAR ANTHONY VR',
-      category: ['all', 'teenpatti', 'roulette', 'others'],
-      image: '/games/casino/aura/amar_akbar_anthony_vr.jpg',
-    },
-    {
-      id: 'aura_ab_vr',
-      title: 'ANDAR BAHAR VR',
-      category: ['all', 'andarbahar'],
-      image: '/games/casino/aura/andar_bahar_vr.jpg',
-    },
-    {
-      id: 'aura_poker_vr',
-      title: 'POKER VR',
-      category: ['all', 'poker'],
-      image: '/games/casino/aura/poker_vr.jpg',
-    },
-    {
-      id: 'aura_matka_vr',
-      title: 'MATKA VR',
-      category: ['all', 'worli'],
-      image: '/games/casino/aura/matka_vr.jpg',
-    },
-    {
-      id: 'aura_32card_casino_vr',
-      title: '32 CARD CASINO VR',
-      category: ['all', '32cards'],
-      image: '/games/casino/aura/32_card_casino_vr.jpg',
-    },
-    {
-      id: 'aura_bollywood_casino_vr',
-      title: 'BOLLYWOOD CASINO VR',
-      category: ['all', 'bollywood'],
-      image: '/games/casino/aura/bollywood_casino_vr.jpg',
-    },
-    {
-      id: 'aura_race_2020_vr',
-      title: 'RACE 20-20 VR',
-      category: ['all', 'casinowar', 'race', 'queen'],
-      image: '/games/casino/aura/race_2020_vr.jpg',
-    },
-    {
-      id: 'aura_baccarat_vr',
-      title: 'BACCARAT VR',
-      category: ['all', 'baccarat'],
-      image: '/games/casino/aura/baccarat_vr.jpg',
-    },
-    {
-      id: 'aura_queen_race_vr',
-      title: 'QUEEN RACE VR',
-      category: ['all', 'queen', 'race'],
-      image: '/games/casino/aura/queen_race_vr.jpg',
-    },
-    {
-      id: 'aura_tp_open_vr',
-      title: 'TEEN PATTI OPEN VR',
-      category: ['all', 'teenpatti'],
-      image: '/games/casino/aura/teenpatti_open_vr.jpg',
-    },
-    {
-      id: 'aura_poker_2020_vr',
-      title: 'POKER 20-20 VR',
-      category: ['all', 'poker'],
-      image: '/games/casino/aura/poker_2020_vr.jpg',
-    },
+        const bannerImg =
+          game.images?.find((img) => img.type === 'banner')?.url ||
+          game.images?.find((img) => img.type === 'logo-square')?.url ||
+          game.images?.find((img) => img.type === 'logo-round')?.url;
 
-    // --- Aura Originals / Instant Games ---
-    {
-      id: 'aura_blastoff',
-      title: 'BLASTOFF',
-      category: ['all', 'others'],
-      image: '/games/casino/aura/blastoff.jpg',
-    },
-    {
-      id: 'aura_aviator',
-      title: 'AVIATOR',
-      category: ['all', 'others'],
-      image: '/games/casino/aura/aviator.jpg',
-    },
-    {
-      id: 'aura_spin_wheel',
-      title: 'SPIN WHEEL',
-      category: ['all', 'others'],
-      image: '/games/casino/aura/spin_wheel.jpg',
-    },
-    {
-      id: 'aura_coin_toss',
-      title: 'COIN TOSS',
-      category: ['all', 'others'],
-      image: '/games/casino/aura/coin_toss.jpg',
-    },
-    {
-      id: 'aura_limbo',
-      title: 'LIMBO',
-      category: ['all', 'others'],
-      image: '/games/casino/aura/limbo.jpg',
-    },
-    {
-      id: 'aura_slot_game',
-      title: 'SLOT GAME',
-      category: ['all', 'others'],
-      image: '/games/casino/aura/slot_game.jpg',
-    },
-    {
-      id: 'aura_rock_paper_scissor',
-      title: 'ROCK PAPER SCISSOR',
-      category: ['all', 'others'],
-      image: '/games/casino/aura/rock_paper_scissors.jpg',
-    },
-    {
-      id: 'aura_double',
-      title: 'DOUBLE',
-      category: ['all', 'others'],
-      image: '/games/casino/aura/double.jpg',
-    },
-    {
-      id: 'aura_cricket',
-      title: 'CRICKET',
-      category: ['all', 'others'],
-      image: '/games/casino/aura/cricket.jpg',
-    },
-    {
-      id: 'aura_classic_dice',
-      title: 'CLASSIC DICE',
-      category: ['all', 'others'],
-      image: '/games/casino/aura/classic_dice.jpg',
-    },
-    {
-      id: 'aura_crash',
-      title: 'CRASH',
-      category: ['all', 'others'],
-      image: '/games/casino/aura/crash.jpg',
-    },
-    {
-      id: 'aura_mines',
-      title: 'MINES',
-      category: ['all', 'others'],
-      image: '/games/casino/aura/mines.jpg',
-    },
-    {
-      id: 'aura_sugar_ride',
-      title: 'SUGAR RIDE',
-      category: ['all', 'others'],
-      image: '/games/casino/aura/sugar_ride.jpg',
-    },
-    {
-      id: 'aura_button_burst',
-      title: 'BUTTON BURST',
-      category: ['all', 'others'],
-      image: '/games/casino/aura/button_burst.jpg',
-    },
+        gamesMap.set(game.gameId, {
+          id: game.gameId,
+          gameId: game.gameId,
+          title: game.name || 'Casino Game',
+          name: game.name || 'Casino Game',
+          providerName: pName,
+          rawCategory: (game.category || '').toLowerCase(),
+          image: bannerImg || '/games/casino/aviator.png',
+          category: ['all'],
+          rawGame: game,
+        });
+      });
+    });
+    return Array.from(gamesMap.values());
+  }, [intCasinoData]);
 
-    // --- Fast Series & Other ---
-    {
-      id: 'aura_tp_t20_fast',
-      title: 'TEENPATTI T20 Fast',
-      category: ['all', 'teenpatti'],
-      image: '/games/casino/aura/teenpatti_t20_fast.jpg',
-    },
-    {
-      id: 'aura_7updown_fast',
-      title: '7 UP DOWN Fast',
-      category: ['all', 'lucky7', 'others'],
-      image: '/games/casino/aura/7_up_down_fast.jpg',
-    },
-    {
-      id: 'aura_2card_tp_fast',
-      title: '2 CARD TEENPATTI Fast',
-      category: ['all', 'teenpatti'],
-      image: '/games/casino/aura/2_card_teenpatti_fast.jpg',
-    },
-    {
-      id: 'aura_dt_fast',
-      title: 'DRAGON TIGER Fast',
-      category: ['all', 'dragontiger'],
-      image: '/games/casino/aura/dragon_tiger_fast.jpg',
-    },
-    {
-      id: 'aura_ball_by_ball',
-      title: 'BALL BY BALL',
-      category: ['all', 'others'],
-      image: '/games/casino/aura/ball_by_ball.jpg',
-    },
-    {
-      id: 'aura_aviator_alt',
-      title: 'Aviator',
-      category: ['all', 'others'],
-      image: '/games/casino/aura/aviator (1).jpg',
-    },
-  ];
+  const currentDataset = React.useMemo(() => {
+    return apiGamesList;
+  }, [apiGamesList]);
 
-  // Games dataset for Live Casino / Crash games (Matching /casino/aviator Screenshot)
-  const liveCasinoGames = [
-    {
-      id: 'aviator_original',
-      title: 'Aviator',
-      category: ['all', 'aviator'],
-      image: '/games/casino/download (12).png',
-    },
-    {
-      id: 'featured_aviastar',
-      title: 'AviaStar',
-      category: ['all', 'aviator'],
-      image: '/games/featured_aviastar.jpg',
-    },
-    {
-      id: 'jetx',
-      title: 'JetX',
-      category: ['all', 'aviator'],
-      image: '/games/casino/download (5).png',
-    },
-    {
-      id: 'pilot',
-      title: 'PILOT',
-      category: ['all', 'aviator'],
-      image: '/games/casino/download (6).png',
-    },
-    {
-      id: 'astronaut',
-      title: 'ASTRONAUT',
-      category: ['all', 'aviator'],
-      image: '/games/casino/download (7).png',
-    },
-    {
-      id: 'aero_pink',
-      title: 'Aero',
-      category: ['all', 'aviator'],
-      image: '/games/casino/download (8).png',
-    },
-    {
-      id: 'aero_upg',
-      title: 'Aero',
-      category: ['all', 'aviator'],
-      image: '/games/casino/download (9).png',
-    },
-    {
-      id: 'lightspeed_1000x',
-      title: 'Light Speed 1000X',
-      category: ['all', 'aviator'],
-      image: '/games/casino/download (10).png',
-    },
-    {
-      id: 'avia_rush',
-      title: 'Avia Rush',
-      category: ['all', 'aviator'],
-      image: '/games/casino/download (11).png',
-    },
-    {
-      id: 'balloon_game',
-      title: 'Balloon',
-      category: ['all', 'aviator'],
-      image: '/games/balloon.png',
-    },
-    {
-      id: 'mines_game',
-      title: 'Mines',
-      category: ['all', 'mines'],
-      image: '/games/mines.png',
-    },
-    {
-      id: 'color_wiz',
-      title: 'Color Prediction',
-      category: ['all', 'color_prediction'],
-      image: '/games/color_prediction.png',
-    },
-  ];
+  const filteredGames = React.useMemo(() => {
+    return currentDataset.filter((g) => {
+      let matchesCategory = false;
+      const titleLower = (g.title || g.name || '').toLowerCase();
+      const catLower = (g.rawCategory || '').toLowerCase();
 
-  const currentDataset =
-    activeMainCategory === 'aura' ? auraGames : liveCasinoGames;
+      if (activeMainCategory === 'aura') {
+        if (activeSubCategory === 'all') {
+          matchesCategory =
+            catLower.includes('table') ||
+            catLower.includes('live') ||
+            catLower.includes('teen') ||
+            catLower.includes('baccarat') ||
+            catLower.includes('roulette') ||
+            catLower.includes('poker') ||
+            catLower.includes('dragon') ||
+            catLower.includes('higher') ||
+            titleLower.includes('teen') ||
+            titleLower.includes('patti') ||
+            titleLower.includes('dragon') ||
+            titleLower.includes('andar') ||
+            titleLower.includes('baccarat') ||
+            titleLower.includes('roulette') ||
+            titleLower.includes('poker') ||
+            titleLower.includes('lucky') ||
+            titleLower.includes('32') ||
+            titleLower.includes('matka') ||
+            titleLower.includes('worli');
+        } else if (activeSubCategory === 'teenpatti') {
+          matchesCategory = titleLower.includes('teen') || titleLower.includes('patti') || catLower.includes('teen_patti');
+        } else if (activeSubCategory === 'dragontiger') {
+          matchesCategory = titleLower.includes('dragon') || titleLower.includes('tiger') || catLower.includes('dragon_tiger');
+        } else if (activeSubCategory === 'andarbahar') {
+          matchesCategory = titleLower.includes('andar') || titleLower.includes('bahar');
+        } else if (activeSubCategory === 'roulette') {
+          matchesCategory = titleLower.includes('roulette') || catLower.includes('roulette');
+        } else if (activeSubCategory === 'baccarat') {
+          matchesCategory = titleLower.includes('baccarat') || catLower.includes('baccarat');
+        } else if (activeSubCategory === 'poker') {
+          matchesCategory = titleLower.includes('poker') || catLower.includes('poker');
+        } else if (activeSubCategory === '32cards') {
+          matchesCategory = titleLower.includes('32');
+        } else if (activeSubCategory === 'lucky7') {
+          matchesCategory = titleLower.includes('7') || titleLower.includes('lucky');
+        } else if (activeSubCategory === 'casinowar') {
+          matchesCategory = titleLower.includes('war') || catLower.includes('war');
+        } else if (activeSubCategory === 'worli') {
+          matchesCategory = titleLower.includes('worli') || titleLower.includes('matka');
+        } else if (activeSubCategory === 'bollywood') {
+          matchesCategory = titleLower.includes('bollywood') || titleLower.includes('amar') || titleLower.includes('anthony');
+        } else if (activeSubCategory === 'queen') {
+          matchesCategory = titleLower.includes('queen');
+        } else if (activeSubCategory === 'race') {
+          matchesCategory = titleLower.includes('race');
+        } else {
+          matchesCategory = true;
+        }
+      } else {
+        if (activeSubCategory === 'all') {
+          matchesCategory = true;
+        } else if (activeSubCategory === 'aviator') {
+          matchesCategory =
+            titleLower.includes('aviator') ||
+            catLower.includes('crash') ||
+            g.id.toLowerCase().includes('aviator');
+        } else if (activeSubCategory === 'color_prediction') {
+          matchesCategory = titleLower.includes('color') || catLower.includes('color');
+        } else if (activeSubCategory === 'mines') {
+          matchesCategory = titleLower.includes('mines') || catLower.includes('mines');
+        } else if (activeSubCategory === 'fun_games') {
+          matchesCategory = true;
+        } else {
+          const sub = activeSubCategory.toLowerCase();
+          matchesCategory =
+            g.providerName === sub ||
+            (sub === 'jili' && (g.providerName === 'jili' || g.providerName === 'jilli')) ||
+            (sub === 'spribe' && g.providerName === 'spribe') ||
+            (sub === 'turbogames' && g.providerName === 'turbogames') ||
+            catLower.includes(sub);
+        }
+      }
 
-  const filteredGames = currentDataset.filter((g) => {
-    const matchesCategory =
-      activeSubCategory === 'all' || g.category.includes(activeSubCategory);
-    const matchesSearch = searchQuery
-      ? g.title.toLowerCase().includes(searchQuery.toLowerCase())
-      : true;
-    return matchesCategory && matchesSearch;
-  });
+      const matchesSearch = searchQuery
+        ? titleLower.includes(searchQuery.toLowerCase()) ||
+          (g.providerName || '').toLowerCase().includes(searchQuery.toLowerCase())
+        : true;
+
+      return matchesCategory && matchesSearch;
+    });
+  }, [currentDataset, activeMainCategory, activeSubCategory, searchQuery]);
 
   const handleMainCategorySelect = (cat) => {
     setActiveMainCategory(cat.id);
@@ -580,8 +313,25 @@ export default function CasinoGamesSection({ onGameClick }) {
     }
   };
 
+  if (isLoadingIntCasinos || apiGamesList.length === 0) {
+    return (
+      <div className="w-full min-h-[65vh] bg-white flex flex-col items-center justify-center py-24 select-none">
+        <div className="relative w-14 h-14 flex items-center justify-center">
+          <div className="absolute inset-0 border-4 border-[#e5e7eb] border-t-[#b6842d] rounded-full animate-spin" />
+          <div
+            className="w-7 h-7 border-3 border-transparent border-b-[#373737] rounded-full animate-spin"
+            style={{ animationDirection: 'reverse', animationDuration: '0.6s' }}
+          />
+        </div>
+        <p className="mt-4 text-[13px] font-bold text-[#373737] tracking-wider uppercase">
+          Loading...
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full bg-[#f2f4f7] select-none flex flex-col pt-2 pb-6">
+    <div className="w-full bg-[#ffff] select-none flex flex-col pt-2 pb-6">
       {/* 1. Search Casino Bar */}
       <div className="px-3 mb-1.5">
         <input
@@ -615,7 +365,7 @@ export default function CasinoGamesSection({ onGameClick }) {
       </div>
 
       {/* 3. Sub Category Filter Pills (All, Roulette, Teenpatti, Poker, etc.) */}
-      <div className="flex overflow-x-auto gap-1 py-1 md:h-[55px] bg-[#d3d3d3] custom-scrollbar">
+      <div className="flex overflow-x-auto gap-2 py-1 md:h-[55px] bg-[#d3d3d3] custom-scrollbar">
         {subCategories.map((sub) => {
           const isActive = activeSubCategory === sub.id;
           return (
@@ -627,15 +377,13 @@ export default function CasinoGamesSection({ onGameClick }) {
                   ? 'linear-gradient(94deg, #b6842d 0%, #ebda8d 55%, #b7862f 100%)'
                   : '#d3d3d3',
               }}
-              className={`shrink-0 ${
-                activeMainCategory === 'aura'
-                  ? 'px-10 ml-1'
-                  : sub.isAll
+              className={`shrink-0 ${activeMainCategory === 'aura'
+                ? 'px-10 ml-1'
+                : sub.isAll
                   ? 'px-10 ml-1'
                   : 'px-4'
-              } ${
-                activeMainCategory === 'aura' ? '' : 'py-1'
-              } whitespace-nowrap shadow-sm shadow-[#b7862f] border-2 border-[#b7862f] rounded-lg font-semibold text-[13px] text-black transition-colors duration-150 hover:bg-[#e1e1e1] active:scale-95 cursor-pointer`}
+                } ${activeMainCategory === 'aura' ? '' : 'py-1'
+                } whitespace-nowrap shadow-sm shadow-[#b7862f] border-2 border-[#b7862f] rounded-lg font-semibold text-[13px] text-black transition-colors duration-150 hover:bg-[#e1e1e1] active:scale-95 cursor-pointer`}
             >
               {sub.label}
             </button>
@@ -657,7 +405,7 @@ export default function CasinoGamesSection({ onGameClick }) {
         </div>
       )}
 
-      {/* 5. 3-Column Games Grid */}
+      {/* 5. Games Grid */}
       <div className="grid grid-cols-3 gap-[2px] pt-0.5 w-full">
         {filteredGames.length > 0 ? (
           filteredGames.map((game) => (
@@ -671,9 +419,12 @@ export default function CasinoGamesSection({ onGameClick }) {
                 alt={game.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 loading="eager"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = '/games/casino/aviator.png';
+                }}
               />
 
-              {/* Badges if present */}
               {game.badge && (
                 <div className="absolute top-1 right-1 z-10">
                   <span className="bg-[#6b21a8] text-white text-[7.5px] sm:text-[8px] font-extrabold px-1.5 py-0.5 rounded-[2px] shadow-xs tracking-tight uppercase leading-none">

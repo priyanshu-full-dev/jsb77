@@ -32,7 +32,9 @@ import {
 import {
   updateAvailableBalance,
   updateExposureBalance,
+  updateUserCasinoBalance,
 } from '../../redux/slices/userSlice';
+import { launcherUrl, updateCasinoBalance } from '../../api';
 
 import Header from '../components/Header';
 import TickerMarquee from '../components/TickerMarquee';
@@ -56,6 +58,7 @@ import MyBetsSection from '../components/MyBetsSection';
 import OpenBetsSection from '../components/OpenBetsSection';
 import ChangePasswordSection from '../components/ChangePasswordSection';
 import DepositSection from '../components/DepositSection';
+import WalletSection from '../components/WalletSection';
 import ChangeLanguageModal from '../components/ChangeLanguageModal';
 import BonusRulesModal from '../components/BonusRulesModal';
 import AuthModal from '../components/AuthModal';
@@ -124,6 +127,7 @@ const getSportFromPath = (pathname) => {
   ) {
     return 'account_statement';
   }
+  if (clean.startsWith('wallet')) return 'wallet';
   if (clean.startsWith('affiliate') || clean.startsWith('affiliates')) return 'affiliate';
   if (!clean || clean === 'inplay' || clean === 'kuberbook333' || clean === 'b2c') return 'inplay';
   if (clean.startsWith('match') || clean.startsWith('event') || clean.startsWith('full-market')) return 'match_detail';
@@ -511,6 +515,18 @@ export default function KuberBook333Page() {
     return () => clearTimeout(timer);
   }, [toast]);
 
+  // Restrict Demo User from accessing wallet, deposit, or withdraw
+  useEffect(() => {
+    if (isDemoUser && (activeSport === 'wallet' || activeSport === 'deposit' || activeSport === 'withdraw')) {
+      setToast({
+        id: Date.now(),
+        type: 'error',
+        message: 'Demo user not allowed to access wallet or place bet in casino',
+      });
+      navigate('/', { replace: true });
+    }
+  }, [isDemoUser, activeSport, navigate]);
+
   const handleToggleFavorite = (match) => {
     if (!match || !match.id) return;
     setFavorites((prev) => {
@@ -631,6 +647,15 @@ export default function KuberBook333Page() {
   };
 
   const handleSelectSport = (sport) => {
+    if (sport === 'sportsbook' || sport === 'basketball' || sport === 'volleyball' || sport === 'tabletennis' || sport === 'mma') {
+      setToast({
+        id: Date.now(),
+        type: 'info',
+        message: 'Coming soon...',
+      });
+      return;
+    }
+
     setSelectedSportTab(sport);
     if (sport === 'inplay') {
       navigate('/inplay');
@@ -639,6 +664,90 @@ export default function KuberBook333Page() {
     } else {
       navigate(`/${sport}`);
     }
+  };
+
+  const handleBannerClick = (game) => {
+    if (isDemoUser) {
+      setToast({
+        id: Date.now(),
+        type: 'error',
+        message: 'Demo user not allowed to place bet in casino',
+      });
+      return;
+    }
+    const gId = typeof game === 'string' ? game : game?.id || game?.gameId || '';
+    if (gId.includes('aviator') || gId.includes('chicken') || gId.includes('mines') || gId.includes('fun')) {
+      navigate('/casino/aviator');
+    } else {
+      navigate('/casino');
+    }
+  };
+
+  const handleLaunchGame = async (game) => {
+    if (!game) return;
+
+    if (!user) {
+      setAuthModal('login');
+      return;
+    }
+
+    if (isDemoUser) {
+      setToast({
+        id: Date.now(),
+        type: 'error',
+        message: 'Demo user not allowed to place bet in casino',
+      });
+      return;
+    }
+
+    const gameId = typeof game === 'string' ? game : game.gameId || game.id || 'aviator';
+    const gameName = typeof game === 'string' ? game : game.name || game.title || 'Casino Game';
+
+    const mainBal = user?.availableBalance !== undefined ? user.availableBalance : (user?.balance || 0);
+    const exp = user?.exposure || 0;
+    const available = mainBal - exp;
+
+    if (available > 0) {
+      try {
+        const response = await updateCasinoBalance({
+          CasinoBalance: available,
+        });
+        if (response?.data?.user) {
+          dispatch(updateAvailableBalance(response.data.user.availableBalance));
+          dispatch(updateUserCasinoBalance(response.data.user.casinoBalance));
+        }
+      } catch (err) {
+        console.warn('Casino balance update notice:', err);
+      }
+    }
+
+    try {
+      const data = {
+        gameId: gameId,
+        playerId: user?._id || user?.id || '',
+        displayName: user?.name || user?.username || user?.casinoDisplayName || 'Player',
+        currency: 'INR',
+        country: 'IN',
+        gender: 'M',
+        birthDate: '1996-10-12',
+        mode: 'real',
+        device: 'mobile',
+        returnUrl: window.location.href,
+        walletSessionId: user?.sessionToken || '',
+      };
+
+      const res = await launcherUrl(data);
+      if (res?.success && res?.data?.url) {
+        const encodedUrl = encodeURIComponent(res.data.url);
+        navigate(`/game-lobby?gameId=${encodedUrl}&url=${encodedUrl}&name=${encodeURIComponent(gameName)}`);
+        return;
+      }
+    } catch (e) {
+      console.warn('Live launcher URL unavailable:', e);
+    }
+
+    const encodedGameId = encodeURIComponent(gameId);
+    navigate(`/game-lobby?gameId=${encodedGameId}&url=${encodedGameId}&name=${encodeURIComponent(gameName)}`);
   };
 
   // 1. Filter Inplay Section Matches
@@ -703,15 +812,37 @@ export default function KuberBook333Page() {
   }, [allMatches, favorites, searchQuery]);
 
   // Extract match ID if on match detail view
-  const matchIdMatch = location.pathname.match(/^\/(?:match|event)\/([^/]+)/i);
+  const matchIdMatch = location.pathname.match(/^\/(?:match|event|full-market|horse-market|greyhound-market)\/([^/]+)/i);
   const currentMatchId = matchIdMatch ? matchIdMatch[1] : 'surrey_w_v_somerset_w';
+  const urlParams = new URLSearchParams(location.search);
+  const urlSport = (urlParams.get('sport') || (location.pathname.includes('horse') ? 'horse' : location.pathname.includes('greyhound') ? 'greyhound' : ''))?.toLowerCase();
+  const urlEventName = urlParams.get('eventName') || urlParams.get('raceName');
+  const isRacingUrl =
+    urlSport === 'horse' ||
+    urlSport === 'greyhound' ||
+    currentMatchId?.startsWith('race_') ||
+    currentMatchId?.startsWith('hr_') ||
+    currentMatchId?.startsWith('gh_') ||
+    location.pathname.includes('horse') ||
+    location.pathname.includes('greyhound');
+
   const currentMatch =
     allMatches.find((m) =>
       String(m.id).toLowerCase() === String(currentMatchId).toLowerCase() ||
       m.title?.toLowerCase().replace(/\s+/g, '_') === String(currentMatchId).toLowerCase() ||
       m.title?.toLowerCase() === String(currentMatchId).replace(/_/g, ' ').toLowerCase()
-    ) ||
-    allMatches[0];
+    ) || (isRacingUrl ? {
+      id: currentMatchId,
+      title: urlEventName ? decodeURIComponent(urlEventName) : (urlSport === 'greyhound' ? 'Romford 18:09' : 'Charles Town 06:32'),
+      venue: urlEventName ? decodeURIComponent(urlEventName).split('-')[0].trim() : 'Charles Town',
+      sport: urlSport || 'horse',
+      isRacing: true,
+      eventId: urlParams.get('eventId') || currentMatchId,
+      marketId: urlParams.get('marketId') || currentMatchId,
+      gmid: urlParams.get('gmid') || currentMatchId,
+      time: urlEventName && urlEventName.includes('-') ? urlEventName.split('-')[1].trim() : '06:32',
+      dateTimeStr: '11/09/2026 06:32:00',
+    } : allMatches[0]);
 
   return (
     <div className="min-h-screen bg-[#000000] text-neutral-900 font-sans select-none antialiased">
@@ -748,7 +879,7 @@ export default function KuberBook333Page() {
           )}
 
           {/* Logged in User Deposit & Withdraw Action Bar (Hidden for Demo Users) */}
-          {user && !isDemoUser && activeSport !== 'deposit' && activeSport !== 'withdraw' && (
+          {user && !isDemoUser && (
             <div className="w-full px-1 bg-white pt-0.5 pb-2 flex items-center gap-1">
               <button
                 type="button"
@@ -778,7 +909,10 @@ export default function KuberBook333Page() {
           )}
 
           {/* 4. CONTENT AREA BASED ON ACTIVE SPORT */}
-          {activeSport === 'deposit' || activeSport === 'withdraw' ? (
+          {activeSport === 'wallet' ? (
+            /* DEDICATED WALLET VIEW */
+            <WalletSection user={user} />
+          ) : activeSport === 'deposit' || activeSport === 'withdraw' ? (
             /* DEDICATED DEPOSIT & WITHDRAW VIEW */
             <DepositSection user={user} onToast={setToast} activeTab={activeSport} />
           ) : activeSport === 'change_password' ? (
@@ -860,24 +994,12 @@ export default function KuberBook333Page() {
             <>
               {/* FEATURED GAMES (2 HORIZONTAL SCROLLING ROWS OF 16:9 CARDS) */}
               <FeaturedGames
-                onGameClick={(gameId) => {
-                  if (gameId === 'mines') {
-                    navigate('/mines');
-                  } else if (gameId === 'chicken_road' || gameId === 'color_prediction') {
-                    navigate('/color-prediction');
-                  } else if (gameId === 'fun_games') {
-                    navigate('/fun-games');
-                  } else {
-                    navigate('/casino/aviator');
-                  }
-                }}
+                onGameClick={handleBannerClick}
               />
 
               {/* "NEW LAUNCH" SECTION (GOLD BANNER + 3 PORTRAIT CARDS) */}
               <NewLaunchSection
-                onGameClick={(gameId) => {
-                  navigate('/casino/aviator');
-                }}
+                onGameClick={handleLaunchGame}
               />
 
               {/* "INPLAY" LIVE ODDS GRID */}
@@ -887,6 +1009,8 @@ export default function KuberBook333Page() {
                 onMatchClick={handleMatchClick}
                 favorites={favorites}
                 onToggleFavorite={handleToggleFavorite}
+                user={user}
+                isLoggedIn={Boolean(user)}
               />
 
               {/* CASINO PROVIDERS */}
@@ -905,21 +1029,19 @@ export default function KuberBook333Page() {
                 onMatchClick={handleMatchClick}
                 favorites={favorites}
                 onToggleFavorite={handleToggleFavorite}
+                user={user}
+                isLoggedIn={Boolean(user)}
               />
             </>
           ) : activeSport === 'casino' ? (
             /* CASINO & CRASH GAMES SECTION (AURA, LIVE CASINO, AVIATOR, ETC.) */
             <CasinoGamesSection
-              onGameClick={() => {
-                setAuthModal('login');
-              }}
+              onGameClick={handleLaunchGame}
             />
           ) : activeSport === 'mac88' ? (
             /* MAC88 CASINO GAMES SECTION */
             <Mac88Section
-              onGameClick={() => {
-                setAuthModal('login');
-              }}
+              onGameClick={handleLaunchGame}
             />
           ) : (activeSport === 'horse' || activeSport === 'greyhound') ? (
             /* HORSE RACING & GREYHOUND RACING SECTION */
@@ -933,6 +1055,8 @@ export default function KuberBook333Page() {
               onMatchClick={handleMatchClick}
               favorites={favorites}
               onToggleFavorite={handleToggleFavorite}
+              user={user}
+              isLoggedIn={Boolean(user)}
             />
           ) : (
             /* DEDICATED SPORT FIXTURES SECTION (FOOTBALL, CRICKET, TENNIS, ETC.) */
@@ -943,6 +1067,8 @@ export default function KuberBook333Page() {
               onMatchClick={handleMatchClick}
               favorites={favorites}
               onToggleFavorite={handleToggleFavorite}
+              user={user}
+              isLoggedIn={Boolean(user)}
             />
           )}
 
@@ -1063,6 +1189,7 @@ export default function KuberBook333Page() {
           handleToggleFavorite={handleToggleFavorite}
           currentMatch={currentMatch}
           setToast={setToast}
+          onGameClick={handleLaunchGame}
         />
       </div>
 

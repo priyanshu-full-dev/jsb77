@@ -16,6 +16,7 @@ import { addLatestBet } from '../../redux/slices/accountSlice';
 import { fetchMarketOdds, setMarketOddsData, setRunningData, setMarketName } from '../../redux/slices/fullmarketSlice';
 import { fetchbookmakerOdds, setBookmakerData } from '../../redux/slices/bookmakerSlice';
 import { fetchfancyOdds, setFancyOddsData } from '../../redux/slices/fancySlice';
+import CustomStar from './CustomStar';
 
 // User uploaded Filter Funnel Icon (/games/download (2).webp)
 const FilterFunnelIcon = ({ className = ' h-[13px]' }) => (
@@ -41,16 +42,6 @@ const TvMonitorIcon = ({ className = ' h-[13px]' }) => (
     src="/games/tv-icon copy.svg"
     alt="Live TV"
     className={`${className} object-contain shrink-0 brightness-0`}
-  />
-);
-
-// User uploaded Fav Star Icons (/games/download copy.svg & /games/download (1) copy.svg)
-const CustomStar = ({ filled, onClick, className = 'w-[17px] h-[17px]' }) => (
-  <img
-    src={filled ? '/games/download (1) copy.svg' : '/games/download copy.svg'}
-    alt={filled ? 'Favorite' : 'Add to Favorites'}
-    onClick={onClick}
-    className={`${className} shrink-0 cursor-pointer object-contain select-none transition-transform active:scale-90`}
   />
 );
 
@@ -93,105 +84,156 @@ const SuspendedBox = ({ text = 'SUSPENDED', height = 'h-[45px]', width = 'w-[154
   </div>
 );
 
+// Greyhound Trap Colors
+const GREYHOUND_TRAP_STYLES = [
+  { num: 1, bg: '#dc2626', text: '#ffffff', border: '#b91c1c' },
+  { num: 2, bg: '#111827', text: '#ffffff', border: '#374151' },
+  { num: 3, bg: '#ffffff', text: '#111827', border: '#d1d5db' },
+  { num: 4, bg: '#2563eb', text: '#ffffff', border: '#1d4ed8' },
+  { num: 5, bg: '#eab308', text: '#111827', border: '#ca8a04' },
+  { num: 6, bg: '#16a34a', text: '#ffffff', border: '#15803d' },
+  { num: 7, bg: '#18181b', text: '#facc15', border: '#27272a' },
+  { num: 8, bg: '#db2777', text: '#ffffff', border: '#be185d' },
+];
+
 // High-fidelity 3D Jockey Silk / Jacket Icon matching exact user reference image
-const JockeySilkIcon = ({ silk = 'blue_horseshoe', className = 'w-[48px] h-[48px]' }) => {
-  if (silk === 'blue_horseshoe') {
+const JockeySilkIcon = ({ silk = 'light_blue_red_cap', himg = null, gmid = null, className = 'w-[42px] h-[42px]' }) => {
+  if (himg) {
+    return (
+      <img
+        src={`https://sitethemedata.com/race_icons/${gmid || '10'}/${himg}`}
+        alt="Silk"
+        className={`${className} object-contain shrink-0`}
+        onError={(e) => {
+          e.currentTarget.style.display = 'none';
+        }}
+      />
+    );
+  }
+
+  // 1. Light Blue with white sleeves and red cap (Wantoknowwhatloveis)
+  if (silk === 'light_blue_red_cap' || silk === 'wantoknowwhatloveis') {
     return (
       <svg viewBox="0 0 100 100" className={`${className} shrink-0 drop-shadow-xs`} fill="none">
-        {/* Collar / Cap */}
-        <path d="M42 16 C42 22, 58 22, 58 16 L50 24 Z" fill="#001a66" />
-        {/* Left Sleeve (Red & White Stripes) */}
-        <path d="M30 20 L10 50 L20 57 L34 32 Z" fill="#ffffff" stroke="#e74c3c" strokeWidth="2.5" />
-        <path d="M26 27 L13 44 L16 49 L29 32 Z" fill="#e74c3c" />
-        <path d="M21 34 L10 50 L13 54 L24 38 Z" fill="#e74c3c" />
-        {/* Right Sleeve (Red & White Stripes) */}
-        <path d="M70 20 L90 50 L80 57 L66 32 Z" fill="#ffffff" stroke="#e74c3c" strokeWidth="2.5" />
-        <path d="M74 27 L87 44 L84 49 L71 32 Z" fill="#e74c3c" />
-        <path d="M79 34 L90 50 L87 54 L76 38 Z" fill="#e74c3c" />
-        {/* Main Torso (Royal Blue) */}
-        <path d="M30 20 L70 20 L66 82 L34 82 Z" fill="#0033cc" stroke="#001a66" strokeWidth="1.5" />
-        {/* White Horseshoe */}
-        <path
-          d="M40 38 C40 28, 60 28, 60 38 C60 48, 54 52, 50 52 C46 52, 40 48, 40 38 Z"
-          fill="none"
-          stroke="#ffffff"
-          strokeWidth="4.5"
-          strokeLinecap="round"
-        />
-        <circle cx="44" cy="35" r="1.5" fill="#0033cc" />
-        <circle cx="56" cy="35" r="1.5" fill="#0033cc" />
-        <circle cx="47" cy="43" r="1.5" fill="#0033cc" />
-        <circle cx="53" cy="43" r="1.5" fill="#0033cc" />
+        {/* Cap with red dot */}
+        <circle cx="50" cy="14" r="7" fill="#ffffff" stroke="#c0c0c0" strokeWidth="1" />
+        <circle cx="56" cy="12" r="4.5" fill="#e74c3c" />
+        {/* Left Sleeve (White with light cuff) */}
+        <path d="M30 20 L10 50 L20 57 L34 32 Z" fill="#e4f2f9" stroke="#b0d4e3" strokeWidth="1.5" />
+        <line x1="18" y1="46" x2="26" y2="40" stroke="#7ebbd4" strokeWidth="2" />
+        {/* Right Sleeve */}
+        <path d="M70 20 L90 50 L80 57 L66 32 Z" fill="#e4f2f9" stroke="#b0d4e3" strokeWidth="1.5" />
+        <line x1="82" y1="46" x2="74" y2="40" stroke="#7ebbd4" strokeWidth="2" />
+        {/* Main Body (Sky Blue) */}
+        <path d="M30 20 L70 20 L66 82 L34 82 Z" fill="#9ed6ea" stroke="#73b9d4" strokeWidth="1.5" />
+        {/* Collar */}
+        <path d="M42 20 L50 28 L58 20 Z" fill="#ffffff" />
       </svg>
     );
   }
-  if (silk === 'blue_diamond') {
+
+  // 2. Blue with white/yellow vertical stripes (Doctorino)
+  if (silk === 'blue_yellow_stripes' || silk === 'doctorino') {
     return (
       <svg viewBox="0 0 100 100" className={`${className} shrink-0 drop-shadow-xs`} fill="none">
-        {/* Left Sleeve (Diamond Pattern) */}
-        <path d="M30 20 L10 50 L20 57 L34 32 Z" fill="#0033cc" stroke="#ffffff" strokeWidth="1" />
-        <polygon points="20,32 25,38 20,44 15,38" fill="#ffffff" />
-        <polygon points="26,24 30,28 26,32 22,28" fill="#ffffff" />
-        {/* Right Sleeve (Diamond Pattern) */}
-        <path d="M70 20 L90 50 L80 57 L66 32 Z" fill="#0033cc" stroke="#ffffff" strokeWidth="1" />
-        <polygon points="80,32 85,38 80,44 75,38" fill="#ffffff" />
-        <polygon points="74,24 78,28 74,32 70,28" fill="#ffffff" />
-        {/* Main Body (Solid Royal Blue) */}
-        <path d="M30 20 L70 20 L66 82 L34 82 Z" fill="#0033cc" stroke="#001a66" strokeWidth="1.5" />
-        <path d="M42 16 C42 22, 58 22, 58 16 L50 24 Z" fill="#001a66" />
+        <circle cx="50" cy="14" r="7" fill="#1e3a8a" />
+        {/* Sleeves */}
+        <path d="M30 20 L10 50 L20 57 L34 32 Z" fill="#1e3a8a" />
+        <path d="M70 20 L90 50 L80 57 L66 32 Z" fill="#1e3a8a" />
+        {/* Main Body */}
+        <path d="M30 20 L70 20 L66 82 L34 82 Z" fill="#1e3a8a" stroke="#0f172a" strokeWidth="1" />
+        {/* White & Yellow Stripes */}
+        <rect x="42" y="20" width="6" height="62" fill="#ffffff" />
+        <rect x="52" y="20" width="6" height="62" fill="#facc15" />
       </svg>
     );
   }
-  if (silk === 'yellow_blue_half') {
+
+  // 3. Dark Navy with white circle ring (Severan)
+  if (silk === 'navy_white_circle' || silk === 'severan') {
     return (
       <svg viewBox="0 0 100 100" className={`${className} shrink-0 drop-shadow-xs`} fill="none">
-        {/* Left Sleeve (Yellow) */}
-        <path d="M30 20 L10 50 L20 57 L34 32 Z" fill="#f1c40f" stroke="#d4ac0d" strokeWidth="1" />
-        {/* Right Sleeve (Yellow with blue cuff) */}
-        <path d="M70 20 L90 50 L80 57 L66 32 Z" fill="#f1c40f" stroke="#d4ac0d" strokeWidth="1" />
-        <path d="M85 45 L90 50 L80 57 L75 52 Z" fill="#0033cc" />
-        {/* Left Half (Yellow) */}
-        <path d="M30 20 L50 20 L50 82 L34 82 Z" fill="#f1c40f" stroke="#d4ac0d" strokeWidth="1" />
-        {/* Right Half (Royal Blue) */}
-        <path d="M50 20 L70 20 L66 82 L50 82 Z" fill="#0033cc" stroke="#001a66" strokeWidth="1" />
-        <path d="M42 16 C42 22, 58 22, 58 16 L50 24 Z" fill="#001a66" />
+        <circle cx="50" cy="14" r="7" fill="#0f172a" />
+        <circle cx="56" cy="12" r="4.5" fill="#e74c3c" />
+        <path d="M30 20 L10 50 L20 57 L34 32 Z" fill="#0f172a" />
+        <path d="M70 20 L90 50 L80 57 L66 32 Z" fill="#0f172a" />
+        <path d="M30 20 L70 20 L66 82 L34 82 Z" fill="#0f172a" stroke="#000000" strokeWidth="1" />
+        {/* White circle ring on chest */}
+        <circle cx="50" cy="50" r="14" fill="none" stroke="#ffffff" strokeWidth="5.5" />
       </svg>
     );
   }
-  if (silk === 'grey_checkered') {
+
+  // 4. Solid Blue with orange cuffs (North Sea)
+  if (silk === 'blue_orange_cuffs' || silk === 'north_sea') {
     return (
       <svg viewBox="0 0 100 100" className={`${className} shrink-0 drop-shadow-xs`} fill="none">
-        {/* Left Sleeve (Grey) */}
-        <path d="M30 20 L10 50 L20 57 L34 32 Z" fill="#95a5a6" stroke="#7f8c8d" strokeWidth="1" />
-        {/* Right Sleeve (Grey) */}
-        <path d="M70 20 L90 50 L80 57 L66 32 Z" fill="#95a5a6" stroke="#7f8c8d" strokeWidth="1" />
-        {/* Main Body (Grey top) */}
-        <path d="M30 20 L70 20 L66 82 L34 82 Z" fill="#95a5a6" stroke="#7f8c8d" strokeWidth="1" />
-        {/* Blue Checkerboard lower half */}
-        <rect x="34" y="54" width="16" height="14" fill="#0033cc" />
-        <rect x="50" y="54" width="16" height="14" fill="#ffffff" />
-        <rect x="34" y="68" width="16" height="14" fill="#ffffff" />
-        <rect x="50" y="68" width="16" height="14" fill="#0033cc" />
-        <path d="M42 16 C42 22, 58 22, 58 16 L50 24 Z" fill="#2c3e50" />
+        <circle cx="50" cy="14" r="7" fill="#0284c7" />
+        {/* Sleeves with orange cuffs */}
+        <path d="M30 20 L10 50 L20 57 L34 32 Z" fill="#0369a1" />
+        <polygon points="10,50 14,44 24,51 20,57" fill="#f97316" />
+        <path d="M70 20 L90 50 L80 57 L66 32 Z" fill="#0369a1" />
+        <polygon points="90,50 86,44 76,51 80,57" fill="#f97316" />
+        {/* Main Body */}
+        <path d="M30 20 L70 20 L66 82 L34 82 Z" fill="#0284c7" stroke="#0369a1" strokeWidth="1" />
       </svg>
     );
   }
-  if (silk === 'red_stars') {
+
+  // 5. Purple with yellow stripe (Ratounet)
+  if (silk === 'purple_yellow_stripe' || silk === 'ratounet') {
     return (
       <svg viewBox="0 0 100 100" className={`${className} shrink-0 drop-shadow-xs`} fill="none">
-        <path d="M30 20 L10 50 L20 57 L34 32 Z" fill="#e74c3c" stroke="#c0392b" strokeWidth="1" />
-        <path d="M70 20 L90 50 L80 57 L66 32 Z" fill="#e74c3c" stroke="#c0392b" strokeWidth="1" />
-        <path d="M30 20 L70 20 L66 82 L34 82 Z" fill="#e74c3c" stroke="#c0392b" strokeWidth="1" />
-        <polygon points="50,30 54,42 66,42 57,50 60,62 50,54 40,62 43,50 34,42 46,42" fill="#ffffff" />
+        <circle cx="50" cy="14" r="7" fill="#ffffff" stroke="#c0c0c0" strokeWidth="1" />
+        <path d="M30 20 L10 50 L20 57 L34 32 Z" fill="#3b0764" />
+        <path d="M70 20 L90 50 L80 57 L66 32 Z" fill="#3b0764" />
+        <path d="M30 20 L70 20 L66 82 L34 82 Z" fill="#3b0764" stroke="#2e0550" strokeWidth="1" />
+        {/* Yellow horizontal stripe across chest */}
+        <rect x="33" y="48" width="34" height="12" fill="#facc15" />
       </svg>
     );
   }
+
+  // 6. Blue with maroon V-chevron (Deal Daily)
+  if (silk === 'blue_maroon_v' || silk === 'deal_daily') {
+    return (
+      <svg viewBox="0 0 100 100" className={`${className} shrink-0 drop-shadow-xs`} fill="none">
+        <circle cx="50" cy="14" r="7" fill="#78350f" />
+        <circle cx="56" cy="12" r="4.5" fill="#78350f" />
+        <path d="M30 20 L10 50 L20 57 L34 32 Z" fill="#1d4ed8" />
+        <path d="M70 20 L90 50 L80 57 L66 32 Z" fill="#1d4ed8" />
+        <path d="M30 20 L70 20 L66 82 L34 82 Z" fill="#1d4ed8" stroke="#1e3a8a" strokeWidth="1" />
+        {/* Maroon V shape on chest */}
+        <path d="M32 20 L50 60 L68 20 L58 20 L50 42 L42 20 Z" fill="#78350f" stroke="#5c2609" strokeWidth="1" />
+      </svg>
+    );
+  }
+
+  // 7. Navy with white stars (Tacticien)
+  if (silk === 'navy_white_stars' || silk === 'tacticien') {
+    return (
+      <svg viewBox="0 0 100 100" className={`${className} shrink-0 drop-shadow-xs`} fill="none">
+        <circle cx="50" cy="14" r="7" fill="#ffffff" stroke="#c0c0c0" strokeWidth="1" />
+        <path d="M30 20 L10 50 L20 57 L34 32 Z" fill="#1e1b4b" />
+        <path d="M70 20 L90 50 L80 57 L66 32 Z" fill="#1e1b4b" />
+        <path d="M30 20 L70 20 L66 82 L34 82 Z" fill="#1e1b4b" stroke="#0f0e26" strokeWidth="1" />
+        {/* White stars pattern */}
+        <polygon points="50,30 52,35 57,35 53,38 55,43 50,40 45,43 47,38 43,35 48,35" fill="#ffffff" />
+        <polygon points="40,46 41,49 44,49 42,51 43,54 40,52 37,54 38,51 36,49 39,49" fill="#ffffff" />
+        <polygon points="60,46 61,49 64,49 62,51 63,54 60,52 57,54 58,51 56,49 59,49" fill="#ffffff" />
+        <polygon points="50,60 51,63 54,63 52,65 53,68 50,66 47,68 48,65 46,63 49,63" fill="#ffffff" />
+      </svg>
+    );
+  }
+
+  // Fallback Green & Gold
   return (
     <svg viewBox="0 0 100 100" className={`${className} shrink-0 drop-shadow-xs`} fill="none">
-      <path d="M30 20 L10 50 L20 57 L34 32 Z" fill="#27ae60" stroke="#1e8449" strokeWidth="1" />
-      <path d="M70 20 L90 50 L80 57 L66 32 Z" fill="#27ae60" stroke="#1e8449" strokeWidth="1" />
-      <path d="M30 20 L70 20 L66 82 L34 82 Z" fill="#27ae60" stroke="#1e8449" strokeWidth="1" />
-      <polygon points="50,22 70,22 50,82 34,82" fill="#f1c40f" />
+      <circle cx="50" cy="14" r="7" fill="#047857" />
+      <path d="M30 20 L10 50 L20 57 L34 32 Z" fill="#047857" />
+      <path d="M70 20 L90 50 L80 57 L66 32 Z" fill="#047857" />
+      <path d="M30 20 L70 20 L66 82 L34 82 Z" fill="#047857" stroke="#065f46" strokeWidth="1" />
+      <polygon points="50,22 70,22 50,82 34,82" fill="#facc15" />
     </svg>
   );
 };
@@ -551,101 +593,101 @@ export default function MatchDetailSection({
     if (isSoccer) {
       const matchOddsMarket = Array.isArray(reduxMarketOdds)
         ? reduxMarketOdds.find((m) => {
-            const name = (m?.marketName || '').toUpperCase();
-            return name.includes('MATCH ODDS') || name.includes('MATCH_ODDS') || (!name.includes('1.5') && !name.includes('2.5') && !name.includes('GOAL'));
-          }) || reduxMarketOdds[0]
+          const name = (m?.marketName || '').toUpperCase();
+          return name.includes('MATCH ODDS') || name.includes('MATCH_ODDS') || (!name.includes('1.5') && !name.includes('2.5') && !name.includes('GOAL'));
+        }) || reduxMarketOdds[0]
         : null;
 
       const liveMatchRunners = matchOddsMarket?.runners && matchOddsMarket.runners.length > 0
         ? matchOddsMarket.runners.map((r, idx) => {
-            const mappedName = runnerNameMap.get(String(r?.selectionId));
-            const rawName = r?.runnerName || mappedName || '';
-            const fallback = idx === 0 ? team1Name : idx === 1 ? team2Name : 'The Draw';
-            const isGeneric = !rawName || rawName.toLowerCase().startsWith('runner ') || rawName.toLowerCase().startsWith('player ');
-            const finalName = !isGeneric ? rawName : fallback;
+          const mappedName = runnerNameMap.get(String(r?.selectionId));
+          const rawName = r?.runnerName || mappedName || '';
+          const fallback = idx === 0 ? team1Name : idx === 1 ? team2Name : 'The Draw';
+          const isGeneric = !rawName || rawName.toLowerCase().startsWith('runner ') || rawName.toLowerCase().startsWith('player ');
+          const finalName = !isGeneric ? rawName : fallback;
 
-            const backPrice = r?.ex?.availableToBack?.[0]?.price;
-            const backSizeVal = r?.ex?.availableToBack?.[0]?.size;
-            const layPrice = r?.ex?.availableToLay?.[0]?.price;
-            const laySizeVal = r?.ex?.availableToLay?.[0]?.size;
+          const backPrice = r?.ex?.availableToBack?.[0]?.price;
+          const backSizeVal = r?.ex?.availableToBack?.[0]?.size;
+          const layPrice = r?.ex?.availableToLay?.[0]?.price;
+          const laySizeVal = r?.ex?.availableToLay?.[0]?.size;
 
-            const backOdd = backPrice !== undefined && backPrice !== null && backPrice !== '' && backPrice !== 0 ? String(backPrice) : '--';
-            const backSize = backSizeVal !== undefined && backSizeVal !== null && backSizeVal !== '' ? String(backSizeVal) : '--';
-            const layOdd = layPrice !== undefined && layPrice !== null && layPrice !== '' && layPrice !== 0 ? String(layPrice) : '--';
-            const laySize = laySizeVal !== undefined && laySizeVal !== null && laySizeVal !== '' ? String(laySizeVal) : '--';
+          const backOdd = backPrice !== undefined && backPrice !== null && backPrice !== '' && backPrice !== 0 ? String(backPrice) : '--';
+          const backSize = backSizeVal !== undefined && backSizeVal !== null && backSizeVal !== '' ? String(backSizeVal) : '--';
+          const layOdd = layPrice !== undefined && layPrice !== null && layPrice !== '' && layPrice !== 0 ? String(layPrice) : '--';
+          const laySize = laySizeVal !== undefined && laySizeVal !== null && laySizeVal !== '' ? String(laySizeVal) : '--';
 
-            return {
-              id: r?.selectionId ? `runner_${r.selectionId}` : `runner_0_${idx + 1}`,
-              selectionId: r?.selectionId,
-              name: finalName,
-              back: { odd: backOdd, size: backSize },
-              lay: { odd: layOdd, size: laySize },
-              isSuspended: r?.status === 'SUSPENDED' || (backOdd === '--' && layOdd === '--'),
-            };
-          })
+          return {
+            id: r?.selectionId ? `runner_${r.selectionId}` : `runner_0_${idx + 1}`,
+            selectionId: r?.selectionId,
+            name: finalName,
+            back: { odd: backOdd, size: backSize },
+            lay: { odd: layOdd, size: laySize },
+            isSuspended: r?.status === 'SUSPENDED' || (backOdd === '--' && layOdd === '--'),
+          };
+        })
         : [
-            { id: 'runner_1', name: team1Name || 'Port FC', back: { odd: '19', size: '26.05' }, lay: { odd: '19.5', size: '17.31' }, isSuspended: false },
-            { id: 'runner_2', name: team2Name || 'Kobe', back: { odd: '1.27', size: '1.5k' }, lay: { odd: '1.29', size: '1.2k' }, isSuspended: false },
-            { id: 'runner_3', name: 'The Draw', back: { odd: '6', size: '46.73' }, lay: { odd: '6.2', size: '14.46' }, isSuspended: false },
-          ];
+          { id: 'runner_1', name: team1Name || 'Port FC', back: { odd: '19', size: '26.05' }, lay: { odd: '19.5', size: '17.31' }, isSuspended: false },
+          { id: 'runner_2', name: team2Name || 'Kobe', back: { odd: '1.27', size: '1.5k' }, lay: { odd: '1.29', size: '1.2k' }, isSuspended: false },
+          { id: 'runner_3', name: 'The Draw', back: { odd: '6', size: '46.73' }, lay: { odd: '6.2', size: '14.46' }, isSuspended: false },
+        ];
 
       const ou15Market = Array.isArray(reduxMarketOdds)
         ? reduxMarketOdds.find((m) => (m?.marketName || '').toUpperCase().includes('1.5'))
         : null;
       const ou15Runners = ou15Market?.runners && ou15Market.runners.length > 0
         ? ou15Market.runners.map((r, idx) => {
-            const fallback = idx === 0 ? 'Under 1.5 Goals' : 'Over 1.5 Goals';
-            const finalName = r?.runnerName || fallback;
-            const backPrice = r?.ex?.availableToBack?.[0]?.price;
-            const backSizeVal = r?.ex?.availableToBack?.[0]?.size;
-            const layPrice = r?.ex?.availableToLay?.[0]?.price;
-            const laySizeVal = r?.ex?.availableToLay?.[0]?.size;
-            const backOdd = backPrice !== undefined && backPrice !== null && backPrice !== '' && backPrice !== 0 ? String(backPrice) : '6.2';
-            const backSize = backSizeVal !== undefined && backSizeVal !== null && backSizeVal !== '' ? String(backSizeVal) : '49.48';
-            const layOdd = layPrice !== undefined && layPrice !== null && layPrice !== '' && layPrice !== 0 ? String(layPrice) : '6.4';
-            const laySize = laySizeVal !== undefined && laySizeVal !== null && laySizeVal !== '' ? String(laySizeVal) : '234.04';
-            return {
-              id: r?.selectionId ? `runner_ou15_${r.selectionId}` : `runner_ou15_${idx + 1}`,
-              selectionId: r?.selectionId,
-              name: finalName,
-              back: { odd: backOdd, size: backSize },
-              lay: { odd: layOdd, size: laySize },
-              isSuspended: r?.status === 'SUSPENDED',
-            };
-          })
+          const fallback = idx === 0 ? 'Under 1.5 Goals' : 'Over 1.5 Goals';
+          const finalName = r?.runnerName || fallback;
+          const backPrice = r?.ex?.availableToBack?.[0]?.price;
+          const backSizeVal = r?.ex?.availableToBack?.[0]?.size;
+          const layPrice = r?.ex?.availableToLay?.[0]?.price;
+          const laySizeVal = r?.ex?.availableToLay?.[0]?.size;
+          const backOdd = backPrice !== undefined && backPrice !== null && backPrice !== '' && backPrice !== 0 ? String(backPrice) : '6.2';
+          const backSize = backSizeVal !== undefined && backSizeVal !== null && backSizeVal !== '' ? String(backSizeVal) : '49.48';
+          const layOdd = layPrice !== undefined && layPrice !== null && layPrice !== '' && layPrice !== 0 ? String(layPrice) : '6.4';
+          const laySize = laySizeVal !== undefined && laySizeVal !== null && laySizeVal !== '' ? String(laySizeVal) : '234.04';
+          return {
+            id: r?.selectionId ? `runner_ou15_${r.selectionId}` : `runner_ou15_${idx + 1}`,
+            selectionId: r?.selectionId,
+            name: finalName,
+            back: { odd: backOdd, size: backSize },
+            lay: { odd: layOdd, size: laySize },
+            isSuspended: r?.status === 'SUSPENDED',
+          };
+        })
         : [
-            { id: 'runner_ou_15_u', name: 'Under 1.5 Goals', back: { odd: '6.2', size: '49.48' }, lay: { odd: '6.4', size: '234.04' }, isSuspended: false },
-            { id: 'runner_ou_15_o', name: 'Over 1.5 Goals', back: { odd: '1.18', size: '3.4k' }, lay: { odd: '1.2', size: '1.8k' }, isSuspended: false },
-          ];
+          { id: 'runner_ou_15_u', name: 'Under 1.5 Goals', back: { odd: '6.2', size: '49.48' }, lay: { odd: '6.4', size: '234.04' }, isSuspended: false },
+          { id: 'runner_ou_15_o', name: 'Over 1.5 Goals', back: { odd: '1.18', size: '3.4k' }, lay: { odd: '1.2', size: '1.8k' }, isSuspended: false },
+        ];
 
       const ou25Market = Array.isArray(reduxMarketOdds)
         ? reduxMarketOdds.find((m) => (m?.marketName || '').toUpperCase().includes('2.5'))
         : null;
       const ou25Runners = ou25Market?.runners && ou25Market.runners.length > 0
         ? ou25Market.runners.map((r, idx) => {
-            const fallback = idx === 0 ? 'Under 2.5 Goals' : 'Over 2.5 Goals';
-            const finalName = r?.runnerName || fallback;
-            const backPrice = r?.ex?.availableToBack?.[0]?.price;
-            const backSizeVal = r?.ex?.availableToBack?.[0]?.size;
-            const layPrice = r?.ex?.availableToLay?.[0]?.price;
-            const laySizeVal = r?.ex?.availableToLay?.[0]?.size;
-            const backOdd = backPrice !== undefined && backPrice !== null && backPrice !== '' && backPrice !== 0 ? String(backPrice) : '2.14';
-            const backSize = backSizeVal !== undefined && backSizeVal !== null && backSizeVal !== '' ? String(backSizeVal) : '67.46';
-            const layOdd = layPrice !== undefined && layPrice !== null && layPrice !== '' && layPrice !== 0 ? String(layPrice) : '2.18';
-            const laySize = laySizeVal !== undefined && laySizeVal !== null && laySizeVal !== '' ? String(laySizeVal) : '4.01';
-            return {
-              id: r?.selectionId ? `runner_ou25_${r.selectionId}` : `runner_ou25_${idx + 1}`,
-              selectionId: r?.selectionId,
-              name: finalName,
-              back: { odd: backOdd, size: backSize },
-              lay: { odd: layOdd, size: laySize },
-              isSuspended: r?.status === 'SUSPENDED',
-            };
-          })
+          const fallback = idx === 0 ? 'Under 2.5 Goals' : 'Over 2.5 Goals';
+          const finalName = r?.runnerName || fallback;
+          const backPrice = r?.ex?.availableToBack?.[0]?.price;
+          const backSizeVal = r?.ex?.availableToBack?.[0]?.size;
+          const layPrice = r?.ex?.availableToLay?.[0]?.price;
+          const laySizeVal = r?.ex?.availableToLay?.[0]?.size;
+          const backOdd = backPrice !== undefined && backPrice !== null && backPrice !== '' && backPrice !== 0 ? String(backPrice) : '2.14';
+          const backSize = backSizeVal !== undefined && backSizeVal !== null && backSizeVal !== '' ? String(backSizeVal) : '67.46';
+          const layOdd = layPrice !== undefined && layPrice !== null && layPrice !== '' && layPrice !== 0 ? String(layPrice) : '2.18';
+          const laySize = laySizeVal !== undefined && laySizeVal !== null && laySizeVal !== '' ? String(laySizeVal) : '4.01';
+          return {
+            id: r?.selectionId ? `runner_ou25_${r.selectionId}` : `runner_ou25_${idx + 1}`,
+            selectionId: r?.selectionId,
+            name: finalName,
+            back: { odd: backOdd, size: backSize },
+            lay: { odd: layOdd, size: laySize },
+            isSuspended: r?.status === 'SUSPENDED',
+          };
+        })
         : [
-            { id: 'runner_ou_25_u', name: 'Under 2.5 Goals', back: { odd: '2.14', size: '67.46' }, lay: { odd: '2.18', size: '4.01' }, isSuspended: false },
-            { id: 'runner_ou_25_o', name: 'Over 2.5 Goals', back: { odd: '1.85', size: '3.87' }, lay: { odd: '1.87', size: '67.46' }, isSuspended: false },
-          ];
+          { id: 'runner_ou_25_u', name: 'Under 2.5 Goals', back: { odd: '2.14', size: '67.46' }, lay: { odd: '2.18', size: '4.01' }, isSuspended: false },
+          { id: 'runner_ou_25_o', name: 'Over 2.5 Goals', back: { odd: '1.85', size: '3.87' }, lay: { odd: '1.87', size: '67.46' }, isSuspended: false },
+        ];
 
       return [
         {
@@ -676,42 +718,42 @@ export default function MatchDetailSection({
     if (isCricket || isTennis) {
       const matchOddsMarket = Array.isArray(reduxMarketOdds)
         ? reduxMarketOdds.find((m) => {
-            const name = (m?.marketName || '').toUpperCase();
-            return name.includes('MATCH ODDS') || name.includes('MATCH_ODDS') || (!name.includes('TIED') && !name.includes('TOSS') && !name.includes('COMPLETED'));
-          }) || reduxMarketOdds[0]
+          const name = (m?.marketName || '').toUpperCase();
+          return name.includes('MATCH ODDS') || name.includes('MATCH_ODDS') || (!name.includes('TIED') && !name.includes('TOSS') && !name.includes('COMPLETED'));
+        }) || reduxMarketOdds[0]
         : null;
 
       const liveMatchRunners = matchOddsMarket?.runners && matchOddsMarket.runners.length > 0
         ? matchOddsMarket.runners.map((r, idx) => {
-            const mappedName = runnerNameMap.get(String(r?.selectionId));
-            const rawName = r?.runnerName || mappedName || '';
-            const fallback = idx === 0 ? team1Name : team2Name;
-            const isGeneric = !rawName || rawName.toLowerCase().startsWith('runner ') || rawName.toLowerCase().startsWith('player ');
-            const finalName = !isGeneric ? rawName : fallback;
+          const mappedName = runnerNameMap.get(String(r?.selectionId));
+          const rawName = r?.runnerName || mappedName || '';
+          const fallback = idx === 0 ? team1Name : team2Name;
+          const isGeneric = !rawName || rawName.toLowerCase().startsWith('runner ') || rawName.toLowerCase().startsWith('player ');
+          const finalName = !isGeneric ? rawName : fallback;
 
-            const backPrice = r?.ex?.availableToBack?.[0]?.price;
-            const backSizeVal = r?.ex?.availableToBack?.[0]?.size;
-            const layPrice = r?.ex?.availableToLay?.[0]?.price;
-            const laySizeVal = r?.ex?.availableToLay?.[0]?.size;
+          const backPrice = r?.ex?.availableToBack?.[0]?.price;
+          const backSizeVal = r?.ex?.availableToBack?.[0]?.size;
+          const layPrice = r?.ex?.availableToLay?.[0]?.price;
+          const laySizeVal = r?.ex?.availableToLay?.[0]?.size;
 
-            const backOdd = backPrice !== undefined && backPrice !== null && backPrice !== '' && backPrice !== 0 ? String(backPrice) : '--';
-            const backSize = backSizeVal !== undefined && backSizeVal !== null && backSizeVal !== '' ? String(backSizeVal) : '--';
-            const layOdd = layPrice !== undefined && layPrice !== null && layPrice !== '' && layPrice !== 0 ? String(layPrice) : '--';
-            const laySize = laySizeVal !== undefined && laySizeVal !== null && laySizeVal !== '' ? String(laySizeVal) : '--';
+          const backOdd = backPrice !== undefined && backPrice !== null && backPrice !== '' && backPrice !== 0 ? String(backPrice) : '--';
+          const backSize = backSizeVal !== undefined && backSizeVal !== null && backSizeVal !== '' ? String(backSizeVal) : '--';
+          const layOdd = layPrice !== undefined && layPrice !== null && layPrice !== '' && layPrice !== 0 ? String(layPrice) : '--';
+          const laySize = laySizeVal !== undefined && laySizeVal !== null && laySizeVal !== '' ? String(laySizeVal) : '--';
 
-            return {
-              id: r?.selectionId ? `runner_${r.selectionId}` : `runner_0_${idx + 1}`,
-              selectionId: r?.selectionId,
-              name: finalName,
-              back: { odd: backOdd, size: backSize },
-              lay: { odd: layOdd, size: laySize },
-              isSuspended: r?.status === 'SUSPENDED' || (backOdd === '--' && layOdd === '--'),
-            };
-          })
+          return {
+            id: r?.selectionId ? `runner_${r.selectionId}` : `runner_0_${idx + 1}`,
+            selectionId: r?.selectionId,
+            name: finalName,
+            back: { odd: backOdd, size: backSize },
+            lay: { odd: layOdd, size: laySize },
+            isSuspended: r?.status === 'SUSPENDED' || (backOdd === '--' && layOdd === '--'),
+          };
+        })
         : [
-            { id: 'runner_1', name: team1Name || 'Pakistan W', back: { odd: '1.08', size: '12.25' }, lay: { odd: '1.1', size: '1.03' }, isSuspended: false },
-            { id: 'runner_2', name: team2Name || 'Thailand W', back: { odd: '10', size: '12.52' }, lay: { odd: '18', size: '1.04' }, isSuspended: false },
-          ];
+          { id: 'runner_1', name: team1Name || 'Pakistan W', back: { odd: '1.08', size: '12.25' }, lay: { odd: '1.1', size: '1.03' }, isSuspended: false },
+          { id: 'runner_2', name: team2Name || 'Thailand W', back: { odd: '10', size: '12.52' }, lay: { odd: '18', size: '1.04' }, isSuspended: false },
+        ];
 
       return [
         {
@@ -1233,9 +1275,42 @@ export default function MatchDetailSection({
   const [oddsValue, setOddsValue] = useState('1.94');
   const [stakeValue, setStakeValue] = useState('0');
   const [myBetsOpen, setMyBetsOpen] = useState(false);
+  const [openBetsTab, setOpenBetsTab] = useState('matched');
+  const [averageOdds, setAverageOdds] = useState(false);
   const [placedBets, setPlacedBets] = useState([]);
   const [tvStreamOpen, setTvStreamOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    hideMatchOdds: false,
+    hideBookmaker: false,
+    hideFancy: false,
+    hideTiedMatch: false,
+    hideToss: false,
+  });
+  const [tempFilters, setTempFilters] = useState({
+    hideMatchOdds: false,
+    hideBookmaker: false,
+    hideFancy: false,
+    hideTiedMatch: false,
+    hideToss: false,
+  });
+
+  const filteredMarketsList = useMemo(() => {
+    return marketsList.filter((mkt) => {
+      const nameUpper = (mkt.marketName || '').toUpperCase();
+      if (filters.hideMatchOdds && (nameUpper.includes('MATCH ODDS') || nameUpper.includes('MATCH_ODDS'))) {
+        return false;
+      }
+      if (filters.hideTiedMatch && (nameUpper.includes('TIED') || nameUpper.includes('DRAW'))) {
+        return false;
+      }
+      if (filters.hideToss && nameUpper.includes('TOSS')) {
+        return false;
+      }
+      return true;
+    });
+  }, [marketsList, filters]);
 
   const toggleFancyFav = (id) => {
     setFancyMarkets((prev) =>
@@ -1270,10 +1345,10 @@ export default function MatchDetailSection({
           (marketType === 'bookmaker'
             ? 'Bookmaker'
             : marketType === 'toss'
-            ? 'Toss'
-            : marketType === 'fancy'
-            ? 'Fancy'
-            : 'Match Odds'),
+              ? 'Toss'
+              : marketType === 'fancy'
+                ? 'Fancy'
+                : 'Match Odds'),
         runnerId,
         selectionId: selectionId || runnerId,
         runnerName,
@@ -1293,6 +1368,57 @@ export default function MatchDetailSection({
   const handleQuickStake = (amount) => {
     setStakeValue(amount.toString());
   };
+
+  const getStoredStakes = () => {
+    try {
+      const saved = localStorage.getItem('kuber_stakes');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((s) => ({
+            label: s.name || `${s.value}`,
+            val: Number(s.value) || 0,
+          }));
+        }
+      }
+      const savedAlt = localStorage.getItem('kuber_user_stakes');
+      if (savedAlt) {
+        const parsedAlt = JSON.parse(savedAlt);
+        if (Array.isArray(parsedAlt) && parsedAlt.length > 0) {
+          return parsedAlt.map((val) => ({
+            label: val >= 1000 ? `${val / 1000}k` : `${val}`,
+            val: Number(val) || 0,
+          }));
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return [
+      { label: '1k', val: 1000 },
+      { label: '2k', val: 2000 },
+      { label: '5k', val: 5000 },
+      { label: '10k', val: 10000 },
+      { label: '20k', val: 20000 },
+      { label: '25k', val: 25000 },
+      { label: '50k', val: 50000 },
+      { label: '75k', val: 75000 },
+    ];
+  };
+
+  const [stakeChips, setStakeChips] = useState(getStoredStakes);
+
+  useEffect(() => {
+    const handleStakesUpdate = () => {
+      setStakeChips(getStoredStakes());
+    };
+    window.addEventListener('kuber_stakes_updated', handleStakesUpdate);
+    window.addEventListener('storage', handleStakesUpdate);
+    return () => {
+      window.removeEventListener('kuber_stakes_updated', handleStakesUpdate);
+      window.removeEventListener('storage', handleStakesUpdate);
+    };
+  }, []);
 
   // 1. Centralized Placed Bets (Synced from Redux and LocalStorage so socket updates never erase P&L)
   const reduxPlacedBets = useSelector((state) => state?.account?.bets || []);
@@ -1521,10 +1647,10 @@ export default function MatchDetailSection({
       (mktType === 'bookmaker'
         ? 'Bookmaker'
         : mktType === 'toss'
-        ? 'Toss'
-        : mktType === 'fancy'
-        ? 'Fancy'
-        : 'Match Odds');
+          ? 'Toss'
+          : mktType === 'fancy'
+            ? 'Fancy'
+            : 'Match Odds');
 
     const newBet = {
       id: Date.now(),
@@ -1603,6 +1729,10 @@ export default function MatchDetailSection({
   );
 
   const isHorseRacing = Boolean(
+    urlSport === 'horse' ||
+    urlSport === 'greyhound' ||
+    String(urlEventType) === '7' ||
+    String(urlEventType) === '43' ||
     currentMatch?.sport === 'horse' ||
     currentMatch?.sport === 'greyhound' ||
     currentMatch?.isRacing ||
@@ -1617,67 +1747,81 @@ export default function MatchDetailSection({
     ))
   );
 
+  // Redux Selectors for Horse and Greyhound live markets
+  const reduxHorseMarkets = useSelector((state) => state?.horse?.horseMarkets || []);
+  const reduxGreyhoundMarkets = useSelector((state) => state?.greyhound?.greyhoundMarkets || []);
+  const isHorse = urlSport === 'horse' || (!urlSport.includes('greyhound') && !urlSport.includes('dog'));
+  const racingMarketList = isHorse ? reduxHorseMarkets : reduxGreyhoundMarkets;
+  const effectiveGmid = searchParams.get('gmid') || urlMarketId || urlEventId || currentMatch?.id;
+
+  const liveRacingMarket = useMemo(() => {
+    if (!Array.isArray(racingMarketList) || racingMarketList.length === 0) return null;
+    return racingMarketList.find(
+      (m) => String(m?.gmid) === String(effectiveGmid) || String(m?.eventId) === String(urlEventId)
+    );
+  }, [racingMarketList, effectiveGmid, urlEventId]);
+
+  // Dynamic countdown timer for race (default ~01:03:03 matching screenshot)
+  const [countdownSeconds, setCountdownSeconds] = useState(3783);
+  useEffect(() => {
+    if (!isHorseRacing) return;
+    const interval = setInterval(() => {
+      setCountdownSeconds((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isHorseRacing]);
+
+  const formattedRemaining = useMemo(() => {
+    const hrs = String(Math.floor(countdownSeconds / 3600)).padStart(2, '0');
+    const mins = String(Math.floor((countdownSeconds % 3600) / 60)).padStart(2, '0');
+    const secs = String(countdownSeconds % 60).padStart(2, '0');
+    return `${hrs}:${mins}:${secs}`;
+  }, [countdownSeconds]);
+
   const horseList = useMemo(() => {
-    if (currentMatch.horses && currentMatch.horses.length > 0) {
+    if (liveRacingMarket) {
+      const matchOddsSection = Array.isArray(liveRacingMarket.odds)
+        ? liveRacingMarket.odds.find((e) => e?.mname === 'MATCH_ODDS') || liveRacingMarket.odds[0]
+        : liveRacingMarket.odds;
+
+      const rawRunners = matchOddsSection?.section || matchOddsSection?.runners || (Array.isArray(liveRacingMarket.odds) ? liveRacingMarket.odds : []);
+      if (Array.isArray(rawRunners) && rawRunners.length > 0) {
+        const defaultSilks = ['wantoknowwhatloveis', 'doctorino', 'severan', 'north_sea', 'ratounet', 'deal_daily', 'tacticien'];
+        return rawRunners.map((r, idx) => {
+          let name = r.nat || r.runnerName || r.name || `Runner ${idx + 1}`;
+          if (name.includes('.')) {
+            const parts = name.split('.');
+            if (parts.length > 1 && !isNaN(parts[0])) name = parts.slice(1).join('.').trim();
+          }
+          const jockey = r.jname || r.jockey || r.trainer || '';
+          const backOdd = r.b1 || r.back?.[0]?.price || r.back?.[0]?.odd || '-';
+          const backSize = r.bs1 || r.back?.[0]?.size || '-';
+          const layOdd = r.l1 || r.lay?.[0]?.price || r.lay?.[0]?.odd || '-';
+          const laySize = r.ls1 || r.lay?.[0]?.size || '-';
+          const isSusp = r.status === 'SUSPENDED' || matchOddsSection?.status === 'SUSPENDED' || (backOdd === '-' && layOdd === '-');
+
+          return {
+            id: String(r.sid || r.id || `runner_${idx + 1}`),
+            num: r.cno || r.number || idx + 1,
+            name,
+            jockey,
+            silk: r.silk || defaultSilks[idx % defaultSilks.length],
+            himg: r.himg,
+            back: { odd: String(backOdd), size: String(backSize) },
+            lay: { odd: String(layOdd), size: String(laySize) },
+            isSuspended: isSusp,
+            selectionId: r.sid || r.id || `runner_${idx + 1}`,
+          };
+        });
+      }
+    }
+
+    if (currentMatch.horses && Array.isArray(currentMatch.horses) && currentMatch.horses.length > 0) {
       return currentMatch.horses;
     }
-    return [
-      {
-        id: 'horse_1',
-        name: 'My Yoke',
-        jockey: 'Jacqueline A. Davis',
-        silk: 'blue_horseshoe',
-        back: { odd: '3.25', size: '1.5k' },
-        lay: { odd: '3.4', size: '850' },
-        isSuspended: true,
-      },
-      {
-        id: 'horse_2',
-        name: 'Cest La Vie Nick',
-        jockey: 'Jose Montano',
-        silk: 'blue_diamond',
-        back: { odd: '4.5', size: '2.1k' },
-        lay: { odd: '4.8', size: '600' },
-        isSuspended: true,
-      },
-      {
-        id: 'horse_3',
-        name: 'Chaperone',
-        jockey: 'Arnaldo Bocachica',
-        silk: 'yellow_blue_half',
-        back: { odd: '2.1', size: '4.2k' },
-        lay: { odd: '2.2', size: '1.2k' },
-        isSuspended: true,
-      },
-      {
-        id: 'horse_4',
-        name: 'Wishful Thoughts',
-        jockey: 'Wesley Ho',
-        silk: 'grey_checkered',
-        back: { odd: '7.0', size: '950' },
-        lay: { odd: '8.2', size: '320' },
-        isSuspended: true,
-      },
-      {
-        id: 'horse_5',
-        name: 'Golden Appeal',
-        jockey: 'Christian Hiraldo',
-        silk: 'red_stars',
-        back: { odd: '5.5', size: '1.1k' },
-        lay: { odd: '6.0', size: '450' },
-        isSuspended: true,
-      },
-      {
-        id: 'horse_6',
-        name: 'Fiber Strong',
-        jockey: 'Denis Araujo',
-        silk: 'green_gold',
-        back: { odd: '12.0', size: '500' },
-        lay: { odd: '14.5', size: '200' },
-        isSuspended: true,
-      },
-    ];
-  }, [currentMatch]);
+
+    return [];
+  }, [liveRacingMarket, currentMatch]);
 
   return (
     <div className="w-full bg-[#f2f4f7] select-none flex flex-col  pb-20 min-h-[500px]">
@@ -1704,10 +1848,15 @@ export default function MatchDetailSection({
           {/* Filter button */}
           <button
             type="button"
+            onClick={() => {
+              setTempFilters(filters);
+              setFilterModalOpen(true);
+            }}
             style={{
               background: 'transparent linear-gradient(94deg, #b6842d, #ebda8d 55%, #b7862f) 0% 0% no-repeat padding-box',
             }}
-            className="py-[6px] px-[9px] rounded-[4px] flex items-center justify-center text-black cursor-pointer hover:brightness-105 active:scale-95 shadow-2xs"
+            className={`py-[6px] px-[9px] rounded-[4px] flex items-center justify-center text-black cursor-pointer hover:brightness-105 active:scale-95 shadow-2xs ${filterModalOpen ? 'ring-2 ring-amber-600' : ''
+              }`}
             title="Filter Markets"
             aria-label="Filter"
           >
@@ -1761,6 +1910,99 @@ export default function MatchDetailSection({
         </div>
       </div>
 
+      {/* Optional Score / Stats Area matching user preference */}
+      {statsOpen && (
+        <div className="w-full bg-black text-white py-6 px-4 text-center my-1 rounded-[4px] shadow-sm animate-in fade-in duration-150">
+          {(() => {
+            const rawScore =
+              activeMatchFromStore?.score ||
+              activeMatchFromStore?.matchScore ||
+              activeMatchFromStore?.scoreCard ||
+              currentMatch?.score ||
+              currentMatch?.scoreCard ||
+              null;
+
+            const t1Score =
+              rawScore?.team1Score ||
+              rawScore?.team1 ||
+              rawScore?.t1Score ||
+              currentMatch?.team1Score ||
+              null;
+
+            const t2Score =
+              rawScore?.team2Score ||
+              rawScore?.team2 ||
+              rawScore?.t2Score ||
+              currentMatch?.team2Score ||
+              null;
+
+            const hasScore = Boolean(
+              (t1Score && t1Score !== '--') ||
+              (t2Score && t2Score !== '--') ||
+              rawScore?.scoreStr ||
+              rawScore?.status
+            );
+
+            if (hasScore) {
+              return (
+                <div className="w-full max-w-[400px] mx-auto flex flex-col gap-2.5 items-center">
+                  {/* Header Badge */}
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse inline-block" />
+                    <span className="text-[11px] font-black text-red-500 uppercase tracking-widest">
+                      LIVE SCORE
+                    </span>
+                  </div>
+
+                  {/* Scorecard Container */}
+                  <div className="w-full bg-[#181818] border border-[#333] rounded-[8px] p-3.5 flex flex-col gap-2.5 shadow-md">
+                    {/* Team 1 Row */}
+                    <div className="flex items-center justify-between font-bold text-[14px]">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                        <span className="text-white font-extrabold truncate">{team1Name}</span>
+                      </div>
+                      <span className="text-[#f5c531] font-mono font-black text-[15px] shrink-0">
+                        {t1Score || '-'}
+                      </span>
+                    </div>
+
+                    <div className="h-[1px] bg-[#282828] w-full" />
+
+                    {/* Team 2 Row */}
+                    <div className="flex items-center justify-between font-bold text-[14px]">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                        <span className="text-white font-extrabold truncate">{team2Name}</span>
+                      </div>
+                      <span className="text-[#f5c531] font-mono font-black text-[15px] shrink-0">
+                        {t2Score || '-'}
+                      </span>
+                    </div>
+
+                    {/* Status bar */}
+                    {(rawScore?.status || rawScore?.crr || currentMatch?.scoreStatus) && (
+                      <div className="mt-1 pt-2 border-t border-[#2a2a2a] flex items-center justify-between text-[11px] font-bold text-gray-400">
+                        {rawScore?.crr && <span className="text-amber-400 uppercase tracking-wider">CRR: {rawScore.crr}</span>}
+                        <span className="uppercase text-gray-300">
+                          {rawScore?.status || currentMatch?.scoreStatus || ''}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <p className="text-[24px] sm:text-[28px] font-extrabold text-white leading-[1.25] tracking-tight max-w-[320px] mx-auto select-none py-4">
+                Score will be available once the match starts
+              </p>
+            );
+          })()}
+        </div>
+      )}
+
       {/* Optional TV Stream Area */}
       {tvStreamOpen && (
         <div className="mx-2 mb-2 p-3 bg-black text-white rounded-[6px] text-center">
@@ -1769,45 +2011,139 @@ export default function MatchDetailSection({
         </div>
       )}
 
-      {/* Optional My Bets Drawer Panel */}
+      {/* OPEN BETS MODAL OVERLAY MATCHING REFERENCE DESIGN */}
       {myBetsOpen && (
-        <div className="mx-2 mb-2 p-2.5 bg-white border border-[#caa049] rounded-[6px] shadow-sm">
-          <div className="flex items-center justify-between pb-1.5 border-b border-gray-200">
-            <span className="font-black text-xs text-black uppercase">My Bets ({placedBets.length})</span>
-            <button
-              onClick={() => setMyBetsOpen(false)}
-              className="text-xs font-bold text-gray-500 hover:text-black"
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[1px] p-2">
+          <div className="w-full max-w-[360px] bg-white rounded-[8px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 border duration-150">
+            {/* Header */}
+            <div
+              style={{
+                background: 'linear-gradient(94deg, #b6842d 0%, #ebda8d 55%, #b7862f 100%)',
+              }}
+              className="px-4 py-3 flex items-center justify-between shadow-xs"
             >
-              Close ✕
-            </button>
-          </div>
-          {placedBets.length === 0 ? (
-            <p className="text-xs text-gray-500 text-center py-2">No open bets placed yet.</p>
-          ) : (
-            <div className="divide-y divide-gray-100 mt-1 max-h-[140px] overflow-y-auto">
-              {placedBets.map((b) => (
-                <div key={b.id} className="py-1.5 flex items-center justify-between text-[11.5px]">
-                  <div>
-                    <span className="font-bold text-black">{b.runner}</span>
-                    <span className={`ml-1.5 px-1 rounded text-[10px] font-black uppercase ${b.type === 'back' || b.type === 'yes' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'}`}>
-                      {b.type}
-                    </span>
-                  </div>
-                  <div className="text-right font-bold text-black">
-                    <span>@{b.odds}</span> | <span>₹{b.stake}</span>
-                  </div>
-                </div>
-              ))}
+              <span className="font-extrabold text-[15.5px] text-black">
+                Open Bets
+              </span>
+              <button
+                type="button"
+                onClick={() => setMyBetsOpen(false)}
+                className="text-white font-extrabold text-[18px] leading-none hover:opacity-70 transition-opacity px-1 cursor-pointer"
+                aria-label="Close"
+              >
+                ✕
+              </button>
             </div>
-          )}
+
+            {/* Body */}
+            <div className="p-4 bg-white flex flex-col gap-3">
+              {/* Checkbox: Average Odds */}
+              <label className="flex items-center gap-2 cursor-pointer select-none text-[13px] font-semibold text-[#212529]">
+                <input
+                  type="checkbox"
+                  checked={averageOdds}
+                  onChange={(e) => setAverageOdds(e.target.checked)}
+                  className="w-4 h-4 rounded border-2 border-gray-400 accent-[#007bff] cursor-pointer"
+                />
+                <span>Average Odds</span>
+              </label>
+
+              {/* Separator line */}
+              <div className="h-[1px] bg-gray-200 w-full my-0.5" />
+
+              {/* Tab Pills: Matched, Bookmaker, Fancy */}
+              <div className="grid grid-cols-3 gap-1 bg-white">
+                <button
+                  type="button"
+                  onClick={() => setOpenBetsTab('matched')}
+                  style={{
+                    background: openBetsTab === 'matched' ? 'linear-gradient(94deg, #b6842d 0%, #ebda8d 55%, #b7862f 100%)' : 'transparent',
+                  }}
+                  className={`py-1.5 font-bold text-[13px] rounded-[4px] cursor-pointer transition-all ${
+                    openBetsTab === 'matched' ? 'text-black shadow-xs' : 'text-gray-800 hover:bg-gray-100 border border-gray-200'
+                  }`}
+                >
+                  Matched
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOpenBetsTab('bookmaker')}
+                  style={{
+                    background: openBetsTab === 'bookmaker' ? 'linear-gradient(94deg, #b6842d 0%, #ebda8d 55%, #b7862f 100%)' : 'transparent',
+                  }}
+                  className={`py-1.5 font-bold text-[13px] rounded-[4px] cursor-pointer transition-all ${
+                    openBetsTab === 'bookmaker' ? 'text-black shadow-xs' : 'text-gray-800 hover:bg-gray-100 border border-gray-200'
+                  }`}
+                >
+                  Bookmaker
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOpenBetsTab('fancy')}
+                  style={{
+                    background: openBetsTab === 'fancy' ? 'linear-gradient(94deg, #b6842d 0%, #ebda8d 55%, #b7862f 100%)' : 'transparent',
+                  }}
+                  className={`py-1.5 font-bold text-[13px] rounded-[4px] cursor-pointer transition-all ${
+                    openBetsTab === 'fancy' ? 'text-black shadow-xs' : 'text-gray-800 hover:bg-gray-100 border border-gray-200'
+                  }`}
+                >
+                  Fancy
+                </button>
+              </div>
+
+              {/* Table Container */}
+              <div className="w-full border border-gray-200 rounded-[4px] overflow-hidden mt-1">
+                {/* Table Header (Gray Bar) */}
+                <div className="grid grid-cols-4 px-2 py-2 bg-[#e0e0e0] font-bold text-[12px] text-[#212529] text-center uppercase tracking-tight">
+                  <span>Selection</span>
+                  <span>Odds</span>
+                  <span>Stake</span>
+                  <span>Date/Time</span>
+                </div>
+
+                {/* Table Content */}
+                <div className="bg-white min-h-[100px] flex flex-col justify-center">
+                  {(() => {
+                    const filteredList = placedBets.filter((b) => {
+                      if (openBetsTab === 'bookmaker') return b.marketType === 'bookmaker' || b.marketName === 'Bookmaker';
+                      if (openBetsTab === 'fancy') return b.marketType === 'fancy' || b.marketName === 'Fancy';
+                      // default 'matched'
+                      return b.marketType !== 'bookmaker' && b.marketType !== 'fancy';
+                    });
+
+                    if (filteredList.length === 0) {
+                      return (
+                        <div className="py-8 text-center text-[#212529] font-bold text-[13px]">
+                          No data found!
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="divide-y divide-gray-100 max-h-[220px] overflow-y-auto">
+                        {filteredList.map((b) => (
+                          <div key={b.id} className="grid grid-cols-4 px-2 py-2 text-[11.5px] text-center items-center font-semibold text-[#212529]">
+                            <span className="truncate text-left font-bold">{b.runner}</span>
+                            <span>{b.odds}</span>
+                            <span>₹{b.stake}</span>
+                            <span className="text-[10px] text-gray-500">{b.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
       {isHorseRacing ? (
         /* ========================================================= */
-        /* HORSE / GREYHOUND RACING INNER MATCH LAYOUT               */
+        /* HORSE / GREYHOUND RACING INNER MATCH LAYOUT (IMAGE 3)     */
         /* ========================================================= */
         <div className="w-full bg-white mt-1.5 shadow-[0_2px_4px_rgba(0,0,0,0.12)] relative z-10">
-          {/* Header Ribbon */}
+          {/* Header Ribbon with Gold Gradient */}
           <div className="w-full bg-[#f3f8fb] flex items-center justify-between relative border-b border-gray-100">
             <div
               style={{
@@ -1816,159 +2152,180 @@ export default function MatchDetailSection({
               }}
               className="h-[38px] pl-3 pr-5 flex items-center justify-between min-w-[62%] max-w-[75%]"
             >
-              {/* Left: Race Title & Elapsed Time */}
+              {/* Left: MATCH ODDS & REMAINING Time */}
               <div className="flex flex-col justify-center">
-                <span className="font-sans font-bold text-[12.5px] text-black uppercase leading-tight tracking-tight">
-                  {currentMatch.raceCode || currentMatch.venue || 'R5 7F CLAIM'}
+                <span className="font-sans font-black text-[12.5px] text-black uppercase leading-tight tracking-tight">
+                  MATCH ODDS
                 </span>
-                <span className="font-sans font-bold text-[10px] text-black uppercase leading-tight tracking-tight">
-                  (ELAPSED: {currentMatch.elapsed || '126:44:32'})
+                <span className="font-sans font-bold text-[9.5px] text-black uppercase leading-tight tracking-tight">
+                  (REMAINING : {formattedRemaining})
                 </span>
               </div>
 
-              {/* Right: SUSPENDED Badge */}
+              {/* Right: BET CLOSE / SUSPENDED Badge */}
               <div className="flex items-center ml-2">
-                <span className="bg-black text-white text-[10.5px] font-black px-2 py-0.5 rounded-[4px] border border-white tracking-wider leading-none select-none">
-                  SUSPENDED
+                <span className="bg-black text-white text-[10px] font-black px-2 py-0.5 rounded-[4px] border border-white tracking-wider leading-none select-none">
+                  {currentMatch.isSuspended ? 'SUSPENDED' : 'BET CLOSE'}
                 </span>
               </div>
             </div>
 
             {/* Right: Min / Max */}
             <div className="pr-2.5 text-[11.5px] font-medium text-black leading-none whitespace-nowrap">
-              Min: {currentMatch.minBet || 1} | Max: {currentMatch.maxBet || 10000}
+              Min: {currentMatch.minBet || 1} | Max: {currentMatch.maxBet || 25000}
             </div>
           </div>
 
           {/* Column Header: BACK & LAY */}
-          <div className="w-full bg-[#f3f8fb] flex items-center justify-end py-0.5">
-            <div className="flex items-center gap-[2px] ml-[2px] text-center shrink-0 pr-0">
-              <span className="w-[76.13px] h-[18px] flex items-center justify-center text-[12px] font-bold text-black uppercase">
+          <div className="w-full bg-white flex items-center justify-end py-1 px-1 border-b border-gray-100">
+            <div className="flex items-center gap-[2px] text-center shrink-0 pr-0.5">
+              <span className="w-[76.13px] h-[18px] flex items-center justify-center text-[12px] font-black text-black uppercase">
                 BACK
               </span>
-              <span className="w-[76.13px] h-[18px] flex items-center justify-center text-[12px] font-bold text-black uppercase">
+              <span className="w-[76.13px] h-[18px] flex items-center justify-center text-[12px] font-black text-black uppercase">
                 LAY
               </span>
             </div>
           </div>
 
-          {/* Horse Runners List */}
-          <div className="w-full bg-white flex flex-col divide-y divide-[#e9ecef]">
-            {horseList.map((horse) => {
-              const isBackSelected =
-                activeBet &&
-                activeBet.marketType === 'horse_racing' &&
-                activeBet.runnerId === horse.id &&
-                activeBet.type === 'back';
-              const isLaySelected =
-                activeBet &&
-                activeBet.marketType === 'horse_racing' &&
-                activeBet.runnerId === horse.id &&
-                activeBet.type === 'lay';
-              const isSlipOpen =
-                activeBet &&
-                activeBet.marketType === 'horse_racing' &&
-                activeBet.runnerId === horse.id;
+          {/* Horse / Greyhound Runners List */}
+          <div className="w-full bg-white flex flex-col divide-y divide-[#edf0f2]">
+            {horseList.length > 0 ? (
+              horseList.map((horse, hIdx) => {
+                const trap = GREYHOUND_TRAP_STYLES[hIdx % GREYHOUND_TRAP_STYLES.length];
+                const isBackSelected =
+                  activeBet &&
+                  activeBet.marketType === 'horse_racing' &&
+                  activeBet.runnerId === horse.id &&
+                  activeBet.type === 'back';
+                const isLaySelected =
+                  activeBet &&
+                  activeBet.marketType === 'horse_racing' &&
+                  activeBet.runnerId === horse.id &&
+                  activeBet.type === 'lay';
+                const isSlipOpen =
+                  activeBet &&
+                  activeBet.marketType === 'horse_racing' &&
+                  activeBet.runnerId === horse.id;
 
-              return (
-                <div key={horse.id} className="flex flex-col">
-                  <div className="w-full flex items-center justify-between py-2 px-2.5 bg-white">
-                    {/* Left: Jockey Silk + Horse Name + Jockey Name */}
-                    <div className="flex items-center gap-2.5 flex-1 min-w-0 pr-2">
-                      {/* Jockey Silk Icon */}
-                      <JockeySilkIcon silk={horse.silk} className="w-[48px] h-[48px]" />
-
-                      {/* Horse & Jockey Info */}
-                      <div className="flex flex-col min-w-0">
-                        <span className="font-bold text-[14px] text-[#111827] truncate leading-tight">
-                          {horse.name}
-                        </span>
-                        {horse.jockey && (
-                          <div className="mt-1">
-                            <span className="bg-[#e9ecef] text-[#212529] px-2 py-[2px] rounded-[3px] text-[11px] font-medium inline-block leading-tight select-none">
-                              Jockey:{horse.jockey}
-                            </span>
+                return (
+                  <div key={horse.id} className="flex flex-col">
+                    <div className="w-full flex items-center justify-between py-2 px-2.5 bg-white hover:bg-gray-50/70 transition-colors">
+                      {/* Left: Jockey Silk + Horse Name + Jockey Name */}
+                      <div className="flex items-center gap-2.5 flex-1 min-w-0 pr-2">
+                        {/* Jockey Silk Icon or Greyhound Trap */}
+                        {isHorse ? (
+                          <JockeySilkIcon silk={horse.silk} himg={horse.himg} gmid={effectiveGmid} className="w-[42px] h-[42px]" />
+                        ) : (
+                          <div
+                            className="w-[28px] h-[28px] rounded-[3px] flex items-center justify-center font-bold text-[13px] shadow-xs shrink-0"
+                            style={{
+                              backgroundColor: trap.bg,
+                              color: trap.text,
+                              border: `1px solid ${trap.border}`,
+                            }}
+                          >
+                            {horse.num || hIdx + 1}
                           </div>
                         )}
-                        {(() => {
-                          const pl = getProjectedPL('horse_racing', horse, 'Horse Race');
-                          if (!pl) return null;
-                          return (
-                            <span
-                              className={`text-[12px] font-bold leading-tight mt-0.5 ${
-                                pl.isPositive ? 'text-[#008a00]' : 'text-[#d32f2f]'
-                              }`}
+
+                        {/* Horse & Jockey Info */}
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-bold text-[14px] text-[#111827] truncate leading-tight">
+                            {horse.name}
+                          </span>
+                          {horse.jockey && (
+                            <div className="mt-1">
+                              <span className="bg-[#e9ecef] text-[#212529] px-2 py-[2px] rounded-[3px] text-[11px] font-medium inline-block leading-tight select-none">
+                                Jockey:{horse.jockey}
+                              </span>
+                            </div>
+                          )}
+                          {(() => {
+                            const pl = getProjectedPL('horse_racing', horse, 'Horse Race');
+                            if (!pl) return null;
+                            return (
+                              <span
+                                className={`text-[12px] font-bold leading-tight mt-0.5 ${pl.isPositive ? 'text-[#008a00]' : 'text-[#d32f2f]'
+                                  }`}
+                              >
+                                {pl.isProjected ? '>> ' : ''}{pl.text}
+                              </span>
+                            );
+                          })()}
+                        </div>
+                      </div>
+
+                      {/* Right: Back & Lay Odds Boxes OR SuspendedBox */}
+                      <div className="flex items-center gap-[2px] shrink-0">
+                        {horse.isSuspended || currentMatch.isSuspended ? (
+                          <SuspendedBox height="h-[45px]" width="w-[154.26px]" />
+                        ) : (
+                          <div className="flex items-center gap-[2px]">
+                            {/* Blue Back Box */}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleSelectBet(
+                                  'horse_racing',
+                                  horse.id,
+                                  horse.name,
+                                  'back',
+                                  horse.back?.odd || '1.51',
+                                  'Horse Race',
+                                  horse.selectionId || horse.id
+                                )
+                              }
+                              className={`w-[76.13px] h-[45px] shadow-2xs hover:brightness-95 flex flex-col items-center justify-center cursor-pointer transition-all active:scale-[0.98] outline-none border-0 ${isBackSelected ? 'bg-[#72bbef]' : 'bg-[#c5e6f8] hover:bg-[#b2dff6]'
+                                }`}
                             >
-                              {pl.isProjected ? '>> ' : ''}{pl.text}
-                            </span>
-                          );
-                        })()}
+                              <span className="font-bold text-[14px] text-[#212529] leading-3">
+                                {horse.back?.odd || '-'}
+                              </span>
+                              <span className="text-[10px] font-medium text-[#4b5563] leading-none mt-1">
+                                {horse.back?.size || '-'}
+                              </span>
+                            </button>
+
+                            {/* Pink Lay Box */}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleSelectBet(
+                                  'horse_racing',
+                                  horse.id,
+                                  horse.name,
+                                  'lay',
+                                  horse.lay?.odd || '6.2',
+                                  'Horse Race',
+                                  horse.selectionId || horse.id
+                                )
+                              }
+                              className={`w-[76.13px] h-[45px] shadow-2xs hover:brightness-95 flex flex-col items-center justify-center cursor-pointer transition-all active:scale-[0.98] outline-none border-0 ${isLaySelected ? 'bg-[#f78ca2]' : 'bg-[#f5ced5] hover:bg-[#f0bcc6]'
+                                }`}
+                            >
+                              <span className="font-bold text-[14px] text-[#212529] leading-3">
+                                {horse.lay?.odd || '-'}
+                              </span>
+                              <span className="text-[10px] font-medium text-[#4b5563] leading-none mt-1">
+                                {horse.lay?.size || '-'}
+                              </span>
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {/* Right: Back & Lay Odds Boxes OR SuspendedBox */}
-                    <div className="flex items-center gap-[2px] shrink-0">
-                      {horse.isSuspended || currentMatch.isSuspended ? (
-                        <SuspendedBox height="h-[45px]" width="w-[154.26px]" />
-                      ) : (
-                        <div className="flex items-center gap-[2px]">
-                          {/* Blue Back Box */}
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleSelectBet(
-                                'horse_racing',
-                                horse.id,
-                                horse.name,
-                                'back',
-                                horse.back?.odd || '3.25',
-                                'Horse Race',
-                                horse.selectionId || horse.id
-                              )
-                            }
-                            className="w-[76.13px] h-[45px] bg-[#aee1fc] shadow-xs hover:brightness-95 flex flex-col items-center justify-center cursor-pointer transition-all active:scale-[0.98]"
-                          >
-                            <span className="font-bold text-[13.5px] text-[#212529] leading-3">
-                              {horse.back?.odd || '0'}
-                            </span>
-                            <span className="text-[10px] font-medium text-[#212529] leading-none mt-0.5">
-                              {horse.back?.size || '0'}
-                            </span>
-                          </button>
-
-                          {/* Pink Lay Box */}
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleSelectBet(
-                                'horse_racing',
-                                horse.id,
-                                horse.name,
-                                'lay',
-                                horse.lay?.odd || '3.4',
-                                'Horse Race',
-                                horse.selectionId || horse.id
-                              )
-                            }
-                            className="w-[76.13px] h-[45px] bg-[#fed5da] shadow-xs hover:brightness-95 flex flex-col items-center justify-center cursor-pointer transition-all active:scale-[0.98]"
-                          >
-                            <span className="font-bold text-[13.5px] text-[#212529] leading-3">
-                              {horse.lay?.odd || '0'}
-                            </span>
-                            <span className="text-[10px] font-medium text-[#212529] leading-none mt-0.5">
-                              {horse.lay?.size || '0'}
-                            </span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                    {/* Inline Bet Slip for Horse Racing */}
+                    {isSlipOpen && renderBetSlip(activeBet)}
                   </div>
-
-                  {/* Inline Bet Slip for Horse Racing */}
-                  {isSlipOpen && renderBetSlip(activeBet)}
-                </div>
-              );
-            })}
+                );
+              })
+            ) : (
+              <div className="py-12 text-center text-gray-500 font-bold text-[13px]">
+                Connecting live stream for runners...
+              </div>
+            )}
           </div>
         </div>
       ) : (
@@ -1976,7 +2333,7 @@ export default function MatchDetailSection({
           {/* ========================================================= */}
           {/* 2. DYNAMIC MARKETS (MATCH ODDS, OVER/UNDER, ETC.)         */}
           {/* ========================================================= */}
-          {marketsList.map((marketObj) => (
+          {filteredMarketsList.map((marketObj) => (
             <div
               key={marketObj.marketId}
               className="w-full bg-[#f3f8fb] mt-1.5 shadow-[0_2px_4px_rgba(0,0,0,0.12)] relative z-10"
@@ -2062,9 +2419,8 @@ export default function MatchDetailSection({
                             if (!pl) return null;
                             return (
                               <span
-                                className={`text-[12.5px] font-bold leading-tight ${
-                                  pl.isPositive ? 'text-[#008a00]' : 'text-[#d32f2f]'
-                                }`}
+                                className={`text-[12.5px] font-bold leading-tight ${pl.isPositive ? 'text-[#008a00]' : 'text-[#d32f2f]'
+                                  }`}
                               >
                                 {pl.isProjected ? '>> ' : ''}{pl.text}
                               </span>
@@ -2142,7 +2498,7 @@ export default function MatchDetailSection({
           {/* ========================================================= */}
           {/* 3. MARKET SECTION 2: BOOKMAKER (Cricket / Available Only) */}
           {/* ========================================================= */}
-          {showBookmakerSection && (
+          {showBookmakerSection && !filters.hideBookmaker && (
             <div className="w-full bg-[#f3f8fb] mt-3 shadow-[0_2px_4px_rgba(0,0,0,0.12)] relative z-10">
               {/* Header Ribbon */}
               <div className="w-full bg-[#f3f8fb] flex items-center justify-between relative border-b border-gray-100">
@@ -2225,9 +2581,8 @@ export default function MatchDetailSection({
                             if (!pl) return null;
                             return (
                               <span
-                                className={`text-[12.5px] font-bold leading-tight ${
-                                  pl.isPositive ? 'text-[#008a00]' : 'text-[#d32f2f]'
-                                }`}
+                                className={`text-[12.5px] font-bold leading-tight ${pl.isPositive ? 'text-[#008a00]' : 'text-[#d32f2f]'
+                                  }`}
                               >
                                 {pl.isProjected ? '>> ' : ''}{pl.text}
                               </span>
@@ -2305,7 +2660,7 @@ export default function MatchDetailSection({
           {/* ========================================================= */}
           {/* 3.5 MARKET SECTION: TO WIN THE TOSS (Cricket / Available) */}
           {/* ========================================================= */}
-          {showTossSection && (
+          {showTossSection && !filters.hideToss && (
             <div className="w-full bg-[#f3f8fb] mt-3 shadow-[0_2px_4px_rgba(0,0,0,0.12)] relative z-10">
               {/* Header Ribbon */}
               <div className="w-full bg-[#f3f8fb] flex items-center justify-between relative border-b border-gray-100">
@@ -2366,9 +2721,8 @@ export default function MatchDetailSection({
                             if (!pl) return null;
                             return (
                               <span
-                                className={`text-[12.5px] font-bold leading-tight ${
-                                  pl.isPositive ? 'text-[#008a00]' : 'text-[#d32f2f]'
-                                }`}
+                                className={`text-[12.5px] font-bold leading-tight ${pl.isPositive ? 'text-[#008a00]' : 'text-[#d32f2f]'
+                                  }`}
                               >
                                 {pl.isProjected ? '>> ' : ''}{pl.text}
                               </span>
@@ -2423,11 +2777,10 @@ export default function MatchDetailSection({
                                     runner.selectionId || runner.id
                                   )
                                 }
-                                className={`w-[76.13px] h-[45px] ${
-                                  runner.lay?.odd === '-' || runner.lay?.odd === '--'
-                                    ? 'bg-[#fed5da] cursor-default'
-                                    : 'bg-[#fed5da] cursor-pointer'
-                                } shadow-xs hover:brightness-95 flex flex-col items-center justify-center transition-all active:scale-[0.98]`}
+                                className={`w-[76.13px] h-[45px] ${runner.lay?.odd === '-' || runner.lay?.odd === '--'
+                                  ? 'bg-[#fed5da] cursor-default'
+                                  : 'bg-[#fed5da] cursor-pointer'
+                                  } shadow-xs hover:brightness-95 flex flex-col items-center justify-center transition-all active:scale-[0.98]`}
                               >
                                 <span className="font-bold text-[13.5px] text-[#212529] leading-3">
                                   {runner.lay?.odd || '-'}
@@ -2453,40 +2806,37 @@ export default function MatchDetailSection({
           {/* ========================================================= */}
           {/* 4. MARKET SECTION 3: FANCY ODDS (Cricket Only)            */}
           {/* ========================================================= */}
-          {showFancySection && (
+          {showFancySection && !filters.hideFancy && (
             <div className="w-full bg-[#f3f8fb] mt-3 shadow-[0_2px_4px_rgba(0,0,0,0.12)] relative z-10 flex flex-col">
               {/* FANCY, BALL BY BALL & NORMAL Tab Pills matching exact reference screenshot */}
               <div className="w-full bg-[#f3f8fb] px-2.5 py-2 flex items-center gap-2 overflow-x-auto no-scrollbar">
                 <button
                   type="button"
                   onClick={() => setActiveFancyTab('fancy')}
-                  className={`${
-                    activeFancyTab === 'fancy'
-                      ? 'bg-[#f5c531] border-2 border-[#dca71d]'
-                      : 'bg-white border-2 border-[#f5c531]'
-                  } rounded-[7px] px-6 py-1.5 font-bold text-[13px] text-black tracking-wide shadow-xs cursor-pointer select-none uppercase hover:brightness-105 active:scale-95 transition-all flex items-center justify-center whitespace-nowrap`}
+                  className={`${activeFancyTab === 'fancy'
+                    ? 'bg-[#f5c531] border-2 border-[#dca71d]'
+                    : 'bg-white border-2 border-[#f5c531]'
+                    } rounded-[7px] px-6 py-1.5 font-bold text-[13px] text-black tracking-wide shadow-xs cursor-pointer select-none uppercase hover:brightness-105 active:scale-95 transition-all flex items-center justify-center whitespace-nowrap`}
                 >
                   FANCY
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveFancyTab('ball_by_ball')}
-                  className={`${
-                    activeFancyTab === 'ball_by_ball'
-                      ? 'bg-[#f5c531] border-2 border-[#dca71d]'
-                      : 'bg-white border-2 border-[#f5c531]'
-                  } rounded-[7px] px-6 py-1.5 font-bold text-[13px] text-black tracking-wide shadow-xs cursor-pointer select-none uppercase hover:brightness-105 active:scale-95 transition-all flex items-center justify-center whitespace-nowrap`}
+                  className={`${activeFancyTab === 'ball_by_ball'
+                    ? 'bg-[#f5c531] border-2 border-[#dca71d]'
+                    : 'bg-white border-2 border-[#f5c531]'
+                    } rounded-[7px] px-6 py-1.5 font-bold text-[13px] text-black tracking-wide shadow-xs cursor-pointer select-none uppercase hover:brightness-105 active:scale-95 transition-all flex items-center justify-center whitespace-nowrap`}
                 >
                   BALL BY BALL
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveFancyTab('normal')}
-                  className={`${
-                    activeFancyTab === 'normal'
-                      ? 'bg-[#f5c531] border-2 border-[#dca71d]'
-                      : 'bg-white border-2 border-[#f5c531]'
-                  } rounded-[7px] px-6 py-1.5 font-bold text-[13px] text-black tracking-wide shadow-xs cursor-pointer select-none uppercase hover:brightness-105 active:scale-95 transition-all flex items-center justify-center whitespace-nowrap`}
+                  className={`${activeFancyTab === 'normal'
+                    ? 'bg-[#f5c531] border-2 border-[#dca71d]'
+                    : 'bg-white border-2 border-[#f5c531]'
+                    } rounded-[7px] px-6 py-1.5 font-bold text-[13px] text-black tracking-wide shadow-xs cursor-pointer select-none uppercase hover:brightness-105 active:scale-95 transition-all flex items-center justify-center whitespace-nowrap`}
                 >
                   NORMAL
                 </button>
@@ -2640,23 +2990,134 @@ export default function MatchDetailSection({
         </>
       )}
 
-      {/* Floating Scroll-to-Top Button */}
-      <button
-        type="button"
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        className="fixed bottom-[80px] left-1/2 -translate-x-1/2 z-40 w-[42px] h-[42px] rounded-full bg-black/90 hover:bg-black text-white shadow-xl flex items-center justify-center cursor-pointer transition-transform active:scale-90"
-        title="Scroll to Top"
-        aria-label="Scroll to top"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          className="w-5 h-5 stroke-white fill-none stroke-[2.5]"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <polyline points="18 15 12 9 6 15" />
-        </svg>
-      </button>
+      {/* HIDE / SHOW FILTER MODAL */}
+      {filterModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[1px] p-2">
+          <div className="w-full max-w-[360px] bg-white rounded-[8px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 border duration-150">
+            {/* Header */}
+            <div
+              style={{
+                background: 'linear-gradient(94deg, #b6842d 0%, #ebda8d 55%, #b7862f 100%)',
+              }}
+              className="px-4 py-4 flex items-center justify-between shadow-xs"
+            >
+              <div className="flex items-center gap-2.5">
+                <span className="font-extrabold text-[15px] text-black ">
+                  Hide / Show Filter
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setTempFilters({
+                      hideMatchOdds: false,
+                      hideBookmaker: false,
+                      hideFancy: false,
+                      hideTiedMatch: false,
+                      hideToss: false,
+                    })
+                  }
+                  className="bg-black text-white text-[11px] font-bold px-2 py-0.5 rounded transition-all hover:bg-gray-800 active:scale-95 cursor-pointer select-none"
+                >
+                  Clear
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setFilterModalOpen(false)}
+                className="text-white font-extrabold text-[18px] leading-none hover:opacity-70 transition-opacity px-1 cursor-pointer"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-[16px] pt-6 bg-white">
+              <div className="grid grid-cols-2 gap-y-1 gap-x-3 text-[12px]  text-[#212529]">
+                <label className="flex items-center gap-1 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={tempFilters.hideMatchOdds}
+                    onChange={(e) =>
+                      setTempFilters((prev) => ({ ...prev, hideMatchOdds: e.target.checked }))
+                    }
+                    className="w-3 h-3 rounded border-2 border-gray-400 accent-[#007bff] cursor-pointer"
+                  />
+                  <span>Hide Match Odds</span>
+                </label>
+
+                <label className="flex items-center gap-1 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={tempFilters.hideBookmaker}
+                    onChange={(e) =>
+                      setTempFilters((prev) => ({ ...prev, hideBookmaker: e.target.checked }))
+                    }
+                    className="w-3 h-3 rounded border-2 border-gray-400 accent-[#007bff] cursor-pointer"
+                  />
+                  <span>Hide Bookmaker</span>
+                </label>
+
+                <label className="flex items-center gap-1 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={tempFilters.hideFancy}
+                    onChange={(e) =>
+                      setTempFilters((prev) => ({ ...prev, hideFancy: e.target.checked }))
+                    }
+                    className="w-3 h-3 rounded border-2 border-gray-400 accent-[#007bff] cursor-pointer"
+                  />
+                  <span>Hide Fancy</span>
+                </label>
+
+                <label className="flex items-center gap-1 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={tempFilters.hideTiedMatch}
+                    onChange={(e) =>
+                      setTempFilters((prev) => ({ ...prev, hideTiedMatch: e.target.checked }))
+                    }
+                    className="w-3 h-3 rounded border-2 border-gray-400 accent-[#007bff] cursor-pointer"
+                  />
+                  <span>Hide Tied Match</span>
+                </label>
+
+                <label className="flex items-center gap-1 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={tempFilters.hideToss}
+                    onChange={(e) =>
+                      setTempFilters((prev) => ({ ...prev, hideToss: e.target.checked }))
+                    }
+                    className="w-3 h-3 rounded border-2 border-gray-400 accent-[#007bff] cursor-pointer"
+                  />
+                  <span>Hide Toss</span>
+                </label>
+              </div>
+
+              {/* Apply Button */}
+              <div className="mt-6 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilters(tempFilters);
+                    setFilterModalOpen(false);
+                  }}
+                  style={{
+                    background: 'linear-gradient(94deg, #b6842d 0%, #ebda8d 55%, #b7862f 100%)',
+                  }}
+                  className="w-[46%] py-2.5 font-extrabold text-[15px] text-black rounded-[6px] shadow-md hover:brightness-105 active:scale-95 transition-all tracking-wide  cursor-pointer"
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
     </div>
   );
 
@@ -2733,51 +3194,19 @@ export default function MatchDetailSection({
           </div>
         </div>
 
-        {/* Stake Quick Chips - Row 1 */}
+        {/* Stake Quick Chips Grid */}
         <div className="grid grid-cols-4 gap-1">
-          {[
-            { label: '1k', val: 1000 },
-            { label: '2k', val: 2000 },
-            { label: '5k', val: 5000 },
-            { label: '10k', val: 10000 },
-          ].map((chip) => {
+          {stakeChips.slice(0, 8).map((chip, idx) => {
             const isSelected = parseFloat(stakeValue) === chip.val;
             return (
               <button
-                key={chip.label}
+                key={`${chip.label}-${idx}`}
                 type="button"
                 onClick={() => handleQuickStake(chip.val)}
-                className={`h-[30px] bg-white rounded-[3px] font-bold text-[13px] text-[#212529] shadow-2xs hover:bg-gray-50 active:scale-95 transition-all cursor-pointer flex items-center justify-center ${
-                  isSelected
-                    ? 'border-[1.5px] border-[#0070e0]'
-                    : 'border border-[#cfdbe5]'
-                }`}
-              >
-                {chip.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Stake Quick Chips - Row 2 */}
-        <div className="grid grid-cols-4 gap-1">
-          {[
-            { label: '20k', val: 20000 },
-            { label: '25k', val: 25000 },
-            { label: '50k', val: 50000 },
-            { label: '75k', val: 75000 },
-          ].map((chip) => {
-            const isSelected = parseFloat(stakeValue) === chip.val;
-            return (
-              <button
-                key={chip.label}
-                type="button"
-                onClick={() => handleQuickStake(chip.val)}
-                className={`h-[30px] bg-white rounded-[3px] font-bold text-[13px] text-[#212529] shadow-2xs hover:bg-gray-50 active:scale-95 transition-all cursor-pointer flex items-center justify-center ${
-                  isSelected
-                    ? 'border-[1.5px] border-[#0070e0]'
-                    : 'border border-[#cfdbe5]'
-                }`}
+                className={`h-[30px] bg-white rounded-[3px] font-bold text-[13px] text-[#212529] shadow-2xs hover:bg-gray-50 active:scale-95 transition-all cursor-pointer flex items-center justify-center ${isSelected
+                  ? 'border-[1.5px] border-[#0070e0]'
+                  : 'border border-[#cfdbe5]'
+                  }`}
               >
                 {chip.label}
               </button>

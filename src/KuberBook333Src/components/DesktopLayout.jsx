@@ -43,6 +43,7 @@ export default function DesktopLayout({
   handleToggleFavorite,
   currentMatch,
   setToast,
+  onGameClick,
 }) {
   // 14 Featured Casino Cards matching desktop screenshot (2 rows x 7)
   const featuredGames = [
@@ -173,7 +174,20 @@ export default function DesktopLayout({
           </button>
 
           {/* Balance & Exposure Badge */}
-          <div className="text-right leading-tight font-extrabold text-[11px] text-black">
+          <div
+            onClick={() => {
+              const isDemo = Boolean(
+                user?.isDemo ||
+                user?.username?.toLowerCase().startsWith('demo') ||
+                user?.userName?.toLowerCase().startsWith('demo') ||
+                user?.username === 'DEMO'
+              );
+              if (!isDemo) {
+                navigate('/wallet');
+              }
+            }}
+            className="text-right leading-tight font-extrabold text-[11px] text-black cursor-pointer hover:opacity-80 transition-opacity select-none"
+          >
             <div>Bal: {user?.balance !== undefined ? user.balance : 1500}</div>
             <div className="text-[#a00000]">Exp: {user?.exposure !== undefined ? user.exposure : 0}</div>
           </div>
@@ -442,10 +456,11 @@ export default function DesktopLayout({
                   <div
                     key={game.id}
                     onClick={() => {
-                      if (game.id === 'mines') navigate('/mines');
-                      else if (game.id === 'chicken_road' || game.id === 'color_prediction') navigate('/color-prediction');
-                      else if (game.id === 'fun_games') navigate('/fun-games');
-                      else navigate('/casino/aviator');
+                      if (onGameClick) {
+                        onGameClick(game);
+                      } else {
+                        navigate('/casino/aviator');
+                      }
                     }}
                     className="relative rounded-xs overflow-hidden border border-neutral-700 bg-neutral-900 cursor-pointer group shadow-sm hover:scale-[1.02] hover:border-amber-400 transition-all aspect-[16/9]"
                   >
@@ -478,7 +493,13 @@ export default function DesktopLayout({
                 {showcasePosters.map((poster) => (
                   <div
                     key={poster.id}
-                    onClick={() => navigate(poster.route)}
+                    onClick={() => {
+                      if (onGameClick) {
+                        onGameClick({ id: poster.id, name: poster.title });
+                      } else {
+                        navigate(poster.route);
+                      }
+                    }}
                     className="relative rounded-xs overflow-hidden border border-neutral-700 bg-neutral-900 cursor-pointer group shadow-md hover:border-amber-400 transition-all aspect-[4/3]"
                   >
                     <img
@@ -498,6 +519,8 @@ export default function DesktopLayout({
                   onMatchClick={handleMatchClick}
                   favorites={favorites}
                   onToggleFavorite={handleToggleFavorite}
+                  user={user}
+                  isLoggedIn={Boolean(user)}
                 />
               </div>
 
@@ -516,16 +539,18 @@ export default function DesktopLayout({
                   onMatchClick={handleMatchClick}
                   favorites={favorites}
                   onToggleFavorite={handleToggleFavorite}
+                  user={user}
+                  isLoggedIn={Boolean(user)}
                 />
               </div>
             </div>
           ) : activeSport === 'casino' ? (
             <div className="bg-white rounded p-2 shadow-sm">
-              <CasinoGamesSection onGameClick={() => onAuthClick('login')} />
+              <CasinoGamesSection onGameClick={onGameClick || (() => onAuthClick('login'))} />
             </div>
           ) : activeSport === 'mac88' ? (
             <div className="bg-white rounded p-2 shadow-sm">
-              <Mac88Section onGameClick={() => onAuthClick('login')} />
+              <Mac88Section onGameClick={onGameClick || (() => onAuthClick('login'))} />
             </div>
           ) : (activeSport === 'horse' || activeSport === 'greyhound') ? (
             <div className="bg-white rounded p-2 shadow-sm">
@@ -540,6 +565,8 @@ export default function DesktopLayout({
                 onMatchClick={handleMatchClick}
                 favorites={favorites}
                 onToggleFavorite={handleToggleFavorite}
+                user={user}
+                isLoggedIn={Boolean(user)}
               />
             </div>
           ) : (
@@ -551,6 +578,8 @@ export default function DesktopLayout({
                 onMatchClick={handleMatchClick}
                 favorites={favorites}
                 onToggleFavorite={handleToggleFavorite}
+                user={user}
+                isLoggedIn={Boolean(user)}
               />
             </div>
           )}

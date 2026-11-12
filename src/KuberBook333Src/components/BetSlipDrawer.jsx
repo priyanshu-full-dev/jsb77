@@ -1,5 +1,38 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+
+const getStoredStakes = () => {
+  try {
+    const saved = localStorage.getItem('kuber_stakes');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map((s) => ({
+          name: s.name || `${s.value}`,
+          val: String(s.value),
+        }));
+      }
+    }
+    const savedAlt = localStorage.getItem('kuber_user_stakes');
+    if (savedAlt) {
+      const parsedAlt = JSON.parse(savedAlt);
+      if (Array.isArray(parsedAlt) && parsedAlt.length > 0) {
+        return parsedAlt.map((val) => ({
+          name: val >= 1000 ? `${val / 1000}k` : `${val}`,
+          val: String(val),
+        }));
+      }
+    }
+  } catch (e) {
+    console.error(e);
+  }
+  return [
+    { name: '100', val: '100' },
+    { name: '500', val: '500' },
+    { name: '1000', val: '1000' },
+    { name: '5000', val: '5000' },
+  ];
+};
 
 export default function BetSlipDrawer({
   selectedBet,
@@ -8,6 +41,20 @@ export default function BetSlipDrawer({
   onClose,
   onPlaceBet,
 }) {
+  const [stakeChips, setStakeChips] = useState(getStoredStakes);
+
+  useEffect(() => {
+    const handleStakesUpdate = () => {
+      setStakeChips(getStoredStakes());
+    };
+    window.addEventListener('kuber_stakes_updated', handleStakesUpdate);
+    window.addEventListener('storage', handleStakesUpdate);
+    return () => {
+      window.removeEventListener('kuber_stakes_updated', handleStakesUpdate);
+      window.removeEventListener('storage', handleStakesUpdate);
+    };
+  }, []);
+
   if (!selectedBet) return null;
 
   return (
@@ -40,13 +87,13 @@ export default function BetSlipDrawer({
         </div>
 
         <div className="grid grid-cols-4 gap-1 mb-3">
-          {['100', '500', '1000', '5000'].map((val) => (
+          {stakeChips.slice(0, 4).map((chip, idx) => (
             <button
-              key={val}
-              onClick={() => setBetStake(val)}
+              key={`${chip.name}-${idx}`}
+              onClick={() => setBetStake(chip.val)}
               className="bg-neutral-800 hover:bg-neutral-700 text-xs py-1 rounded font-bold cursor-pointer"
             >
-              +{val}
+              +{chip.name}
             </button>
           ))}
         </div>

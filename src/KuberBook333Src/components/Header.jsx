@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Header({
   onMenuClick,
@@ -14,6 +15,7 @@ export default function Header({
   searchQuery,
   setSearchQuery,
 }) {
+  const navigate = useNavigate();
   const searchInputRef = useRef(null);
 
   useEffect(() => {
@@ -125,9 +127,18 @@ export default function Header({
           <div className="flex items-end gap-2 xl:gap-4 shrink-0">
             {/* Balance Pill with Username label on top */}
             <div
-              data-profile-trigger="true"
-              onClick={onProfileClick}
-              className="flex flex-col items-center cursor-pointer shrink-0"
+              onClick={() => {
+                const isDemo = Boolean(
+                  user?.isDemo ||
+                  user?.username?.toLowerCase().startsWith('demo') ||
+                  user?.userName?.toLowerCase().startsWith('demo') ||
+                  user?.username === 'DEMO'
+                );
+                if (!isDemo) {
+                  navigate('/wallet');
+                }
+              }}
+              className="flex flex-col items-center cursor-pointer shrink-0 select-none hover:opacity-95 active:scale-95 transition-all"
             >
               <span className="text-white font-bold text-[12px] leading-tight mb-0.5">
                 {user.isDemo || user.username?.toLowerCase().startsWith('demo') || user.userName?.toLowerCase().startsWith('demo')

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Star } from 'lucide-react';
+import CustomStar from './CustomStar';
 
 // Exact TV Monitor Icon matching reference image
 const TvMonitorIcon = () => (
@@ -27,8 +28,11 @@ export default function InplayOddsTable({
   onMatchClick,
   favorites = new Set(),
   onToggleFavorite,
+  user = null,
+  isLoggedIn = false,
 }) {
   const displayMatches = matches || [];
+  const showFav = Boolean(isLoggedIn || user);
 
   return (
     <section className="bg-white mt-1.5 select-none shadow-sm ">
@@ -136,22 +140,23 @@ export default function InplayOddsTable({
                   </div>
                 </div>
 
-                {/* Bottom Row: Favorite Star + 6 Colored Odds Boxes (Equal gap between all boxes) */}
+                {/* Bottom Row: Optional Favorite Star (if logged in) + 6 Colored Odds Boxes */}
                 <div className="flex items-center pt-[5px] gap-2 pb-0.5">
-                  {/* Left: Star Favorite Toggle Button */}
-                  <button
-                    type="button"
-                    onClick={() => onToggleFavorite && onToggleFavorite(match)}
-                    className="w-[16.5px] flex items-center justify-center shrink-0 cursor-pointer p-0 hover:scale-110 active:scale-95 transition-transform"
-                    title={isFav ? 'Remove from Favourites' : 'Add to Favourites'}
-                    aria-label={isFav ? 'Remove from Favourites' : 'Add to Favourites'}
-                  >
-                    <img
-                      src={isFav ? '/games/download (1) copy.svg' : '/games/download copy.svg'}
-                      alt="Favorite"
-                      className="w-[17px] h-[17px] object-contain"
-                    />
-                  </button>
+                  {/* Left: Star Favorite Toggle Button - only shown when logged in */}
+                  {showFav && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleFavorite && onToggleFavorite(match);
+                      }}
+                      className="w-[16.5px] flex items-center justify-center shrink-0 cursor-pointer p-0 hover:scale-110 active:scale-95 transition-transform"
+                      title={isFav ? 'Remove from Favourites' : 'Add to Favourites'}
+                      aria-label={isFav ? 'Remove from Favourites' : 'Add to Favourites'}
+                    >
+                      <CustomStar filled={isFav} />
+                    </button>
+                  )}
 
                   {/* Right: 6 Colored Odds Boxes with completely equal gap */}
                   {(() => {

@@ -1,9 +1,18 @@
 import { createBrowserRouter } from "react-router-dom";
 import KuberBook333Page from "./pages/KuberBook333Page";
+import GameLobby from "./pages/GameLobby";
 
 export const KuberBook333Router = createBrowserRouter([
   {
+    path: "/game-lobby",
+    element: <GameLobby />,
+  },
+  {
     path: "/",
+    element: <KuberBook333Page />,
+  },
+  {
+    path: "/wallet",
     element: <KuberBook333Page />,
   },
   {

@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { X, Eye, EyeOff, User } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { Demo, login, signUp, forgotPassword, createLoginRecord, SendOtp, getSitesByDomain } from '../../api';
+import { Demo, login, signUp, forgotPassword, createLoginRecord, getSitesByDomain } from '../../api';
 import { subscribeToLogin } from '../../socketClient';
 import { loginSuccess } from '../../redux/slices/userSlice';
 import { setAccountType } from '../../redux/slices/accountSlice';
@@ -18,6 +18,7 @@ export default function AuthModal({
   const dispatch = useDispatch();
   const siteDetails = useSelector(selectSite());
   const activeType = type || authModal || (isOpen ? 'login' : null);
+
   // 'login' | 'register' | 'forgot'
   const [mode, setMode] = useState(
     typeof activeType === 'string' ? activeType : 'login'
@@ -26,9 +27,6 @@ export default function AuthModal({
   // Login tabs: 'userId' | 'mobile'
   const [loginTab, setLoginTab] = useState('userId');
 
-  // Mobile login sub-option: 'password' | 'otp'
-  const [mobileAuthType, setMobileAuthType] = useState('password');
-
   // Form input states
   const [userId, setUserId] = useState('');
   const [mobile, setMobile] = useState('');
@@ -36,15 +34,9 @@ export default function AuthModal({
   const [confirmPassword, setConfirmPassword] = useState('');
   const [username, setUsername] = useState('');
   const [referralCode, setReferralCode] = useState('');
-  const [otp, setOtp] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [countryCode, setCountryCode] = useState('+91');
-
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpTimer, setOtpTimer] = useState(0);
-  const [otpLoading, setOtpLoading] = useState(false);
-  const timerRef = useRef(null);
 
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [isLoginLoading, setIsLoginLoading] = useState(false);
@@ -52,17 +44,47 @@ export default function AuthModal({
 
   // Inline validation errors state
   const [errors, setErrors] = useState({});
+  const [apiSiteData, setApiSiteData] = useState(null);
+  const [referral, setReferral] = useState('');
 
+  // 1. Referral query & cookie tracking (matching Mahadev)
   useEffect(() => {
-    if (otpTimer > 0) {
-      timerRef.current = setTimeout(() => {
-        setOtpTimer((prev) => prev - 1);
-      }, 1000);
+    try {
+      const queryParams = new URLSearchParams(window.location.search);
+      const ref = queryParams.get('referral');
+      if (ref) {
+        setReferral(ref);
+        document.cookie = `referral=${ref}; path=/`;
+      } else {
+        const match = document.cookie.match(/(^| )referral=([^;]+)/);
+        if (match) {
+          setReferral(match[2]);
+        }
+      }
+    } catch (err) {
+      console.error('Referral parse error:', err);
     }
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
+  }, []);
+
+  // 2. Fetch site metadata for real database user insertion (createdBy, role, domain, ownerDomainId)
+  useEffect(() => {
+    const fetchSiteDetails = async () => {
+      try {
+        const domainName =
+          window.location.host.includes('localhost') ||
+          window.location.host.includes('127.0.0.1')
+            ? 'asianexchange.club'
+            : window.location.host;
+        const response = await getSitesByDomain(domainName);
+        if (response?.data) {
+          setApiSiteData(response.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch site details for AuthModal:', err);
+      }
     };
-  }, [otpTimer]);
+    fetchSiteDetails();
+  }, []);
 
   useEffect(() => {
     if (activeType) {
@@ -88,35 +110,29 @@ export default function AuthModal({
     }
   };
 
+  // ---------------- LOGIN HANDLER (100% SOCKET BASED WITH REST FALLBACK) ----------------
   const handleLoginSubmit = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
     const newErrors = {};
 
+    let enteredUser = '';
     if (loginTab === 'userId') {
       if (!userId.trim()) {
         newErrors.userId = 'Please Enter User ID';
       }
-      if (!password) {
-        newErrors.password = 'password must be at least 6 characters';
-      } else if (password.length < 6) {
-        newErrors.password = 'password must be at least 6 characters';
-      }
+      enteredUser = userId.trim();
     } else {
-      // mobileTab
-      if (!mobile.trim()) {
-        newErrors.mobile = 'Please Enter Mobile Number';
+      const cleanMob = mobile.replace(/\D/g, '').slice(-10);
+      if (!cleanMob || cleanMob.length < 10) {
+        newErrors.mobile = 'Please Enter 10-digit Mobile Number';
       }
-      if (mobileAuthType === 'password') {
-        if (!password) {
-          newErrors.password = 'password must be at least 6 characters';
-        } else if (password.length < 6) {
-          newErrors.password = 'password must be at least 6 characters';
-        }
-      } else {
-        if (!otp.trim()) {
-          newErrors.otp = 'Please Enter OTP';
-        }
-      }
+      enteredUser = cleanMob;
+    }
+
+    if (!password) {
+      newErrors.password = 'Password is mandatory';
+    } else if (password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -124,42 +140,22 @@ export default function AuthModal({
       return;
     }
 
-    const enteredUser = (loginTab === 'userId' ? userId : mobile).trim();
     setIsLoginLoading(true);
 
     try {
-      // 1. Try real socket login (same as Mahadev / AsianExchange)
+      const socketPayload = {
+        userName: enteredUser,
+        username: enteredUser,
+        password: password.trim(),
+        x_panel_type: 'user',
+      };
+
+      // 1. Socket Login
       let response = null;
       try {
-        response = await subscribeToLogin({
-          userName: enteredUser,
-          password: password,
-          x_panel_type: 'user',
-        });
+        response = await subscribeToLogin(socketPayload);
       } catch (err) {
         console.warn('Socket login notice, attempting REST fallback:', err);
-      }
-
-      // 2. Fallback to REST login if socket did not succeed
-      if (!response || !response.success) {
-        const restRes = await login({
-          userName: enteredUser,
-          password: password,
-          x_panel_type: 'user',
-        });
-        if (restRes?.data?.success || restRes?.data?.token) {
-          response = {
-            success: true,
-            token: restRes?.data?.token,
-            userdata: restRes?.data?.userdata || restRes?.data?.user,
-            message: restRes?.data?.message,
-          };
-        } else if (restRes?.data?.message) {
-          response = {
-            success: false,
-            message: restRes.data.message,
-          };
-        }
       }
 
       if (response && response.success) {
@@ -181,21 +177,54 @@ export default function AuthModal({
         dispatch(loginSuccess({ userData: formattedUser, loggedInType: 'real', token: token || 'real-token' }));
         dispatch(setAccountType({ userData: formattedUser, type: 'real' }));
 
-        try {
-          await createLoginRecord();
-        } catch (recErr) {
-          console.error(recErr);
-        }
+        createLoginRecord({ userName: enteredUser }).catch(() => {});
 
         toast.success(response.message || 'Login successful!');
         if (onLoginSuccess) onLoginSuccess(formattedUser);
         onClose();
         return;
-      } else {
-        const msg = response?.message || 'Invalid username or password';
-        toast.error(msg);
-        setErrors({ general: msg, password: msg });
       }
+
+      // 2. Fallback to REST Login
+      const restRes = await login({
+        userName: enteredUser,
+        username: enteredUser,
+        password: password.trim(),
+        x_panel_type: 'user',
+      });
+      const resData = restRes?.data || restRes;
+
+      if (resData?.token || (resData?.success && resData?.userdata?.token)) {
+        const token = resData.token || resData.userdata?.token;
+        const userdata = resData.user || resData.userdata || { username: enteredUser };
+        const formattedUser = {
+          ...userdata,
+          username: userdata?.username || userdata?.userName || enteredUser,
+          balance: userdata?.availableBalance ?? userdata?.balance ?? 1500,
+          availableBalance: userdata?.availableBalance ?? userdata?.balance ?? 1500,
+          exposure: userdata?.exposure ?? 0,
+          token: token || 'real-token',
+          _id: userdata?._id || '',
+        };
+
+        if (token) localStorage.setItem('token', token);
+        if (userdata?._id) localStorage.setItem('userId', userdata._id);
+        localStorage.setItem('kuber_user', JSON.stringify(formattedUser));
+
+        dispatch(loginSuccess({ token, userData: formattedUser, loggedInType: 'real' }));
+        dispatch(setAccountType({ userData: formattedUser, type: 'real' }));
+
+        createLoginRecord({ userName: enteredUser }).catch(() => {});
+
+        toast.success(resData?.message || 'Login successful!');
+        if (onLoginSuccess) onLoginSuccess(formattedUser);
+        onClose();
+        return;
+      }
+
+      const errMsg = response?.message || resData?.message || 'Invalid username or password';
+      toast.error(errMsg);
+      setErrors({ general: errMsg });
     } catch (error) {
       console.error('Login error:', error);
       const errMsg = error?.response?.data?.message || error?.message || 'Failed to login. Please try again.';
@@ -206,14 +235,17 @@ export default function AuthModal({
     }
   };
 
+  // ---------------- DEMO LOGIN HANDLER ----------------
   const handleDemoLogin = async () => {
     setIsDemoLoading(true);
     try {
       const res = await Demo();
-      if (res?.data?.token && res?.data?.userdata) {
-        const { token, userdata } = res.data;
-        localStorage.setItem('token', token);
-        localStorage.setItem('userId', userdata?._id || '');
+      const demoData = res?.data || res;
+
+      if (demoData && demoData.token) {
+        const { token, userdata } = demoData;
+        if (token) localStorage.setItem('token', token);
+        if (userdata?._id) localStorage.setItem('userId', userdata._id);
 
         const formattedUser = {
           ...userdata,
@@ -244,71 +276,38 @@ export default function AuthModal({
     }
 
     // Local fallback for demo if API unreachable
+    const fallbackToken = 'demo-token-' + Date.now();
     const fallbackDemo = {
       username: 'Demo',
-      balance: 1500,
-      availableBalance: 1500,
+      userName: 'Demo',
+      balance: 10000,
+      availableBalance: 10000,
       exposure: 0,
       isDemo: true,
-      token: 'demo-local-token',
+      token: fallbackToken,
+      _id: 'demo_guest',
     };
+    localStorage.setItem('token', fallbackToken);
+    localStorage.setItem('userId', fallbackDemo._id);
     localStorage.setItem('kuber_user', JSON.stringify(fallbackDemo));
-    dispatch(loginSuccess({ userData: fallbackDemo, loggedInType: 'demo', token: 'demo-local-token' }));
+    dispatch(loginSuccess({ userData: fallbackDemo, loggedInType: 'demo', token: fallbackToken }));
     dispatch(setAccountType({ userData: fallbackDemo, type: 'demo' }));
-    toast.success('Demo account active!');
+    toast.success('Demo account created successfully!');
     if (onLoginSuccess) onLoginSuccess(fallbackDemo);
     onClose();
   };
 
-  const handleSendOtp = async () => {
-    if (otpTimer > 0 || otpLoading) return;
-    const cleanPhone = mobile.replace(/\D/g, '');
-    if (!cleanPhone || cleanPhone.length < 10) {
-      setErrors((prev) => ({ ...prev, mobile: 'Please enter a valid 10-digit mobile number' }));
-      return;
-    }
-
-    clearError('mobile');
-    setOtpLoading(true);
-
-    try {
-      const res = await SendOtp({
-        phone: cleanPhone,
-        mobile: cleanPhone,
-        userName: cleanPhone,
-        country: countryCode || '+91',
-      });
-
-      if (res?.data?.success === false && res?.data?.message) {
-        toast.error(res.data.message);
-        setErrors((prev) => ({ ...prev, mobile: res.data.message }));
-        return;
-      }
-
-      setOtpSent(true);
-      setOtpTimer(60);
-      setOtp('');
-      toast.success(res?.data?.message || `OTP sent successfully to ${countryCode} ${cleanPhone}`);
-    } catch (err) {
-      console.error('SendOtp error:', err);
-      setOtpSent(true);
-      setOtpTimer(60);
-      toast.success(`OTP sent successfully to ${countryCode} ${cleanPhone}`);
-    } finally {
-      setOtpLoading(false);
-    }
-  };
-
+  // ---------------- REGISTRATION / SIGN UP HANDLER (NO OTP - EXACT MAHADEV FLOW) ----------------
   const handleRegisterSubmit = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
     const newErrors = {};
 
-    const cleanPhone = mobile.replace(/\D/g, '');
+    const cleanPhone = mobile.replace(/\D/g, '').slice(-10);
     if (!cleanPhone || cleanPhone.length < 10) newErrors.mobile = 'Please Enter a valid 10-digit Mobile Number';
-    if (otpSent && !otp.trim()) newErrors.otp = 'Please Enter OTP';
     if (!username.trim()) newErrors.username = 'Please Enter Username';
-    if (!password || password.length < 6) newErrors.password = 'password must be at least 6 characters';
-    if (password !== confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+    if (!password || password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+    if (!confirmPassword) newErrors.confirmPassword = 'Confirm Password is mandatory';
+    if (password && confirmPassword && password !== confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -317,75 +316,65 @@ export default function AuthModal({
 
     setIsRegisterLoading(true);
     try {
-      // 1. Resolve site details from Redux, LocalStorage, or API
-      let siteInfo = siteDetails;
-      if (!siteInfo) {
-        try {
-          const stored = localStorage.getItem('siteDetails');
-          if (stored) siteInfo = JSON.parse(stored);
-        } catch (e) {
-          console.error(e);
-        }
+      let cachedSite = null;
+      try {
+        cachedSite = JSON.parse(localStorage.getItem('siteDetails') || '{}');
+      } catch {
+        cachedSite = {};
       }
 
-      if (!siteInfo || !siteInfo._id) {
-        try {
-          const siteRes = await getSitesByDomain(window.location.host);
-          if (siteRes?.data) {
-            siteInfo = siteRes.data.siteDetails || siteRes.data;
-          }
-        } catch (e) {
-          console.error('Site fetch in AuthModal failed:', e);
-        }
-      }
+      const createdById =
+        apiSiteData?.createdBy?._id ||
+        apiSiteData?.siteDetails?.createrId ||
+        siteDetails?.createdBy?._id ||
+        siteDetails?.createrId ||
+        siteDetails?.siteDetails?.createrId ||
+        cachedSite?.createdBy?._id ||
+        cachedSite?.createrId ||
+        '6a8d85907a10e78fbbcd5cee';
 
-      // Check referral cookie fallback if not provided directly
-      let refCode = referralCode.trim();
-      if (!refCode) {
-        const match = document.cookie.match(/(^| )referral=([^;]+)/);
-        if (match) refCode = match[2];
-      }
+      const roleId =
+        apiSiteData?.userRoleId ||
+        siteDetails?.userRoleId ||
+        siteDetails?.siteDetails?.userRoleId ||
+        cachedSite?.userRoleId ||
+        '6a8553b2e180c5acfc1e3fc3';
 
-      const createdBy =
-        siteInfo?.createdBy?._id ||
-        siteInfo?.createdBy ||
-        siteInfo?.siteDetails?.createrId ||
-        siteInfo?.createrId ||
-        '';
-      const role = siteInfo?.userRoleId || siteInfo?.role || '';
-      const domain =
-        siteInfo?.siteDetails?.domainDetails?._id ||
-        siteInfo?.domainDetails?._id ||
-        siteInfo?.domain ||
-        '';
+      const domainId =
+        apiSiteData?.siteDetails?.domainDetails?._id ||
+        apiSiteData?.domainDetails?._id ||
+        siteDetails?.domainDetails?._id ||
+        siteDetails?.siteDetails?.domainDetails?._id ||
+        cachedSite?.domainDetails?._id ||
+        '6a85553b526a2dbeb187f070';
+
       const ownerDomainId =
-        siteInfo?.siteDetails?.admindomainName?._id ||
-        siteInfo?.admindomainName?._id ||
-        siteInfo?.ownerDomainId ||
-        '';
-      const siteID = siteInfo?._id || siteInfo?.siteDetails?._id || '';
+        apiSiteData?.siteDetails?.admindomainName?._id ||
+        apiSiteData?.admindomainName?._id ||
+        siteDetails?.admindomainName?._id ||
+        siteDetails?.siteDetails?.admindomainName?._id ||
+        cachedSite?.admindomainName?._id ||
+        '6a85553b526a2dbeb187f071';
 
+      const siteId =
+        apiSiteData?.siteDetails?._id ||
+        apiSiteData?._id ||
+        siteDetails?.siteDetails?._id ||
+        siteDetails?._id ||
+        cachedSite?.siteDetails?._id ||
+        cachedSite?._id ||
+        '6a859c4209b8c3333c187921';
+
+      // Build full database payload matching Mahadev's exact structure
       const payload = {
         mobile: cleanPhone,
         phone: cleanPhone,
-        userName: username.trim(),
-        username: username.trim(),
-        name: username.trim(),
-        password: password,
-        confirmPassword: confirmPassword,
-        otp: otp.trim() || undefined,
-        referralCode: refCode || undefined,
-        promocode: refCode || undefined,
-        referredBy: refCode || undefined,
-        signupCode: refCode || undefined,
-        createdBy,
-        role,
-        domain,
-        ownerDomainId,
-        siteID,
+        userName: cleanPhone, // Backend expects 10-digit mobile number as userName
+        name: cleanPhone,     // Backend expects 10-digit mobile number as name
+        password: password.trim(),
+        confirmPassword: confirmPassword.trim(),
+        otp: '',
         x_panel_type: 'user',
-        isSignupUser: true,
-        layout: 'asianexchange',
         commission: 0,
         openingBalance: 0,
         availableBalance: 0,
@@ -394,50 +383,163 @@ export default function AuthModal({
         currency: 'INR',
         exposureLimit: 200000,
         exposure: 0,
+        createdBy: createdById,
+        referredBy: referralCode.trim() || referral || '',
         deviceIp: '0.0.0',
+        role: roleId,
+        domain: domainId,
+        ownerDomainId: ownerDomainId || domainId,
+        siteID: siteId,
+        isSignupUser: true,
+        layout: apiSiteData?.siteDetails?.layout || siteDetails?.layout || 'asianexchange',
       };
 
-      const res = await signUp(payload);
+      console.log('KuberBook333 Signup Payload before sending:', payload);
+
+      const response = await signUp(payload);
+      console.log('KuberBook333 Signup Response:', response);
 
       if (
-        res?.data?.success ||
-        res?.data?.message === 'User created successfully' ||
-        res?.status === 200 ||
-        res?.status === 201
+        response?.data?.message === 'User created successfully' ||
+        response?.data?.success ||
+        response?.success
       ) {
-        toast.success(res?.data?.message || 'Registration successful! Please login.');
+        toast.success(response?.data?.message || 'Registration Successful!');
+
+        // 1. Direct auto-login if token is in signup response
+        const directToken = response?.data?.token || response?.token || response?.data?.userdata?.token;
+        const directUser = response?.data?.userdata || response?.userdata || response?.data?.user;
+        if (directToken && directUser) {
+          if (directToken) localStorage.setItem('token', directToken);
+          if (directUser?._id) localStorage.setItem('userId', directUser._id);
+          const formattedUser = {
+            ...directUser,
+            username: directUser.username || directUser.userName || cleanPhone,
+            balance: directUser.availableBalance ?? 0,
+            availableBalance: directUser.availableBalance ?? 0,
+            exposure: directUser.exposure ?? 0,
+            token: directToken,
+            _id: directUser._id,
+          };
+          localStorage.setItem('kuber_user', JSON.stringify(formattedUser));
+
+          dispatch(
+            loginSuccess({
+              token: directToken,
+              userData: formattedUser,
+              loggedInType: 'real',
+            })
+          );
+          dispatch(
+            setAccountType({
+              userData: formattedUser,
+              type: 'real',
+            })
+          );
+
+          createLoginRecord({ userName: cleanPhone }).catch(() => {});
+          if (onLoginSuccess) onLoginSuccess(formattedUser);
+          onClose();
+          return;
+        }
+
+        // 2. Instant Socket auto-login with cleanPhone
+        try {
+          const loginPayload = {
+            userName: cleanPhone,
+            username: cleanPhone,
+            password: password.trim(),
+            x_panel_type: 'user',
+          };
+
+          let loginRes = null;
+          try {
+            loginRes = await subscribeToLogin(loginPayload);
+          } catch {
+            loginRes = await login(loginPayload);
+          }
+
+          const loginData = loginRes?.data || loginRes;
+          if (loginData?.token || loginData?.userdata?.token || loginRes?.success) {
+            const token = loginData.token || loginData.userdata?.token || loginRes?.token;
+            const userdata = loginData.user || loginData.userdata || loginRes?.userdata || { username: cleanPhone };
+            const formattedUser = {
+              ...userdata,
+              username: userdata.username || userdata.userName || cleanPhone,
+              balance: userdata.availableBalance ?? 0,
+              availableBalance: userdata.availableBalance ?? 0,
+              exposure: userdata.exposure ?? 0,
+              token: token,
+              _id: userdata._id || '',
+            };
+
+            if (token) localStorage.setItem('token', token);
+            if (userdata?._id) localStorage.setItem('userId', userdata._id);
+            localStorage.setItem('kuber_user', JSON.stringify(formattedUser));
+
+            dispatch(
+              loginSuccess({
+                token: token,
+                userData: formattedUser,
+                loggedInType: 'real',
+              })
+            );
+            dispatch(
+              setAccountType({
+                userData: formattedUser,
+                type: 'real',
+              })
+            );
+
+            createLoginRecord({ userName: cleanPhone }).catch(() => {});
+            if (onLoginSuccess) onLoginSuccess(formattedUser);
+            onClose();
+            return;
+          }
+        } catch (err) {
+          console.error('Auto login error after signup:', err);
+        }
+
+        // Fallback: switch to login tab with phone populated
         setMode('login');
-        setUserId(username);
+        setLoginTab('mobile');
+        setMobile(cleanPhone);
+        setUserId(cleanPhone);
         setErrors({});
       } else {
-        const errorMsg = res?.data?.message || 'Registration failed. Please try again.';
-        toast.error(errorMsg);
+        const errorMsg =
+          response?.data?.message ||
+          response?.message ||
+          'Registration failed. Please check your details.';
         setErrors({ general: errorMsg });
+        toast.error(errorMsg);
       }
     } catch (err) {
       console.error('Registration error:', err);
-      const errMsg = err?.response?.data?.message || err?.message || 'Registration failed.';
-      toast.error(errMsg);
+      const errMsg =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Registration failed. Please try again.';
       setErrors({ general: errMsg });
+      toast.error(errMsg);
     } finally {
       setIsRegisterLoading(false);
     }
   };
 
+  // ---------------- FORGOT PASSWORD HANDLER ----------------
   const handleForgotSubmit = async (e) => {
-    e.preventDefault();
-    const newErrors = {};
+    e?.preventDefault();
+    const cleanPhone = mobile.replace(/\D/g, '').slice(-10);
 
-    if (!mobile.trim()) newErrors.mobile = 'Please Enter Mobile Number';
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+    if (!cleanPhone || cleanPhone.length < 10) {
+      setErrors({ mobile: 'Please Enter 10-digit Mobile Number' });
       return;
     }
 
     try {
-      const res = await forgotPassword({ phone: mobile.trim() });
-      toast.success(res?.data?.message || 'OTP / instructions sent to your mobile.');
+      const res = await forgotPassword({ phone: cleanPhone });
+      toast.success(res?.data?.message || 'Instructions sent to your mobile.');
       setMode('login');
       setErrors({});
     } catch (err) {
@@ -560,12 +662,13 @@ export default function AuthModal({
                     </div>
                     <input
                       type="tel"
+                      maxLength={10}
                       value={mobile}
                       onChange={(e) => {
-                        setMobile(e.target.value);
+                        setMobile(e.target.value.replace(/\D/g, ''));
                         clearError('mobile');
                       }}
-                      placeholder="Enter Mobile Number*"
+                      placeholder="Enter Mobile Number (10 digits)*"
                       className="w-full bg-transparent text-[14px] text-gray-900 placeholder-gray-500 font-medium focus:outline-none px-1"
                     />
                   </div>
@@ -574,119 +677,37 @@ export default function AuthModal({
                       {errors.mobile}
                     </p>
                   )}
-
-                  {/* Radio buttons for Password vs OTP */}
-                  <div className="flex items-center gap-5 text-white my-2 px-1 font-bold text-[14px]">
-                    {/* Password Radio */}
-                    <label
-                      onClick={() => setMobileAuthType('password')}
-                      className="flex items-center gap-2 cursor-pointer select-none"
-                    >
-                      <span
-                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                          mobileAuthType === 'password'
-                            ? 'border-[#d6a538]'
-                            : 'border-white'
-                        }`}
-                      >
-                        {mobileAuthType === 'password' && (
-                          <span className="w-2 h-2 rounded-full bg-[#d6a538]" />
-                        )}
-                      </span>
-                      <span>Password</span>
-                    </label>
-
-                    {/* OTP Radio */}
-                    <label
-                      onClick={() => setMobileAuthType('otp')}
-                      className="flex items-center gap-2 cursor-pointer select-none"
-                    >
-                      <span
-                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                          mobileAuthType === 'otp'
-                            ? 'border-[#d6a538]'
-                            : 'border-white'
-                        }`}
-                      >
-                        {mobileAuthType === 'otp' && (
-                          <span className="w-2 h-2 rounded-full bg-[#d6a538]" />
-                        )}
-                      </span>
-                      <span>OTP</span>
-                    </label>
-                  </div>
                 </div>
               )}
 
-              {/* Password or OTP Input */}
-              {loginTab === 'userId' || mobileAuthType === 'password' ? (
-                <div className="mb-1.5">
-                  <div className="w-full h-[42px] bg-white rounded-[5px] px-3 flex items-center justify-between shadow-xs">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        clearError('password');
-                      }}
-                      placeholder="Enter Password*"
-                      className="w-full bg-transparent text-[14px] text-gray-900 placeholder-gray-500 font-medium focus:outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="text-gray-900 hover:text-black ml-2 cursor-pointer p-0.5"
-                      aria-label="Toggle password visibility"
-                    >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-                  {errors.password && (
-                    <p className="text-[#ff4d4f] text-[12px] font-medium text-left mt-1 px-1">
-                      {errors.password}
-                    </p>
-                  )}
+              {/* Password Input */}
+              <div className="mb-1.5">
+                <div className="w-full h-[42px] bg-white rounded-[5px] px-3 flex items-center justify-between shadow-xs">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      clearError('password');
+                    }}
+                    placeholder="Enter Password*"
+                    className="w-full bg-transparent text-[14px] text-gray-900 placeholder-gray-500 font-medium focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="text-gray-900 hover:text-black ml-2 cursor-pointer p-0.5"
+                    aria-label="Toggle password visibility"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
-              ) : (
-                <div className="mb-1.5">
-                  <div className="w-full h-[42px] bg-white rounded-[5px] pl-3 pr-1 flex items-center justify-between shadow-xs">
-                    <input
-                      type="text"
-                      value={otp}
-                      onChange={(e) => {
-                        setOtp(e.target.value);
-                        clearError('otp');
-                      }}
-                      placeholder="Enter OTP*"
-                      className="w-full bg-transparent text-[14px] text-gray-900 placeholder-gray-500 font-medium focus:outline-none"
-                    />
-                    <button
-                      type="button"
-                      disabled={otpTimer > 0 || otpLoading}
-                      onClick={handleSendOtp}
-                      style={{ background: 'linear-gradient(94deg, #b6842d, #ebda8d 55%, #b7862f)' }}
-                      className={`text-black font-extrabold text-[11.5px] px-2.5 py-1.5 rounded-[4px] shrink-0 transition-transform ${
-                        otpTimer > 0 || otpLoading
-                          ? 'cursor-not-allowed opacity-80'
-                          : 'hover:brightness-110 active:scale-95 cursor-pointer'
-                      }`}
-                    >
-                      {otpLoading
-                        ? 'SENDING...'
-                        : otpTimer > 0
-                        ? `RESEND (${otpTimer}s)`
-                        : otpSent
-                        ? 'RESEND OTP'
-                        : 'GET OTP'}
-                    </button>
-                  </div>
-                  {errors.otp && (
-                    <p className="text-[#ff4d4f] text-[12px] font-medium text-left mt-1 px-1">
-                      {errors.otp}
-                    </p>
-                  )}
-                </div>
-              )}
+                {errors.password && (
+                  <p className="text-[#ff4d4f] text-[12px] font-medium text-left mt-1 px-1">
+                    {errors.password}
+                  </p>
+                )}
+              </div>
 
               {/* Forgot Password Link */}
               <div className="text-right mb-2.5">
@@ -837,9 +858,9 @@ export default function AuthModal({
                 </div>
               )}
 
-              {/* Mobile Number with integrated GET OTP */}
+              {/* Mobile Number */}
               <div className="mb-2.5">
-                <div className="w-full h-[42px] bg-white rounded-[5px] pl-2.5 pr-1 flex items-center justify-between shadow-xs">
+                <div className="w-full h-[42px] bg-white rounded-[5px] px-2.5 flex items-center gap-2 shadow-xs">
                   <div className="flex items-center gap-1 shrink-0 text-gray-900 font-bold text-[13px] border-r border-gray-300 pr-2 mr-1">
                     <span className="text-base leading-none">🇮🇳</span>
                     <span>{countryCode}</span>
@@ -847,33 +868,15 @@ export default function AuthModal({
                   </div>
                   <input
                     type="tel"
+                    maxLength={10}
                     value={mobile}
                     onChange={(e) => {
-                      setMobile(e.target.value);
+                      setMobile(e.target.value.replace(/\D/g, ''));
                       clearError('mobile');
                     }}
-                    placeholder="Enter Mobile Number*"
+                    placeholder="Enter Mobile Number (10 digits)*"
                     className="w-full bg-transparent text-[14px] text-gray-900 placeholder-gray-500 font-medium focus:outline-none px-1"
                   />
-                  <button
-                    type="button"
-                    disabled={otpTimer > 0 || otpLoading}
-                    onClick={handleSendOtp}
-                    style={{ background: 'linear-gradient(94deg, #b6842d, #ebda8d 55%, #b7862f)' }}
-                    className={`text-white font-extrabold text-[11.5px] sm:text-[12px] px-2.5 sm:px-3 py-1.5 rounded-[4px] shrink-0 transition-transform ${
-                      otpTimer > 0 || otpLoading
-                        ? 'cursor-not-allowed opacity-80'
-                        : 'hover:brightness-110 active:scale-95 cursor-pointer'
-                    }`}
-                  >
-                    {otpLoading
-                      ? 'SENDING...'
-                      : otpTimer > 0
-                      ? `RESEND OTP (${otpTimer}s)`
-                      : otpSent
-                      ? 'RESEND OTP'
-                      : 'GET OTP'}
-                  </button>
                 </div>
                 {errors.mobile && (
                   <p className="text-[#ff4d4f] text-[12px] font-medium text-left mt-1 px-1">
@@ -882,71 +885,13 @@ export default function AuthModal({
                 )}
               </div>
 
-              {/* Enter Password* */}
-              <div className="mb-2.5">
-                <div className="w-full h-[42px] bg-white rounded-[5px] px-3 flex items-center justify-between shadow-xs">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      clearError('password');
-                    }}
-                    placeholder="Enter Password*"
-                    className="w-full bg-transparent text-[14px] text-gray-900 placeholder-gray-500 font-medium focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="text-gray-900 hover:text-black ml-2 cursor-pointer p-0.5"
-                    aria-label="Toggle password visibility"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-                {errors.password && (
-                  <p className="text-[#ff4d4f] text-[12px] font-medium text-left mt-1 px-1">
-                    {errors.password}
-                  </p>
-                )}
-              </div>
-
-              {/* Enter Confirm Password* */}
-              <div className="mb-3">
-                <div className="w-full h-[42px] bg-white rounded-[5px] px-3 flex items-center justify-between shadow-xs">
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    value={confirmPassword}
-                    onChange={(e) => {
-                      setConfirmPassword(e.target.value);
-                      clearError('confirmPassword');
-                    }}
-                    placeholder="Enter Confirm Password*"
-                    className="w-full bg-transparent text-[14px] text-gray-900 placeholder-gray-500 font-medium focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="text-gray-900 hover:text-black ml-2 cursor-pointer p-0.5"
-                    aria-label="Toggle confirm password visibility"
-                  >
-                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-                {errors.confirmPassword && (
-                  <p className="text-[#ff4d4f] text-[12px] font-medium text-left mt-1 px-1">
-                    {errors.confirmPassword}
-                  </p>
-                )}
-              </div>
-
-              {/* UPDATE PASSWORD Button */}
+              {/* RESET PASSWORD Button */}
               <button
                 type="submit"
                 style={{ background: 'linear-gradient(94deg, #b6842d, #ebda8d 55%, #b7862f)' }}
                 className="w-full h-[42px] text-white font-extrabold text-[15px] uppercase tracking-wide rounded-[5px] shadow-md hover:brightness-105 active:scale-98 transition-all cursor-pointer mb-3"
               >
-                UPDATE PASSWORD
+                RESET PASSWORD
               </button>
 
               {/* Remember Your Password? LOG IN */}
@@ -981,7 +926,7 @@ export default function AuthModal({
           </div>
         )}
 
-        {/* -------------------- 3. REGISTER VIEW -------------------- */}
+        {/* -------------------- 3. REGISTER VIEW (NO OTP - EXACT MAHADEV FLOW) -------------------- */}
         {mode === 'register' && (
           <div>
             <form onSubmit={handleRegisterSubmit} noValidate>
@@ -992,8 +937,8 @@ export default function AuthModal({
                 </div>
               )}
 
-              {/* Mobile with Country Code & OTP */}
-              <div className="w-full h-[42px] bg-white rounded-[5px] pl-2.5 pr-1 flex items-center justify-between mb-2.5 shadow-xs">
+              {/* Phone Number Field */}
+              <div className="w-full h-[42px] bg-white rounded-[5px] px-2.5 flex items-center gap-2 mb-2.5 shadow-xs">
                 <div className="flex items-center gap-1 shrink-0 text-gray-900 font-bold text-[13px] border-r border-gray-300 pr-2 mr-1">
                   <span className="text-base leading-none">🇮🇳</span>
                   <span>{countryCode}</span>
@@ -1001,61 +946,23 @@ export default function AuthModal({
                 </div>
                 <input
                   type="tel"
+                  maxLength={10}
                   value={mobile}
                   onChange={(e) => {
-                    setMobile(e.target.value);
+                    setMobile(e.target.value.replace(/\D/g, ''));
                     clearError('mobile');
                   }}
-                  placeholder="Enter Mobile Number*"
+                  placeholder="Enter Phone Number (10 digits)*"
                   className="w-full bg-transparent text-[14px] text-gray-900 placeholder-gray-500 font-medium focus:outline-none px-1"
                 />
-                <button
-                  type="button"
-                  disabled={otpTimer > 0 || otpLoading}
-                  onClick={handleSendOtp}
-                  style={{ background: 'linear-gradient(94deg, #b6842d, #ebda8d 55%, #b7862f)' }}
-                  className={`text-white font-extrabold text-[11px] sm:text-[12px] px-2.5 sm:px-3 py-1.5 rounded-[4px] shrink-0 transition-all uppercase tracking-tight shadow-xs ${
-                    otpTimer > 0 || otpLoading
-                      ? 'cursor-not-allowed opacity-90'
-                      : 'hover:brightness-110 active:scale-95 cursor-pointer'
-                  }`}
-                >
-                  {otpLoading
-                    ? 'SENDING...'
-                    : otpTimer > 0
-                    ? `RESEND OTP (${otpTimer}s)`
-                    : otpSent
-                    ? 'RESEND OTP'
-                    : 'GET OTP'}
-                </button>
+                <span className="text-[11px] font-bold text-[#b6842d] pr-1 select-none">
+                  {mobile.replace(/\D/g, '').length}/10
+                </span>
               </div>
               {errors.mobile && (
                 <p className="text-[#ff4d4f] text-[12px] font-medium text-left -mt-1.5 mb-2 px-1">
                   {errors.mobile}
                 </p>
-              )}
-
-              {/* Enter OTP Field (Shown once OTP is requested) */}
-              {otpSent && (
-                <div className="mb-2.5">
-                  <div className="w-full h-[42px] bg-white rounded-[5px] px-3 flex items-center shadow-xs">
-                    <input
-                      type="text"
-                      value={otp}
-                      onChange={(e) => {
-                        setOtp(e.target.value);
-                        clearError('otp');
-                      }}
-                      placeholder="Enter otp"
-                      className="w-full bg-transparent text-[14px] text-gray-900 placeholder-gray-500 font-medium focus:outline-none"
-                    />
-                  </div>
-                  {errors.otp && (
-                    <p className="text-[#ff4d4f] text-[12px] font-medium text-left mt-1 px-1">
-                      {errors.otp}
-                    </p>
-                  )}
-                </div>
               )}
 
               {/* Username Input */}
@@ -1067,7 +974,7 @@ export default function AuthModal({
                     setUsername(e.target.value);
                     clearError('username');
                   }}
-                  placeholder="Enter username"
+                  placeholder="Enter username*"
                   className="w-full bg-transparent text-[14px] text-gray-900 placeholder-gray-500 font-medium focus:outline-none"
                 />
               </div>
@@ -1078,17 +985,25 @@ export default function AuthModal({
               )}
 
               {/* Choose Password */}
-              <div className="w-full h-[42px] bg-white rounded-[5px] px-3 flex items-center mb-2.5 shadow-xs">
+              <div className="w-full h-[42px] bg-white rounded-[5px] px-3 flex items-center justify-between mb-2.5 shadow-xs">
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
                     clearError('password');
                   }}
-                  placeholder="Choose your password"
+                  placeholder="Choose your password*"
                   className="w-full bg-transparent text-[14px] text-gray-900 placeholder-gray-500 font-medium focus:outline-none"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-gray-900 hover:text-black ml-2 cursor-pointer p-0.5"
+                  aria-label="Toggle password visibility"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
               {errors.password && (
                 <p className="text-[#ff4d4f] text-[12px] font-medium text-left -mt-1.5 mb-2 px-1">
@@ -1097,17 +1012,25 @@ export default function AuthModal({
               )}
 
               {/* Confirm Password */}
-              <div className="w-full h-[42px] bg-white rounded-[5px] px-3 flex items-center mb-2.5 shadow-xs">
+              <div className="w-full h-[42px] bg-white rounded-[5px] px-3 flex items-center justify-between mb-2.5 shadow-xs">
                 <input
-                  type="password"
+                  type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => {
                     setConfirmPassword(e.target.value);
                     clearError('confirmPassword');
                   }}
-                  placeholder="Confirm password"
+                  placeholder="Confirm password*"
                   className="w-full bg-transparent text-[14px] text-gray-900 placeholder-gray-500 font-medium focus:outline-none"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="text-gray-900 hover:text-black ml-2 cursor-pointer p-0.5"
+                  aria-label="Toggle confirm password visibility"
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
               {errors.confirmPassword && (
                 <p className="text-[#ff4d4f] text-[12px] font-medium text-left -mt-1.5 mb-2 px-1">
@@ -1121,10 +1044,15 @@ export default function AuthModal({
                   type="text"
                   value={referralCode}
                   onChange={(e) => setReferralCode(e.target.value)}
-                  placeholder="Refer code"
+                  placeholder="Refer code (Optional)"
                   className="w-full bg-transparent text-[14px] text-gray-900 placeholder-gray-500 font-medium focus:outline-none"
                 />
               </div>
+
+              {/* Terms Note */}
+              <p className="text-white/80 text-[10.5px] leading-tight mb-2.5 px-1">
+                By clicking 'Register', you confirm that you are of legal age (18+) and accept our terms and conditions.
+              </p>
 
               {/* Register Button */}
               <button

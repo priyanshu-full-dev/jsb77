@@ -282,7 +282,7 @@ export default function FeaturedGames({ onGameClick }) {
           <div key={idx} className="flex flex-col gap-1 shrink-0 snap-start">
             {/* Top Card (Row 1) */}
             <div
-              onClick={() => onGameClick(col.top.id)}
+              onClick={() => onGameClick(col.top)}
               className={`w-[158px] sm:w-[152px] h-[80px] sm:h-[96px] rounded-md overflow-hidden  ${col.top.border} shadow-md cursor-pointer relative hover:brightness-105 active:scale-95 transition-all ${col.top.bg}`}
             >
               {col.top.image ? (
@@ -299,7 +299,7 @@ export default function FeaturedGames({ onGameClick }) {
 
             {/* Bottom Card (Row 2) */}
             <div
-              onClick={() => onGameClick(col.bottom.id)}
+              onClick={() => onGameClick(col.bottom)}
               className={`w-[158px] sm:w-[152px] h-[80px] sm:h-[96px] rounded-md overflow-hidden  ${col.bottom.border} shadow-md cursor-pointer relative hover:brightness-105 active:scale-95 transition-all ${col.bottom.bg}`}
             >
               {col.bottom.image ? (

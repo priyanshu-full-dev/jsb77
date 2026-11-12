@@ -104,6 +104,15 @@ export default function CricketPage() {
   };
 
   const handleSelectSport = (sport) => {
+    if (sport === 'sportsbook' || sport === 'basketball' || sport === 'volleyball' || sport === 'tabletennis' || sport === 'mma') {
+      setToast({
+        id: Date.now(),
+        type: 'info',
+        message: 'Coming soon...',
+      });
+      return;
+    }
+
     if (sport === 'cricket') {
       navigate('/cricket');
     } else if (sport === 'inplay') {
@@ -167,6 +176,8 @@ export default function CricketPage() {
           favorites={favorites}
           onToggleFavorite={handleToggleFavorite}
           searchQuery={searchQuery}
+          user={user}
+          isLoggedIn={Boolean(user)}
         />
 
         {/* 5. TOAST NOTIFICATION */}

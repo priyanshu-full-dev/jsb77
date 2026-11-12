@@ -1,5 +1,6 @@
 import React from 'react';
 import { Star } from 'lucide-react';
+import CustomStar from './CustomStar';
 
 // Exact TV Monitor Icon matching reference image
 const TvMonitorIcon = () => (
@@ -20,7 +21,10 @@ export default function SportSection({
   onMatchClick,
   favorites = new Set(),
   onToggleFavorite,
+  user = null,
+  isLoggedIn = false,
 }) {
+  const showFav = Boolean(isLoggedIn || user);
   const getBannerTitle = () => {
     switch (sport) {
       case 'favourites':
@@ -189,22 +193,23 @@ export default function SportSection({
                   </div>
                 </div>
 
-                {/* Bottom Row: Favorite Star + 6 Odds Boxes */}
+                {/* Bottom Row: Optional Favorite Star (if logged in) + 6 Odds Boxes */}
                 <div className="flex items-center pt-[5px] gap-2 pb-0.5">
-                  {/* Star Toggle */}
-                  <button
-                    type="button"
-                    onClick={() => onToggleFavorite && onToggleFavorite(match)}
-                    className="w-[16.5px] flex items-center justify-center shrink-0 cursor-pointer p-0 hover:scale-110 active:scale-95 transition-transform"
-                    title={isFav ? 'Remove from Favourites' : 'Add to Favourites'}
-                    aria-label={isFav ? 'Remove from Favourites' : 'Add to Favourites'}
-                  >
-                    <img
-                      src={isFav ? '/games/download (1) copy.svg' : '/games/download copy.svg'}
-                      alt="Favorite"
-                      className="w-[17px] h-[17px] object-contain"
-                    />
-                  </button>
+                  {/* Star Toggle - only when logged in */}
+                  {showFav && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleFavorite && onToggleFavorite(match);
+                      }}
+                      className="w-[16.5px] flex items-center justify-center shrink-0 cursor-pointer p-0 hover:scale-110 active:scale-95 transition-transform"
+                      title={isFav ? 'Remove from Favourites' : 'Add to Favourites'}
+                      aria-label={isFav ? 'Remove from Favourites' : 'Add to Favourites'}
+                    >
+                      <CustomStar filled={isFav} />
+                    </button>
+                  )}
 
                   {/* 6 Odds Boxes */}
                   {(() => {
