@@ -85,7 +85,7 @@ const HeroCarousel = ({ onActionClick }) => {
           >
             <img
               src={banner.image}
-              alt={banner.title || `NPR77 Promo Banner ${idx + 1}`}
+              alt={banner.title || `JSB77 Promo Banner ${idx + 1}`}
               className="w-full h-full object-cover object-center block"
               loading={idx === 0 ? "eager" : "lazy"}
               draggable={false}
@@ -96,16 +96,16 @@ const HeroCarousel = ({ onActionClick }) => {
 
       {/* Pagination Indicator Dots */}
       <div
-        className="absolute bottom-2 right-3.5 flex items-center gap-1.5 z-20"
+        className="absolute bottom-2.5 right-4 flex items-center gap-[5px] z-20"
         onClick={(e) => e.stopPropagation()}
       >
         {nprBanners.map((_, idx) => (
           <button
             key={idx}
             onClick={() => setCurrentIndex(idx)}
-            className={`transition-all duration-300 rounded-full h-1.5 ${idx === currentIndex
-              ? "w-3.5 bg-white shadow-md"
-              : "w-1.5 bg-white/50 hover:bg-white/80"
+            className={`transition-all duration-300 rounded-full w-[9px] h-[9px] cursor-pointer ${idx === currentIndex
+              ? "bg-white shadow-sm scale-105"
+              : "bg-white/55 hover:bg-white/80"
               }`}
             aria-label={`Slide ${idx + 1}`}
           />

@@ -58,7 +58,7 @@ const MenuDrawer = ({ isOpen, onClose, onSelectCategory, user, onLogout }) => {
           <img
             src="/npr/jsb77_logo_white.png"
             alt="JSB77 Logo"
-            className="h-10 sm:h-11 w-auto object-contain"
+            className="h-14 sm:h-16 w-auto object-contain"
           />
 
           {/* White Circular Close Button with Dark Navy 'X' */}

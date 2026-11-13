@@ -5,6 +5,7 @@ import SportsPage from "./pages/Sports/SportsPage";
 import CasinoPage from "./pages/Casino/CasinoPage";
 import PromotionPage from "./pages/Promotion/PromotionPage";
 import MembersPage from "./pages/Members/MembersPage";
+import DepositPage from "./pages/Deposit/DepositPage";
 import LoginPage from "./pages/Auth/LoginPage";
 
 export const NprRouter = createBrowserRouter([
@@ -70,7 +71,11 @@ export const NprRouter = createBrowserRouter([
       },
       {
         path: "deposit",
-        element: <Home />,
+        element: <DepositPage />,
+      },
+      {
+        path: "m/deposit",
+        element: <DepositPage />,
       },
       {
         path: "*",

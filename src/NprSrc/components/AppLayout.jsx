@@ -36,7 +36,9 @@ const AppLayout = () => {
   const navigate = useNavigate();
   const isPromotionPage = location.pathname.includes("promotion");
   const isMembersPage = location.pathname.includes("members");
-  const hideTopChrome = isPromotionPage || isMembersPage;
+  const isDepositPage = location.pathname.includes("deposit");
+  const hideTopChrome = isPromotionPage || isMembersPage || isDepositPage;
+  const hideBottomNav = isMembersPage || isDepositPage;
 
   const handleOpenLogin = () => {
     setAuthMode("login");
@@ -69,19 +71,19 @@ const AppLayout = () => {
   };
 
   return (
-    <div className={`npr-font npr-canvas max-w-md mx-auto relative shadow-2xl ${isMembersPage ? "pb-0" : "pb-16"} min-h-screen flex flex-col`}>
-      {/* 1. Main Header (Hidden on Promotion & Members pages) */}
+    <div className={`npr-font npr-canvas max-w-md mx-auto relative shadow-2xl ${hideBottomNav ? "pb-0" : "pb-16"} min-h-screen flex flex-col`}>
+      {/* 1. Main Header (Hidden on Promotion, Members & Deposit pages) */}
       {!hideTopChrome && (
         <Header onOpenMenu={() => setMenuOpen(true)} user={user} />
       )}
 
-      {/* 3. Auth Bar (Hidden on Promotion & Members pages) */}
+      {/* 3. Auth Bar (Hidden on Promotion, Members & Deposit pages) */}
       {!hideTopChrome && (
         <AuthBar
           user={user}
           onOpenLogin={handleOpenLogin}
           onOpenRegister={handleOpenRegister}
-          onOpenDeposit={() => setDepositOpen(true)}
+          onOpenDeposit={user ? () => navigate("/deposit") : handleOpenLogin}
           onOpenWithdrawal={() => setWithdrawalOpen(true)}
         />
       )}
@@ -93,7 +95,7 @@ const AppLayout = () => {
             user,
             onOpenLogin: handleOpenLogin,
             onOpenRegister: handleOpenRegister,
-            onOpenDeposit: () => setDepositOpen(true),
+            onOpenDeposit: user ? () => navigate("/deposit") : handleOpenLogin,
             onOpenWithdrawal: () => setWithdrawalOpen(true),
             onOpenInvite: () => setInviteOpen(true),
             onLogout: handleLogout,
@@ -101,16 +103,16 @@ const AppLayout = () => {
         />
       </main>
 
-      {/* 5. Persistent Bottom Navigation (Hidden on Members page) */}
-      {!isMembersPage && (
+      {/* 5. Persistent Bottom Navigation (Hidden on Members & Deposit pages) */}
+      {!hideBottomNav && (
         <BottomNav
           onOpenInvite={() => setInviteOpen(true)}
-          onOpenDeposit={() => setDepositOpen(true)}
+          onOpenDeposit={user ? () => navigate("/deposit") : handleOpenLogin}
           onOpenMembers={user ? () => navigate("/members") : handleOpenLogin}
         />
       )}
 
-      {/* 6. Floating Left Point Redeem Side Widget (Hidden on Promotion & Members pages) */}
+      {/* 6. Floating Left Point Redeem Side Widget (Hidden on Promotion, Members & Deposit pages) */}
       {!hideTopChrome && <SideRedeemWidget />}
 
       {/* Modals & Drawers */}
