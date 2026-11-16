@@ -36,8 +36,8 @@ const NewsTicker = () => {
   };
 
   return (
-    <div className="mx-2.5 my-1.5 sm:mx-3 select-none">
-      <div className="bg-white border-[1.5px] border-[#2b6be4] rounded-full pl-3.5 pr-3 py-1.5 flex items-center gap-2.5 shadow-xs overflow-hidden h-[34px]">
+    <div className="mx-2.5 mt-[6px] mb-[8px] sm:mx-3 select-none">
+      <div className="bg-white border-[1.5px] border-[#2b6be4] rounded-full pl-3.5 pr-3 py-1 flex items-center gap-2.5 shadow-xs overflow-hidden h-[33px]">
         {/* Exact Blue Loudspeaker Icon */}
         <div className="flex-shrink-0 flex items-center justify-center">
           <svg

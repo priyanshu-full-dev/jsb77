@@ -10,19 +10,19 @@ const BottomNav = ({ onOpenInvite, onOpenDeposit, onOpenMembers }) => {
   const isPromotion = location.pathname.includes("promotion");
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50 bg-[#0045b8] text-white shadow-[0_-2px_10px_rgba(0,0,0,0.15)] flex items-end justify-between px-1 h-[64px] sm:h-[68px] pb-1.5 select-none border-t border-[#0e58dc]/30">
+    <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50 bg-[#0045b8] text-[#cce0ff] shadow-[0_-2px_10px_rgba(0,0,0,0.15)] flex items-end justify-between px-1 h-[65px] sm:h-[64px] pb-1.5 select-none border-t border-[#0e58dc]/30">
       {/* 1. Home */}
       <NavLink
         to="/"
-        className="flex flex-col items-center justify-end flex-1 h-full pb-1 text-white transition relative group focus:outline-none"
+        className="flex flex-col items-center justify-end flex-1 h-full pb-1 text-[#cce0ff] hover:text-white transition relative group focus:outline-none"
       >
         <img
           src="/npr/nav/nav_home.png"
           alt="Home"
-          className="w-[32px] h-[32px] sm:w-[36px] sm:h-[36px] object-contain block mb-1 drop-shadow-xs group-active:scale-95 transition pointer-events-none"
+          className="w-[26px] h-[26px] sm:w-[28px] sm:h-[28px] object-contain block mb-1 drop-shadow-xs group-active:scale-95 transition pointer-events-none"
           draggable={false}
         />
-        <span className="text-[12px] sm:text-[12.5px] font-bold leading-none tracking-tight">
+        <span className="text-[11.5px] sm:text-[12px] font-bold leading-none tracking-tight">
           Home
         </span>
         {/* Active Pill Indicator under Home (absolute so it never shifts the icon or text) */}
@@ -34,15 +34,15 @@ const BottomNav = ({ onOpenInvite, onOpenDeposit, onOpenMembers }) => {
       {/* 2. Promotion */}
       <NavLink
         to="/promotion"
-        className="flex flex-col items-center justify-end flex-1 h-full pb-1 text-white transition relative group focus:outline-none"
+        className="flex flex-col items-center justify-end flex-1 h-full pb-1 text-[#cce0ff] hover:text-white transition relative group focus:outline-none"
       >
         <img
           src="/npr/nav/nav_promotion.png"
           alt="Promotion"
-          className="w-[32px] h-[32px] sm:w-[36px] sm:h-[36px] object-contain block mb-1 drop-shadow-xs group-active:scale-95 transition pointer-events-none"
+          className="w-[26px] h-[26px] sm:w-[28px] sm:h-[28px] object-contain block mb-1 drop-shadow-xs group-active:scale-95 transition pointer-events-none"
           draggable={false}
         />
-        <span className="text-[12px] sm:text-[12.5px] font-bold leading-none tracking-tight">
+        <span className="text-[11.5px] sm:text-[12px] font-bold leading-none tracking-tight">
           Promotion
         </span>
         {/* Active Pill Indicator under Promotion (absolute so it never shifts the icon or text) */}
@@ -52,10 +52,10 @@ const BottomNav = ({ onOpenInvite, onOpenDeposit, onOpenMembers }) => {
       </NavLink>
 
       {/* 3. Center Elevated Floating Button: Invite */}
-      <div className="flex-1 flex flex-col items-center justify-end relative -top-2 sm:-top-5">
+      <div className="flex-1 flex flex-col items-center justify-end relative -top-2 sm:-top-4">
         <button
           onClick={onOpenInvite}
-          className="w-[65px] h-[65px] sm:w-[66px] sm:h-[66px] rounded-full flex items-center justify-center transform active:scale-95 transition focus:outline-none"
+          className="w-[56px] h-[56px] sm:w-[58px] sm:h-[58px] rounded-full flex items-center justify-center transform active:scale-95 transition focus:outline-none"
           title="Invite"
         >
           <img
@@ -65,23 +65,25 @@ const BottomNav = ({ onOpenInvite, onOpenDeposit, onOpenMembers }) => {
             draggable={false}
           />
         </button>
-        <span className="text-[15px] sm:text-[12.5px] font-bold text-white mt-0.5 leading-none tracking-tight">
+        <span className="text-[11.5px] sm:text-[12px] font-bold text-[#cce0ff] mt-0.5 leading-none tracking-tight">
           Invite
         </span>
       </div>
 
-      {/* 4. Deposit */}
+      {/* 4. Deposit (With 2x Scale Pulse Animation) */}
       <button
         onClick={onOpenDeposit}
-        className="flex flex-col items-center justify-end flex-1 h-full pb-1 text-white transition group focus:outline-none"
+        className="flex flex-col items-center justify-end flex-1 h-full pb-1 text-[#cce0ff] hover:text-white transition group focus:outline-none"
       >
-        <img
-          src="/npr/nav/nav_deposit.png"
-          alt="Deposit"
-          className="w-[32px] h-[32px] sm:w-[36px] sm:h-[36px] object-contain block mb-1 drop-shadow-xs group-active:scale-95 transition pointer-events-none"
-          draggable={false}
-        />
-        <span className="text-[12px] sm:text-[12.5px] font-bold leading-none tracking-tight">
+        <div className="animate-deposit-pulse flex items-center justify-center">
+          <img
+            src="/npr/nav/nav_deposit.png"
+            alt="Deposit"
+            className="w-[26px] h-[26px] sm:w-[28px] sm:h-[28px] object-contain block mb-1 drop-shadow-xs group-active:scale-95 transition pointer-events-none"
+            draggable={false}
+          />
+        </div>
+        <span className="text-[11.5px] sm:text-[12px] font-bold leading-none tracking-tight">
           Deposit
         </span>
       </button>
@@ -89,15 +91,15 @@ const BottomNav = ({ onOpenInvite, onOpenDeposit, onOpenMembers }) => {
       {/* 5. Members */}
       <button
         onClick={onOpenMembers}
-        className="flex flex-col items-center justify-end flex-1 h-full pb-1 text-white transition group focus:outline-none"
+        className="flex flex-col items-center justify-end flex-1 h-full pb-1 text-[#cce0ff] hover:text-white transition group focus:outline-none"
       >
         <img
           src="/npr/nav/nav_members.png"
           alt="Members"
-          className="w-[32px] h-[32px] sm:w-[36px] sm:h-[36px] object-contain block mb-1 drop-shadow-xs group-active:scale-95 transition pointer-events-none"
+          className="w-[26px] h-[26px] sm:w-[28px] sm:h-[28px] object-contain block mb-1 drop-shadow-xs group-active:scale-95 transition pointer-events-none"
           draggable={false}
         />
-        <span className="text-[12px] sm:text-[12.5px] font-bold leading-none tracking-tight">
+        <span className="text-[11.5px] sm:text-[12px] font-bold leading-none tracking-tight">
           Members
         </span>
       </button>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { FaInfoCircle, FaCheck, FaCopy, FaTimes } from "react-icons/fa";
 
@@ -31,6 +31,18 @@ const PAYMENT_METHODS = [
   },
 ];
 
+// Crypto channels configuration
+const CRYPTO_CHANNELS = {
+  usdt: [
+    { id: "trc20", name: "USDT-TRC20", bonus: "+2%" },
+    { id: "bep20", name: "USDT-BEP20", bonus: "+2%" },
+  ],
+  usdc: [
+    { id: "trc20", name: "USDC-TRC20", bonus: "+2%" },
+    { id: "bep20", name: "USDC-BEP20", bonus: "+2%" },
+  ],
+};
+
 // Preset deposit amounts with bonus and turnover requirement
 const PRESET_AMOUNTS = [
   { amount: 3000, bonus: 450, turnover: "5times" },
@@ -48,14 +60,35 @@ const DepositPage = () => {
   const { user } = context;
 
   const [selectedMethod, setSelectedMethod] = useState("fonepay");
+  const [selectedChannel, setSelectedChannel] = useState("trc20");
   const [selectedAmount, setSelectedAmount] = useState(3000);
-  const [customAmount, setCustomAmount] = useState("3,000");
+  const [customAmount, setCustomAmount] = useState("");
   const [promoApplied, setPromoApplied] = useState(true);
   const [toastMsg, setToastMsg] = useState("");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [referenceId, setReferenceId] = useState("");
   const [copied, setCopied] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showScrollArrow, setShowScrollArrow] = useState(true);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollBottom = window.innerHeight + window.scrollY;
+      const totalHeight = document.documentElement.scrollHeight;
+      // Hide if user is within 45px of the bottom
+      setShowScrollArrow(scrollBottom < totalHeight - 45);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const handleScrollDown = () => {
+    window.scrollBy({ top: 280, behavior: "smooth" });
+  };
+
+  const isCrypto = selectedMethod === "usdt" || selectedMethod === "usdc";
 
   const showToast = (msg) => {
     setToastMsg(msg);
@@ -63,17 +96,19 @@ const DepositPage = () => {
   };
 
   // Find bonus corresponding to currently selected or custom amount
+  const currentAmountNum = customAmount
+    ? Number(String(customAmount).replace(/,/g, "")) || 0
+    : selectedAmount || 3000;
   const matchedPreset = PRESET_AMOUNTS.find(
-    (p) => p.amount === Number(String(customAmount).replace(/,/g, ""))
+    (p) => p.amount === currentAmountNum
   );
-  const currentAmountNum = Number(String(customAmount).replace(/,/g, "")) || 3000;
   const currentBonusNum = matchedPreset
     ? matchedPreset.bonus
     : Math.floor(currentAmountNum * 0.15);
 
   const handleSelectAmount = (preset) => {
     setSelectedAmount(preset.amount);
-    setCustomAmount(preset.amount.toLocaleString());
+    setCustomAmount("");
   };
 
   const handleCustomAmountChange = (e) => {
@@ -90,8 +125,9 @@ const DepositPage = () => {
   };
 
   const handleNext = () => {
-    if (!currentAmountNum || currentAmountNum < 1000) {
-      showToast("Minimum deposit amount is Rs. 1,000");
+    const minLimit = isCrypto ? 8250 : 1000;
+    if (!currentAmountNum || currentAmountNum < minLimit) {
+      showToast(`Minimum deposit amount is Rs. ${minLimit.toLocaleString()}`);
       return;
     }
     setShowPaymentModal(true);
@@ -126,6 +162,17 @@ const DepositPage = () => {
 
   return (
     <div className="min-h-screen bg-white flex flex-col relative pb-20 select-none">
+      <style>{`
+        @keyframes depositArrowBlink {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0;
+          }
+        }
+      `}</style>
+
       {/* Toast Notification */}
       {toastMsg && (
         <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 bg-black/85 text-white text-[12.5px] font-medium px-4 py-2 rounded-full shadow-lg pointer-events-none animate-fadeIn">
@@ -135,7 +182,7 @@ const DepositPage = () => {
 
       {/* 1. Dedicated Gradient Royal Blue Header */}
       <header
-        className="h-12 px-3 flex items-center justify-between sticky top-0 z-40 shadow-xs"
+        className="h-[55px] px-7 pl-10 flex items-center justify-between sticky top-0 z-40 shadow-xs"
         style={{
           background: "linear-gradient(180deg, #005cf3 0%, #0045b8 50%, #042562 100%)",
         }}
@@ -144,19 +191,24 @@ const DepositPage = () => {
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="p-1.5 text-white hover:opacity-80 active:scale-95 transition cursor-pointer flex items-center justify-center"
+          className="p-1.5 text-white hover:opacity-80 active:scale-95 transition cursor-pointer flex items-center justify-center -ml-1"
           aria-label="Back"
         >
-          <img
-            src="/npr/deposit/deposit_back_exact.png"
-            alt="Back"
-            className="h-[20px] w-auto block pointer-events-none"
-            draggable={false}
-          />
+          <svg
+            viewBox="0 0 15 25"
+            className="w-[13px] h-[22px] text-white"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="12.5,2 3,12.5 12.5,23" />
+          </svg>
         </button>
 
         {/* Title */}
-        <h1 className="text-white text-[17px] font-normal tracking-wide">
+        <h1 className="text-white text-[17px] font-normal tracking-normal">
           Deposit
         </h1>
 
@@ -164,51 +216,53 @@ const DepositPage = () => {
         <button
           type="button"
           onClick={() => showToast("Viewing Deposit History...")}
-          className="p-1.5 text-white hover:opacity-80 active:scale-95 transition cursor-pointer flex items-center justify-center"
+          className="p-1.5 text-white hover:opacity-80 active:scale-95 transition cursor-pointer flex items-center justify-center -mr-1"
           title="Deposit Records"
           aria-label="Deposit Records"
         >
           <img
             src="/npr/deposit/deposit_record_exact.png"
             alt="Deposit Records"
-            className="h-[26px] w-auto block pointer-events-none"
+            className="h-[27px] w-auto block pointer-events-none"
             draggable={false}
           />
         </button>
       </header>
 
       {/* Main Form Body */}
-      <div className="px-4 pt-3.5">
+      <div className="px-3 pt-2">
         {/* Section 1: Deposit Method */}
         <div className="flex items-center gap-1.5 mb-2.5">
-          <span className="w-2 h-2 rounded-full bg-[#f59e0b] inline-block" />
-          <h2 className="text-[#1f2937] font-bold text-[14.5px]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#f59e0b] inline-block" />
+          <h2 className="text-[#1f2937] font-bold text-[13.5px]">
             Deposit Method
           </h2>
         </div>
 
-        {/* Payment Methods 3-Card Row */}
-        <div className="grid grid-cols-3 gap-2.5">
+        {/* Payment Methods Row */}
+        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-1">
           {PAYMENT_METHODS.map((method) => {
             const isSelected = selectedMethod === method.id;
             return (
               <button
                 key={method.id}
                 type="button"
-                onClick={() => setSelectedMethod(method.id)}
-                className={`h-[110px] sm:h-[115px] rounded-[10px] flex flex-col items-center justify-between py-3 px-1.5 relative transition bg-white cursor-pointer ${
-                  isSelected
-                    ? "border-[1.5px] border-[#eb2828]"
-                    : "border border-[#e2e4e8] hover:border-gray-300"
-                }`}
+                onClick={() => {
+                  setSelectedMethod(method.id);
+                  setSelectedChannel("trc20");
+                }}
+                className={`w-[89px] h-[95px] rounded-[5px] shrink-0 flex flex-col items-center justify-between py-1.5 px-1 relative transition bg-white cursor-pointer ${isSelected
+                  ? "border-[1.5px] border-[#eb2828]"
+                  : "border border-[#e2e4e8] hover:border-gray-300"
+                  }`}
               >
                 {/* Method Logo & Content */}
                 {method.id === "fonepay" ? (
-                  <div className="flex-1 flex flex-col items-center justify-between w-full py-1">
+                  <div className="flex-1 flex flex-col items-center justify-evenly w-full py-0.5">
                     <img
                       src={method.logo}
                       alt="FonePay"
-                      className="h-[21px] w-auto object-contain pointer-events-none mt-1"
+                      className="h-[18px] w-auto object-contain pointer-events-none mt-1"
                       draggable={false}
                     />
                     <img
@@ -223,13 +277,13 @@ const DepositPage = () => {
                     <img
                       src={method.logo}
                       alt={method.name}
-                      className="w-[38px] h-[38px] object-contain pointer-events-none mb-1.5"
+                      className="w-[30px] h-[30px] object-contain pointer-events-none mb-0.5"
                       draggable={false}
                     />
-                    <span className="text-[#1f2937] font-bold text-[13.5px] leading-tight">
+                    <span className="text-[#1f2937] font-bold text-[12px] leading-tight">
                       {method.name}
                     </span>
-                    <span className="text-[#eb2828] font-bold text-[12px] leading-tight mt-0.5">
+                    <span className="text-[#eb2828] font-bold text-[11px] leading-tight">
                       {method.badgeText}
                     </span>
                   </div>
@@ -240,7 +294,7 @@ const DepositPage = () => {
                   <img
                     src="/npr/deposit/card_corner_selected_clean.png"
                     alt=""
-                    className="absolute bottom-0 right-0 w-[22px] h-[24px] pointer-events-none"
+                    className="absolute bottom-0 right-0 w-[17px] h-[18px] pointer-events-none rounded-br-[9px]"
                     draggable={false}
                   />
                 )}
@@ -249,15 +303,68 @@ const DepositPage = () => {
           })}
         </div>
 
+        {/* Payment Channel Section (USDT / USDC) */}
+        {isCrypto && (
+          <div className="mt-4">
+            <div className="flex items-center gap-1.5 mb-2.5">
+              <span className="w-2 h-2 rounded-full bg-[#6bbcb3] inline-block" />
+              <h2 className="text-[#1f2937] font-bold text-[14.5px]">
+                Payment Channel
+              </h2>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              {(CRYPTO_CHANNELS[selectedMethod] || []).map((ch) => {
+                const isChSelected = selectedChannel === ch.id;
+                return (
+                  <button
+                    key={ch.id}
+                    type="button"
+                    onClick={() => setSelectedChannel(ch.id)}
+                    className={`w-[120px] sm:w-[142px] h-[55px] shrink-0 rounded-[5px] bg-white relative flex items-center justify-center transition cursor-pointer select-none overflow-hidden ${isChSelected
+                      ? "border-[1.5px] border-[#eb2828]"
+                      : "border border-[#e2e4ea] hover:border-gray-300"
+                      }`}
+                  >
+                    {/* Top-Left Thumbs-up Ribbon Badge */}
+                    <div className="absolute top-[-2px] left-0 pointer-events-none">
+                      <img
+                        src="/npr/deposit/channel_thumb_badge.png"
+                        alt=""
+                        className="w-[16px] h-[20px] object-contain rounded-tl-[7px]"
+                        draggable={false}
+                      />
+                    </div>
+
+                    {/* Top-Right Red +2% Badge */}
+                    <div className="absolute top-0 right-0 bg-[#eb2828] text-white font-bold text-[9px] px-1.5 py-[1px] rounded-bl-[6px] pointer-events-none">
+                      {ch.bonus}
+                    </div>
+
+                    {/* Channel Name */}
+                    <span
+                      className={`text-[13px] font-bold ${isChSelected ? "text-[#eb2828]" : "text-[#1f2937]"
+                        }`}
+                    >
+                      {ch.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+
         {/* Selected Method Title */}
-        <div className="text-[#1f2937] font-bold text-[15.5px] mt-4 mb-2">
+        <div className="text-[#1f2937]  text-[15px] mt-4 mb-2">
           {PAYMENT_METHODS.find((m) => m.id === selectedMethod)?.name}
         </div>
 
         {/* Section 2: Deposit Amounts */}
-        <div className="flex items-center gap-1.5 mb-3">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#b56f86] inline-block" />
-          <h2 className="text-[#1f2937] font-bold text-[15px]">
+        <div className="flex items-center gap-1.5 mb-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#b56f86] inline-block" />
+          <h2 className="text-[#1f2937] font-bold text-[13px]">
             Deposit Amounts
           </h2>
         </div>
@@ -272,11 +379,10 @@ const DepositPage = () => {
                 key={item.amount}
                 type="button"
                 onClick={() => handleSelectAmount(item)}
-                className={`h-[41px] rounded-[10px] relative flex items-center justify-center transition cursor-pointer bg-white ${
-                  isSelected
-                    ? "border-[1.5px] border-[#eb2828] text-[#eb2828]"
-                    : "border border-[#fdd7d6] text-[#555555]"
-                }`}
+                className={`h-[41px] rounded-[10px] relative flex items-center justify-center transition cursor-pointer bg-white ${isSelected
+                  ? "border-[1.5px] border-[#eb2828] text-[#eb2828]"
+                  : "border border-[#fdd7d6] text-[#555555]"
+                  }`}
               >
                 {/* Top-Right Integrated Ribbon */}
                 <div className="absolute -top-[4.5px] -right-[0.5px] z-10 flex items-center pointer-events-none select-none">
@@ -329,7 +435,7 @@ const DepositPage = () => {
         </div>
 
         {/* Row 2: 2 Buttons */}
-        <div className="grid grid-cols-5 gap-1.5 sm:gap-2 mt-2.5">
+        <div className="grid grid-cols-5 gap-1.5 sm:gap-2 mt-1.5">
           {PRESET_AMOUNTS.slice(5).map((item) => {
             const isSelected = selectedAmount === item.amount;
             return (
@@ -337,11 +443,10 @@ const DepositPage = () => {
                 key={item.amount}
                 type="button"
                 onClick={() => handleSelectAmount(item)}
-                className={`h-[41px] rounded-[10px] relative flex items-center justify-center transition cursor-pointer bg-white ${
-                  isSelected
-                    ? "border-[1.5px] border-[#eb2828] text-[#eb2828]"
-                    : "border border-[#fdd7d6] text-[#555555]"
-                }`}
+                className={`h-[41px] rounded-[10px] relative flex items-center justify-center transition cursor-pointer bg-white ${isSelected
+                  ? "border-[1.5px] border-[#eb2828] text-[#eb2828]"
+                  : "border border-[#fdd7d6] text-[#555555]"
+                  }`}
               >
                 {/* Top-Right Integrated Ribbon */}
                 <div className="absolute -top-[4.5px] -right-[0.5px] z-10 flex items-center pointer-events-none select-none">
@@ -394,41 +499,55 @@ const DepositPage = () => {
         </div>
 
         {/* Amount Input Field */}
-        <div className="border border-gray-200 rounded-lg px-3 py-2 flex items-center gap-2.5 mt-3.5 bg-white">
-          <span className="text-gray-900 font-bold text-[15px] select-none">
+        <div className="border border-[#e2e4e8] rounded-[8px] px-3.5 h-[44px] flex items-center gap-2.5 mt-3 bg-white">
+          <span className="text-[#1f2937] font-bold text-[15px] select-none">
             Rs
           </span>
           <input
             type="text"
             value={customAmount}
             onChange={handleCustomAmountChange}
-            placeholder="1,000 - 200,000"
-            className="flex-1 text-[15px] font-semibold text-gray-900 placeholder:text-gray-400 focus:outline-none"
+            placeholder={isCrypto ? "8,250 - 1,000,000" : "1,000 - 200,000"}
+            className="flex-1 text-[15px] font-normal text-[#1f2937] placeholder:text-[#a0a5ad] focus:outline-none"
           />
         </div>
 
+        {/* Crypto Exchange Rate Display (USDT / USDC) */}
+        {isCrypto && (
+          <div className="flex flex-col items-center justify-center mt-4 mb-2 select-none">
+            <div className="text-[#eb2828] text-[15.5px] font-normal leading-tight">
+              {customAmount
+                ? `${(Number(String(customAmount).replace(/,/g, "")) / 165).toFixed(2)} ${selectedMethod.toUpperCase()}`
+                : `- ${selectedMethod.toUpperCase()}`}
+            </div>
+            <div className="text-[#eb2828] text-[16px] sm:text-[17px] font-normal mt-1 leading-tight">
+              Rate: 1 {selectedMethod.toUpperCase()} = Rs 165.00
+            </div>
+          </div>
+        )}
+
         {/* Warning / Deposit Info */}
-        <p className="text-[#eb2828] text-[12.5px] leading-snug mt-2.5">
-          <span className="font-semibold">Deposit Info:</span> कृपया हाम्रो नम्बर
-          निक्षेपको रूपमा बचत नगर्नुहोस्। जम्मा गर्नु अघि सधैं वेबसाइट जाँच
-          गर्नुहोस्
+        <p className="text-[#ff0000] text-[17px] sm:text-[13.5px] font-normal leading-[1.2] mt-3.5 mb-5 tracking-normal">
+          Deposit Info: कृपया हाम्रो नम्बर निक्षेपको रूपमा बचत
+          <br />
+          नगर्नुहोस्। जम्मा गर्नु अघि सधैं वेबसाइट जाँच गर्नुहोस्
         </p>
       </div>
 
       {/* Light Grey Section Divider Band */}
-      <div className="h-2 bg-[#f4f4f4] my-3.5 w-full" />
+      <div className="h-[9px] bg-[#f2f2f2] w-full" />
 
       {/* Section 3: Promotions */}
-      <div className="px-4">
+      <div className="px-4 mb-16 mt-3">
         <div className="flex items-center gap-1.5 mb-2.5">
-          <span className="w-2 h-2 rounded-full bg-[#ec4899] inline-block" />
-          <h2 className="text-[#1f2937] font-bold text-[14.5px]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#ec4899] inline-block" />
+          <h2 className="text-[#1f2937] font-bold text-[15px]">
             Promotions
           </h2>
         </div>
 
         {/* Promo Ticket Row */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 mt-1">
           {/* Custom Radio Button */}
           <button
             type="button"
@@ -438,94 +557,179 @@ const DepositPage = () => {
           >
             <div className="w-[18px] h-[18px] rounded-full border-[1.5px] border-[#eb2828] flex items-center justify-center p-[2px]">
               {promoApplied && (
-                <div className="w-[9px] h-[9px] rounded-full bg-[#eb2828]" />
+                <div className="w-[8px] h-[8px] rounded-full bg-[#eb2828]" />
               )}
             </div>
           </button>
 
-          {/* Ticket Container */}
+          {/* Pure CSS Ticket Sleeve Component with Exact Clip-Path */}
           <div
-            className={`flex-1 h-[78px] rounded-xl flex items-center overflow-hidden relative shadow-xs transition ${
-              promoApplied ? "opacity-100" : "opacity-50 grayscale"
-            }`}
-            style={{
-              background:
-                "linear-gradient(90deg, #ff7e3f 0%, #ff5277 55%, #ff3863 100%)",
-            }}
+            className={`flex-1 h-[76px] relative flex select-none cursor-pointer transition ${promoApplied ? "opacity-100" : "opacity-45 grayscale"
+              }`}
+            onClick={() => setPromoApplied(!promoApplied)}
           >
-            {/* Top-Left Diagonal "PROMOTION" Ribbon */}
+            {/* Layer 1: Orange/Coral Back Sleeve with Rounded Right End */}
             <div
-              className="absolute top-0 left-0 bg-[#ffa726] text-white text-[8px] font-extrabold px-2 py-[1px] rounded-br-md uppercase tracking-wider shadow-2xs pointer-events-none"
-            >
-              PROMOTION
-            </div>
+              className="absolute left-0 top-0 bottom-0 right-4 rounded-l-[14px] rounded-r-[24px] overflow-hidden"
+              style={{
+                background:
+                  "linear-gradient(90deg, #ff8a3d 0%, #ff5e3a 50%, #ff3d60 100%)",
+              }}
+            />
 
-            {/* Left Part: Deposit + Amount */}
-            <div className="w-[40%] pl-3 pt-2 flex flex-col justify-center">
-              <span className="text-white/90 text-[11px] leading-tight font-medium">
-                Deposit
-              </span>
-              <span className="text-white font-extrabold text-[13.5px] sm:text-[14.5px] leading-tight tracking-tight mt-0.5">
-                Rs {currentAmountNum.toLocaleString()}.00
-              </span>
-            </div>
-
-            {/* Vertical White Dashed/Line Divider */}
-            <div className="w-[1px] h-11 bg-white/30 my-auto" />
-
-            {/* Middle Part: Money Bag + Bonus + Turnover */}
-            <div className="flex-1 pl-2.5 flex flex-col justify-center">
-              <div className="flex items-center gap-1.5">
-                {/* 3D Money Bag */}
-                <img
-                  src="/npr/deposit/money_bag.png"
-                  alt="Bonus"
-                  className="w-5 h-5 object-contain shrink-0"
-                />
-                <span className="text-white font-black text-[17px] leading-none tracking-tight">
-                  {currentBonusNum.toFixed(2)}
-                </span>
-                <FaInfoCircle size={11} className="text-white/80 shrink-0 ml-0.5" />
-              </div>
-              <div className="flex items-center gap-1 text-white/90 text-[10px] font-medium mt-1 leading-none">
-                <span>Turnover</span>
-                <span>5times</span>
-              </div>
-            </div>
-
-            {/* Right Ticket Stub with Circular Notches & GO Button */}
-            <div className="h-full w-[70px] bg-white flex items-center justify-center relative shrink-0">
-              {/* Top Notch */}
-              <div className="absolute -top-2 left-0 w-3.5 h-3.5 rounded-full bg-[#f4f4f4] -translate-x-1/2 pointer-events-none" />
-              {/* Bottom Notch */}
-              <div className="absolute -bottom-2 left-0 w-3.5 h-3.5 rounded-full bg-[#f4f4f4] -translate-x-1/2 pointer-events-none" />
-
-              {/* Circular GO Button */}
-              <button
-                type="button"
-                onClick={() => showToast("Promotion applied to current deposit!")}
-                className="w-10 h-10 rounded-full text-white font-black text-[12.5px] flex items-center justify-center shadow-sm active:scale-95 transition cursor-pointer"
+            {/* Layer 2: White Ticket Stub (Extending Out to the Right) */}
+            <div className="absolute right-0 top-2 bottom-2 w-[80px] sm:w-[86px] rounded-[8px] bg-[#f8f9fe] border border-[#e2e4ea] flex items-center justify-center z-10 shadow-2xs">
+              {/* Circular Orange "GO" Button */}
+              <div
+                className="w-10 h-10 rounded-full ml-4 text-white font-black text-[13px] flex items-center justify-center shadow-xs active:scale-95 transition cursor-pointer"
                 style={{
                   background:
-                    "linear-gradient(135deg, #ff7e3f 0%, #ff5277 100%)",
+                    "linear-gradient(135deg, #ff9436 0%, #ff5e3a 100%)",
                 }}
               >
                 GO
-              </button>
+              </div>
+
+              {/* Semicircular Cutout Notch on Right Edge */}
+              <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-[12px] h-[8px] rounded-full bg-white border-l-[1px] border-[#e2e4ea]" />
+            </div>
+
+            {/* Layer 3: Front Gradient Sleeve with Inward `<` Chevron Notch */}
+            <div
+              className="relative z-20 h-full flex items-center pl-3.5 pr-5 w-[calc(100%-48px)] rounded-l-[14px] overflow-hidden"
+              style={{
+                background:
+                  "linear-gradient(90deg, #ff8533 0%, #ff5277 50%, #ff2b66 100%)",
+                clipPath:
+                  "polygon(0 0, 100% 0, calc(100% - 12px) 50%, 100% 100%, 0 100%)",
+              }}
+            >
+              {/* Top-Left 45° Folded Corner Ribbon */}
+              <div className="absolute top-0 left-0 w-20 h-30 overflow-hidden pointer-events-none z-30">
+                <div className="absolute top-[14px] -left-[28px] w-[110px] py-[1.5px] bg-gradient-to-r from-[#ffa726] to-[#ff9800] text-white text-[8px] font-black tracking-widest text-center -rotate-45 shadow-xs uppercase">
+                  PROMOTION
+                </div>
+              </div>
+
+              {/* Left Column: Deposit Amount */}
+              <div className="flex flex-col justify-center shrink-0 pr-2 pl-2">
+                <span className="text-white/90 text-[11px] leading-tight font-medium">
+                  Deposit
+                </span>
+                <span className="text-white font-extrabold text-[14px] sm:text-[15.5px] leading-tight tracking-tight mt-0.5 whitespace-nowrap">
+                  Rs {currentAmountNum.toLocaleString()}.00
+                </span>
+              </div>
+
+              {/* Vertical White Divider */}
+              <div className="w-[1px] h-9 bg-white/40 my-auto shrink-0 mr-2.5" />
+
+              {/* Middle Column: Bonus & Turnover */}
+              <div className="flex-1 flex flex-col justify-center min-w-0 pr-2">
+                <div className="flex items-center gap-1">
+                  <img
+                    src="/npr/deposit/money_bag.png"
+                    alt="Bonus"
+                    className="w-5 h-5 object-contain shrink-0"
+                    draggable={false}
+                  />
+                  <span className="text-white font-black text-[17px] sm:text-[18px] leading-none tracking-tight">
+                    {currentBonusNum.toFixed(2)}
+                  </span>
+                  <svg
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    className="w-3.5 h-3.5 text-white/80 shrink-0 ml-0.5"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div className="flex items-center gap-1 text-white/90 text-[10px] sm:text-[10.5px] font-medium mt-1 leading-none">
+                  <span>Turnover</span>
+                  <span>5times</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 4. Fixed Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-40 bg-white">
-        <button
-          type="button"
-          onClick={handleNext}
-          className="w-full h-[50px] bg-[#e62121] hover:bg-[#d41818] active:bg-[#c01010] text-white font-bold text-[16px] tracking-wide flex items-center justify-center transition cursor-pointer select-none"
-        >
-          Next
-        </button>
+      {/* Light Grey Section Divider Band */}
+      <div className="h-[9px] bg-[#f2f2f2] w-full mt-4" />
+
+      {/* Section 4: Payment Details */}
+      <div className="px-4 mt-3 pb-24">
+        <div className="flex items-center gap-1.5 mb-2.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#4f46e5] inline-block" />
+          <h2 className="text-[#1f2937] font-bold text-[15px]">
+            Payment Details
+          </h2>
+        </div>
+
+        {/* Payment Details 2-Row Card */}
+        <div className="border border-[#e5e7eb] rounded-[14px] overflow-hidden shadow-2xs">
+          {/* Row 1: Deposit Amounts */}
+          <div className="bg-white px-4 py-3.5 flex items-center justify-between border-b border-[#f0f0f0]">
+            <span className="text-[#6b7280] font-semibold text-[13.5px]">
+              Deposit Amounts
+            </span>
+            <span className="text-[#4b5563] font-bold text-[14px]">
+              Rs {currentAmountNum.toLocaleString()}.00
+            </span>
+          </div>
+
+          {/* Row 2: Actual Payment Amount */}
+          <div className="bg-[#fff7f7] px-4 py-3.5 flex items-center justify-between">
+            <span className="text-[#6b7280] font-semibold text-[13.5px]">
+              Actual Payment Amount
+            </span>
+            <span className="text-[#ff1a3c] font-bold text-[14px]">
+              Rs {currentAmountNum.toLocaleString()}.00
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Fixed Bottom Action Bar with Floating Blinking Scroll Arrow */}
+      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-40 pointer-events-none">
+        {/* Floating Blinking Scroll Down Arrow */}
+        <div className="flex justify-center pb-2 pointer-events-auto">
+          <button
+            type="button"
+            onClick={() => {
+              window.scrollBy({ top: 320, behavior: "smooth" });
+            }}
+            className="w-[24px] h-[24px] rounded-full bg-[#2a9ef9] flex items-center justify-center cursor-pointer transition active:scale-90"
+            style={{
+              animation: "depositArrowBlink 1.2s infinite ease-in-out",
+            }}
+            aria-label="Scroll Down"
+          >
+            <svg
+              viewBox="0 0 10 6"
+              className="w-[10px] h-[6px] text-white stroke-white stroke-[2.2] fill-none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="1.5,1.5 5,5 8.5,1.5" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Next Button */}
+        <div className="bg-white pointer-events-auto">
+          <button
+            type="button"
+            onClick={handleNext}
+            className="w-full h-[50px] bg-[#e62121] hover:bg-[#d41818] active:bg-[#c01010] text-white font-bold text-[16px] tracking-wide flex items-center justify-center transition cursor-pointer select-none"
+          >
+            Next
+          </button>
+        </div>
       </div>
 
       {/* 5. Payment Gateway Simulation Modal */}

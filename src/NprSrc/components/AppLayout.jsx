@@ -37,8 +37,22 @@ const AppLayout = () => {
   const isPromotionPage = location.pathname.includes("promotion");
   const isMembersPage = location.pathname.includes("members");
   const isDepositPage = location.pathname.includes("deposit");
-  const hideTopChrome = isPromotionPage || isMembersPage || isDepositPage;
-  const hideBottomNav = isMembersPage || isDepositPage;
+  const isInvitePage = location.pathname.includes("invite");
+  const isWithdrawalPage = location.pathname.includes("withdrawal");
+  const isBetHistoryPage = location.pathname.includes("bet-history");
+  const hideTopChrome =
+    isPromotionPage ||
+    isMembersPage ||
+    isDepositPage ||
+    isInvitePage ||
+    isWithdrawalPage ||
+    isBetHistoryPage;
+  const hideBottomNav =
+    isMembersPage ||
+    isDepositPage ||
+    isInvitePage ||
+    isWithdrawalPage ||
+    isBetHistoryPage;
 
   const handleOpenLogin = () => {
     setAuthMode("login");
@@ -84,7 +98,7 @@ const AppLayout = () => {
           onOpenLogin={handleOpenLogin}
           onOpenRegister={handleOpenRegister}
           onOpenDeposit={user ? () => navigate("/deposit") : handleOpenLogin}
-          onOpenWithdrawal={() => setWithdrawalOpen(true)}
+          onOpenWithdrawal={user ? () => navigate("/withdrawal") : handleOpenLogin}
         />
       )}
 
@@ -96,8 +110,8 @@ const AppLayout = () => {
             onOpenLogin: handleOpenLogin,
             onOpenRegister: handleOpenRegister,
             onOpenDeposit: user ? () => navigate("/deposit") : handleOpenLogin,
-            onOpenWithdrawal: () => setWithdrawalOpen(true),
-            onOpenInvite: () => setInviteOpen(true),
+            onOpenWithdrawal: user ? () => navigate("/withdrawal") : handleOpenLogin,
+            onOpenInvite: () => navigate("/invite"),
             onLogout: handleLogout,
           }}
         />
@@ -106,7 +120,7 @@ const AppLayout = () => {
       {/* 5. Persistent Bottom Navigation (Hidden on Members & Deposit pages) */}
       {!hideBottomNav && (
         <BottomNav
-          onOpenInvite={() => setInviteOpen(true)}
+          onOpenInvite={() => navigate("/invite")}
           onOpenDeposit={user ? () => navigate("/deposit") : handleOpenLogin}
           onOpenMembers={user ? () => navigate("/members") : handleOpenLogin}
         />
@@ -131,8 +145,8 @@ const AppLayout = () => {
         onLogout={handleLogout}
         onOpenLogin={handleOpenLogin}
         onOpenRegister={handleOpenRegister}
-        onOpenDeposit={() => setDepositOpen(true)}
-        onOpenWithdrawal={() => setWithdrawalOpen(true)}
+        onOpenDeposit={user ? () => { setMenuOpen(false); navigate("/deposit"); } : handleOpenLogin}
+        onOpenWithdrawal={user ? () => { setMenuOpen(false); navigate("/withdrawal"); } : handleOpenLogin}
       />
 
       <InviteModal

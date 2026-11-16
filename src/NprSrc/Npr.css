@@ -170,3 +170,33 @@
 .animate-side-redeem-in {
   animation: nprSlideFromLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Deposit Icon Double Pulse / Scale Animation (2 times scale up, pause, repeat - Fast Cycle) */
+@keyframes depositDoublePulse {
+  0% {
+    transform: scale(1);
+  }
+  12% {
+    transform: scale(1.18);
+  }
+  24% {
+    transform: scale(1);
+  }
+  36% {
+    transform: scale(1.18);
+  }
+  48% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-deposit-pulse {
+  display: inline-block;
+  animation: depositDoublePulse 1.4s ease-in-out infinite;
+  transform-origin: center center;
+  will-change: transform;
+}
+

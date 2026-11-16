@@ -12,12 +12,12 @@ const FloatingWidgets = ({ onOpenFeatured }) => {
       {/* 1. Video Teaser Section (Gates of Olympus Big Win) */}
       {videoVisible && (
         <div className="w-full relative select-none bg-[#f4f7fb]">
-          <div className="relative w-full aspect-[820/280] overflow-hidden bg-black shadow-xs group">
+          <div className="relative w-full aspect-[512/182] overflow-hidden bg-black shadow-xs">
             {/* The exact high-res Gates of Olympus video banner */}
             <img
               src="/npr/gates_of_olympus_video.jpg"
               alt="Rare One Tumble Gates of Olympus - DAILY Degens"
-              className="w-full h-full object-cover object-[center_18%] cursor-pointer block group-hover:scale-[1.02] transition duration-500"
+              className="w-full h-full object-cover object-[center_18%] cursor-pointer block"
               onClick={() => setModalOpen(true)}
               draggable={false}
             />
@@ -32,18 +32,6 @@ const FloatingWidgets = ({ onOpenFeatured }) => {
               title="Previous Video"
             >
               <FaChevronLeft size={11} />
-            </button>
-
-            {/* Top-right Dismiss / Close 'X' Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setVideoVisible(false);
-              }}
-              className="absolute top-2 right-2.5 z-20 w-6 h-6 rounded-full bg-black/60 hover:bg-black/90 flex items-center justify-center text-white/90 transition shadow-md"
-              title="Close Banner"
-            >
-              <FaTimes size={11} />
             </button>
           </div>
 

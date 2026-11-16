@@ -12,7 +12,7 @@ const SportsPage = () => {
         <p className="text-[11px] text-blue-100">Live odds on IPL, BPL, Premier League & Tennis</p>
       </div>
       <JackpotSection />
-      <GameSection onSelectGame={() => onOpenLogin && onOpenLogin()} />
+      <GameSection initialCategory="sports" onSelectGame={() => onOpenLogin && onOpenLogin()} />
     </div>
   );
 };

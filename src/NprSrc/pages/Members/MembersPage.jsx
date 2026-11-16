@@ -204,6 +204,18 @@ const MembersPage = () => {
   };
 
   const handleGridClick = (item) => {
+    if (item.id === "betHistory") {
+      navigate("/bet-history");
+      return;
+    }
+    if (item.id === "depositRecord") {
+      navigate("/deposit");
+      return;
+    }
+    if (item.id === "withdrawalRecord") {
+      navigate("/withdrawal");
+      return;
+    }
     if (item.id === "inviteFriends") {
       onOpenInvite?.();
       return;

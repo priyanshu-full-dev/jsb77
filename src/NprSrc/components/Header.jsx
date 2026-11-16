@@ -42,76 +42,72 @@ const Header = ({ onOpenMenu, user }) => {
         />
       )}
 
-      <header className="bg-white border-b border-gray-100 px-3 py-2.5 flex items-center justify-between sticky top-0 z-50 shadow-xs relative">
+      <header className="bg-white border-b border-gray-100 px-3 h-[54px] flex items-center justify-between sticky top-0 z-50 shadow-xs relative">
         {/* Left Side: Brand Logo + Logged-in User Profile Block */}
-        <div className="flex items-center gap-2 select-none">
+        <div className="flex items-center gap-12 select-none">
           <Link to="/" className="flex items-center group">
             <img
               src="/npr/jsb77_logo_header.png"
               alt="JSB77 Logo"
-              className="h-[31px] sm:h-[32px] w-auto object-contain transition duration-200"
+              className="h-[30px] w-auto object-contain transition duration-200"
             />
           </Link>
 
-          {/* User Profile Block (Visible when logged in) */}
+          {/* User Profile Block (Visible when logged in - Clicks to Members Page) */}
           {user && (
-            <div className="flex items-center gap-2.5 ml-3.5 sm:ml-5 select-none">
+            <Link
+              to="/members"
+              className="flex items-center gap-2 ml-2.5 sm:ml-4 select-none cursor-pointer group hover:opacity-90 active:scale-[0.98] transition"
+              title="Go to Members Profile"
+            >
               {/* Solid Blue Circle Avatar */}
-              <div className="w-[35px] h-[35px] rounded-full bg-[#0045b8] flex items-center justify-center text-white shrink-0 shadow-xs">
-                <FaUser size={18} className="text-white" />
+              <div className="w-[33px] h-[33px] rounded-full bg-[#0045b8] flex items-center justify-center text-white shrink-0 shadow-xs group-hover:bg-[#003da5] transition">
+                <FaUser size={16} className="text-white" />
               </div>
 
               {/* Username & Balance */}
               <div className="flex flex-col justify-center text-left leading-none">
-                <span className="text-[#0045b8] font-bold text-[14px] leading-tight tracking-tight">
+                <span className="text-[#0045b8] font-bold text-[13.5px] leading-tight tracking-tight group-hover:underline">
                   {user.username || "prish07"}
                 </span>
-                <div className="flex items-center gap-1 mt-0.5">
-                  <span className="text-[#0045b8] font-bold text-[13.5px] leading-none">
-                    Rs{hideBalance ? "••••" : (user.balance || "0.00")}
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="text-[#0045b8] font-bold text-[13px] leading-none">
+                    Rs{hideBalance ? "****" : (user.balance || "0.00")}
                   </span>
                   <button
                     type="button"
-                    onClick={() => setHideBalance(!hideBalance)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setHideBalance(!hideBalance);
+                    }}
                     className="text-[#0045b8] hover:opacity-80 transition focus:outline-none cursor-pointer flex items-center justify-center"
                     title={hideBalance ? "Show balance" : "Hide balance"}
                     aria-label={hideBalance ? "Show balance" : "Hide balance"}
                   >
                     {hideBalance ? (
+                      /* Exact Match to Reference: Downward Curved Eyelid with 5 Eyelashes */
                       <svg
-                        viewBox="0 0 24 16"
-                        className="w-[22px] h-[15px] text-[#0045b8]"
+                        viewBox="0 0 22 15"
+                        className="w-[18px] h-[13px] text-[#0045b8]"
                         fill="none"
                       >
                         <path
-                          d="M12 1.5C5.6 1.5 1 8 1 8s4.6 6.5 11 6.5S23 8 23 8s-4.6-6.5-11-6.5z"
-                          fill="currentColor"
-                        />
-                        <circle cx="12" cy="8" r="4.5" fill="#ffffff" />
-                        <circle cx="12" cy="8" r="2.4" fill="currentColor" />
-                        <line
-                          x1="3"
-                          y1="2"
-                          x2="21"
-                          y2="14"
-                          stroke="#ffffff"
-                          strokeWidth="3.4"
-                          strokeLinecap="round"
-                        />
-                        <line
-                          x1="3"
-                          y1="2"
-                          x2="21"
-                          y2="14"
+                          d="M 2 3.5 C 4 8.5, 8 10.5, 11 10.5 C 14 10.5, 18 8.5, 20 3.5"
                           stroke="currentColor"
                           strokeWidth="2"
                           strokeLinecap="round"
                         />
+                        <line x1="3.8" y1="6.5" x2="1.8" y2="9.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                        <line x1="7.2" y1="9.2" x2="5.5" y2="12.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                        <line x1="11" y1="10.5" x2="11" y2="14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                        <line x1="14.8" y1="9.2" x2="16.5" y2="12.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                        <line x1="18.2" y1="6.5" x2="20.2" y2="9.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
                       </svg>
                     ) : (
                       <svg
                         viewBox="0 0 24 16"
-                        className="w-[22px] h-[15px] text-[#0045b8]"
+                        className="w-[20px] h-[14px] text-[#0045b8]"
                         fill="none"
                       >
                         <path
@@ -125,37 +121,37 @@ const Header = ({ onOpenMenu, user }) => {
                   </button>
                 </div>
               </div>
-            </div>
+            </Link>
           )}
         </div>
 
         {/* Action Icons (Exact Match to Reference Screenshot) */}
-        <div className="flex items-center gap-3 sm:gap-3.5">
+        <div className="flex items-center gap-2.5 sm:gap-3">
           {/* WhatsApp Icon */}
           <a
             href="https://wa.me/9779800000000"
             target="_blank"
             rel="noopener noreferrer"
-            className="w-7 h-7 flex items-center justify-center hover:opacity-85 transition active:scale-95 select-none"
+            className="w-6 h-6 flex items-center justify-center hover:opacity-85 transition active:scale-95 select-none"
             title="WhatsApp Support"
           >
             <img
               src="/npr/icon_whatsapp.png"
               alt="WhatsApp"
-              className="w-[26px] h-[26px] object-contain block"
+              className="w-[24px] h-[24px] object-contain block"
             />
           </a>
 
           {/* Live Support / Headset Icon */}
           <button
             onClick={() => alert("Connecting to 24/7 JSB77 Live Support...")}
-            className="w-7 h-7 flex items-center justify-center hover:opacity-85 transition active:scale-95 select-none focus:outline-hidden"
+            className="w-6 h-6 flex items-center justify-center hover:opacity-85 transition active:scale-95 select-none focus:outline-hidden"
             title="Live Customer Service"
           >
             <img
               src="/npr/icon_headset.png"
               alt="Live Support"
-              className="w-[25px] h-[25px] object-contain block"
+              className="w-[23px] h-[23px] object-contain block"
             />
           </button>
 
@@ -163,7 +159,7 @@ const Header = ({ onOpenMenu, user }) => {
           <div className="relative" ref={langRef}>
             <button
               onClick={() => setLangDropdownOpen((prev) => !prev)}
-              className="w-7 h-7 rounded-full overflow-hidden border border-gray-200 shadow-xs hover:scale-105 transition flex items-center justify-center focus:outline-hidden"
+              className="w-6 h-6 rounded-full overflow-hidden border border-gray-200 shadow-xs hover:scale-105 transition flex items-center justify-center focus:outline-hidden"
               title="Select Language"
             >
               <img

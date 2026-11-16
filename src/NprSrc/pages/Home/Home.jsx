@@ -16,7 +16,7 @@ const Home = () => {
   return (
     <div className="flex flex-col w-full">
       {/* 1. Hero Carousel Banner */}
-      <HeroCarousel onActionClick={onOpenRegister} />
+      <HeroCarousel />
 
       {/* 2. News Ticker / Marquee */}
       <NewsTicker />

@@ -6,6 +6,9 @@ import CasinoPage from "./pages/Casino/CasinoPage";
 import PromotionPage from "./pages/Promotion/PromotionPage";
 import MembersPage from "./pages/Members/MembersPage";
 import DepositPage from "./pages/Deposit/DepositPage";
+import InvitePage from "./pages/Invite/InvitePage";
+import WithdrawalPage from "./pages/Withdrawal/WithdrawalPage";
+import BetHistoryPage from "./pages/Records/BetHistoryPage";
 import LoginPage from "./pages/Auth/LoginPage";
 
 export const NprRouter = createBrowserRouter([
@@ -76,6 +79,30 @@ export const NprRouter = createBrowserRouter([
       {
         path: "m/deposit",
         element: <DepositPage />,
+      },
+      {
+        path: "invite",
+        element: <InvitePage />,
+      },
+      {
+        path: "m/invite",
+        element: <InvitePage />,
+      },
+      {
+        path: "withdrawal",
+        element: <WithdrawalPage />,
+      },
+      {
+        path: "m/withdrawal",
+        element: <WithdrawalPage />,
+      },
+      {
+        path: "bet-history",
+        element: <BetHistoryPage />,
+      },
+      {
+        path: "m/bet-history",
+        element: <BetHistoryPage />,
       },
       {
         path: "*",

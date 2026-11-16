@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import PropTypes from "prop-types";
+import { useNavigate } from "react-router-dom";
 import {
   FaTimes,
   FaGift,
@@ -24,6 +25,7 @@ const categories = [
 ];
 
 const MenuDrawer = ({ isOpen, onClose, onSelectCategory, user, onLogout }) => {
+  const navigate = useNavigate();
   // Prevent background page from scrolling when drawer is open
   useEffect(() => {
     if (isOpen) {
@@ -98,9 +100,9 @@ const MenuDrawer = ({ isOpen, onClose, onSelectCategory, user, onLogout }) => {
           <button
             onClick={() => {
               onClose();
-              alert("Opening NPR77 Promotions...");
+              navigate("/promotion");
             }}
-            className="w-full h-12 rounded-[14px] bg-gradient-to-r from-[#ffaa00] via-[#f58400] to-[#e65c00] flex items-center gap-3.5 px-4 text-white font-bold text-[15px] shadow-[0_3px_8px_rgba(245,132,0,0.35)] transition hover:opacity-95 active:scale-[0.98]"
+            className="w-full h-12 rounded-[14px] bg-gradient-to-r from-[#ffaa00] via-[#f58400] to-[#e65c00] flex items-center gap-3.5 px-4 text-white font-bold text-[15px] shadow-[0_3px_8px_rgba(245,132,0,0.35)] transition hover:opacity-95 active:scale-[0.98] cursor-pointer"
           >
             <FaGift size={22} className="text-white shrink-0 drop-shadow-xs" />
             <span>Promotion</span>
@@ -110,9 +112,9 @@ const MenuDrawer = ({ isOpen, onClose, onSelectCategory, user, onLogout }) => {
           <button
             onClick={() => {
               onClose();
-              alert("Opening Reward Center & VIP Rewards...");
+              navigate("/members");
             }}
-            className="w-full h-12 rounded-[14px] bg-gradient-to-r from-[#e63966] via-[#ba3694] to-[#6f3bb2] flex items-center gap-3.5 px-4 text-white font-bold text-[15px] shadow-[0_3px_8px_rgba(186,54,148,0.35)] transition hover:opacity-95 active:scale-[0.98]"
+            className="w-full h-12 rounded-[14px] bg-gradient-to-r from-[#e63966] via-[#ba3694] to-[#6f3bb2] flex items-center gap-3.5 px-4 text-white font-bold text-[15px] shadow-[0_3px_8px_rgba(186,54,148,0.35)] transition hover:opacity-95 active:scale-[0.98] cursor-pointer"
           >
             <FaAward size={22} className="text-white shrink-0 drop-shadow-xs" />
             <span>Reward Center</span>
@@ -122,9 +124,9 @@ const MenuDrawer = ({ isOpen, onClose, onSelectCategory, user, onLogout }) => {
           <button
             onClick={() => {
               onClose();
-              alert("Invite Friends & Earn Commission!");
+              navigate("/invite");
             }}
-            className="w-full h-12 rounded-[14px] bg-gradient-to-r from-[#3f64f5] via-[#5b4fe8] to-[#8042df] flex items-center gap-3.5 px-4 text-white font-bold text-[15px] shadow-[0_3px_8px_rgba(91,79,232,0.35)] transition hover:opacity-95 active:scale-[0.98]"
+            className="w-full h-12 rounded-[14px] bg-gradient-to-r from-[#3f64f5] via-[#5b4fe8] to-[#8042df] flex items-center gap-3.5 px-4 text-white font-bold text-[15px] shadow-[0_3px_8px_rgba(91,79,232,0.35)] transition hover:opacity-95 active:scale-[0.98] cursor-pointer"
           >
             <FaUsers size={22} className="text-white shrink-0 drop-shadow-xs" />
             <span>Invite</span>
@@ -134,9 +136,9 @@ const MenuDrawer = ({ isOpen, onClose, onSelectCategory, user, onLogout }) => {
           <button
             onClick={() => {
               onClose();
-              alert("Viewing Betting History & Records...");
+              navigate("/bet-history");
             }}
-            className="w-full h-12 rounded-[14px] bg-gradient-to-r from-[#e61924] via-[#bf0f19] to-[#80070a] flex items-center gap-3.5 px-4 text-white font-bold text-[15px] shadow-[0_3px_8px_rgba(230,25,36,0.35)] transition hover:opacity-95 active:scale-[0.98]"
+            className="w-full h-12 rounded-[14px] bg-gradient-to-r from-[#e61924] via-[#bf0f19] to-[#80070a] flex items-center gap-3.5 px-4 text-white font-bold text-[15px] shadow-[0_3px_8px_rgba(230,25,36,0.35)] transition hover:opacity-95 active:scale-[0.98] cursor-pointer"
           >
             <FaCalendarAlt size={20} className="text-white shrink-0 drop-shadow-xs" />
             <span>Betting Record</span>

@@ -12,7 +12,7 @@ const CasinoPage = () => {
         <p className="text-[11px] text-blue-100">Evolution, Pragmatic Play, Jili, Sexy Baccarat & Spribe</p>
       </div>
       <JackpotSection />
-      <GameSection onSelectGame={() => onOpenLogin && onOpenLogin()} />
+      <GameSection initialCategory="live" onSelectGame={() => onOpenLogin && onOpenLogin()} />
     </div>
   );
 };
