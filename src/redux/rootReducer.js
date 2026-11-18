@@ -29,6 +29,8 @@ import kabaddiReducer from "./slices/kabaddiSlice";
 import diamondCasinoOddsReducer from "./slices/diamondCasinoOddsSlice";
 import casinoPermissionReducer from "./slices/casinoPermissionSlice";
 import tvReducer from "./slices/tvSlice";
+import lockReducer from "./slices/lockSlice";
+import auraMatchesReducer from "./slices/auraMatchesSlice";
 
 const appReducer = combineReducers({
   authModal: authModalSlice,
@@ -37,6 +39,8 @@ const appReducer = combineReducers({
   account: accountSlice,
   user: userSlice,
   matches: matchesReducer,
+  auraMatches: auraMatchesReducer,
+  locks: lockReducer,
   marketOdds: marketOddsReducer,
   bookmakerOdds: bookmakerOddsReducer,
   fancyOdds: fancyOddsReducer,

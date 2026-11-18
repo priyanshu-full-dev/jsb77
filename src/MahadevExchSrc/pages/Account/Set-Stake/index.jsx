@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import { selectSite } from "../../../utils/helper/commonSelectors";
+import { selectSite } from "../../../../utils/helper/commonSelectors";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
-import Loading from "../../../../SkyExchangeSrc/src/components/Loading";
+import Loading from "../../../../utils/Loader";
 
 export default function SetStake() {
   const topHeaderColor = useSelector(selectSite())?.headerColor;

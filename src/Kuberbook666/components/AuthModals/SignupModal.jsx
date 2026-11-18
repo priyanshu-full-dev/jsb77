@@ -6,7 +6,6 @@ import { getSitesByDomain, signUp, login, createLoginRecord } from "../../../api
 import { selectSite } from "../../../utils/helper/commonSelectors";
 import { loginSuccess } from "../../../redux/slices/userSlice";
 import { setAccountType } from "../../../redux/slices/accountSlice";
-import { subscribeToLogin } from "../../../socketClient";
 
 const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
   const dispatch = useDispatch();
@@ -232,7 +231,7 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
           return;
         }
 
-        // 2. Instant Socket auto-login with cleanPhone
+        // 2. Direct REST auto-login with cleanPhone (no socket)
         try {
           const loginPayload = {
             userName: cleanPhone,
@@ -241,12 +240,7 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
             x_panel_type: "user",
           };
 
-          let loginRes = null;
-          try {
-            loginRes = await subscribeToLogin(loginPayload);
-          } catch {
-            loginRes = await login(loginPayload);
-          }
+          const loginRes = await login(loginPayload);
 
           const loginData = loginRes?.data || loginRes;
           if (loginData?.token || loginData?.userdata?.token || loginRes?.success) {

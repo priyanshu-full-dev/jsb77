@@ -1,0 +1,177 @@
+/* Vimaan Scoped Styles */
+
+/* Aviator Multiplier Badge Colors */
+.purple {
+  color: #913ef8 !important;
+}
+.blue {
+  color: #34b4ff !important;
+}
+.pink {
+  color: #c017b4 !important;
+}
+
+/* Custom Aviator Control Buttons */
+.edit_btn {
+  background: linear-gradient(360deg, #cf7204, #f48808);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 16.94px;
+  border: 1px solid #ffffff;
+  width: 64px;
+  height: 28px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+.edit_btn:hover {
+  filter: brightness(1.1);
+  transform: scale(1.02);
+}
+.edit_btn:active {
+  transform: scale(0.97);
+}
+
+.clear_btn {
+  background: linear-gradient(180deg, #e50539, #a10000);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 16.94px;
+  border: 1px solid #ffffff;
+  width: 64px;
+  height: 28px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+.clear_btn:hover {
+  filter: brightness(1.1);
+  transform: scale(1.02);
+}
+.clear_btn:active {
+  transform: scale(0.97);
+}
+
+.betbtnInput {
+  width: 100%;
+  background: #141516;
+  text-align: center;
+  border: 1px solid #414148 !important;
+  color: #ffffff;
+  border-radius: 10px;
+  outline: none;
+  font-weight: 600;
+  font-size: 13px;
+  transition: border-color 0.2s;
+}
+.betbtnInput:focus {
+  border-color: #e50539 !important;
+}
+
+.bet_item_celebrated {
+  border-color: rgb(66, 127, 0) !important;
+  background-color: rgb(18, 52, 5) !important;
+  color: rgb(255, 255, 255) !important;
+  transition: all 0.3s ease;
+}
+
+/* Slider Tab Switcher Transition */
+.all-bet {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Custom Scrollbar - Scoped ONLY to Vimaan bottom section (Exact match to user screenshot) */
+.vimaan-root .vimaan-bottom-scroller,
+.vimaan-bottom-scroller {
+  overflow-y: scroll !important;
+  scrollbar-width: auto !important;
+  scrollbar-color: #bcbcbc #ffffff !important;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
+}
+
+.vimaan-root .vimaan-bottom-scroller::-webkit-scrollbar,
+.vimaan-bottom-scroller::-webkit-scrollbar {
+  width: 14px !important;
+  height: 14px !important;
+  display: block !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+}
+
+.vimaan-root .vimaan-bottom-scroller::-webkit-scrollbar-track,
+.vimaan-bottom-scroller::-webkit-scrollbar-track {
+  display: block !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+}
+
+.vimaan-root .vimaan-bottom-scroller::-webkit-scrollbar-thumb,
+.vimaan-bottom-scroller::-webkit-scrollbar-thumb {
+  display: block !important;
+  background-color: #bcbcbc !important;
+  background-clip: padding-box !important;
+  border: 3px solid #ffffff !important;
+  border-radius: 10px !important;
+}
+
+.vimaan-root .vimaan-bottom-scroller::-webkit-scrollbar-thumb:hover,
+.vimaan-bottom-scroller::-webkit-scrollbar-thumb:hover {
+  background-color: #9e9e9e !important;
+}
+
+.vimaan-root .vimaan-bottom-scroller::-webkit-scrollbar-button,
+.vimaan-bottom-scroller::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Number input arrows remove - Scoped ONLY to Vimaan */
+.vimaan-root input::-webkit-outer-spin-button,
+.vimaan-root input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.vimaan-root input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Pulsing radar rays background */
+@keyframes sunburstRotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-sunburst {
+  animation: sunburstRotate 40s linear infinite;
+}
+
+/* Propeller spin (smooth and calm) */
+@keyframes propSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.propeller-spin {
+  animation: propSpin 1.8s linear infinite;
+}
+
+/* Flew away text animation */
+@keyframes flewAwayGlow {
+  0% { transform: scale(0.92); opacity: 0.8; }
+  50% { transform: scale(1.04); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.95; }
+}
+.animate-flew-away {
+  animation: flewAwayGlow 0.4s ease-out forwards;
+}

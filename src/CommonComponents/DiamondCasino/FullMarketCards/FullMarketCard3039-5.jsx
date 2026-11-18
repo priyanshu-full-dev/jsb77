@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { IoInformationCircle } from "react-icons/io5";
 import { useDispatch, useSelector } from "react-redux";
-import PlaceBet from "../../../AuraExchangeSrc/components/PlaceBet";
-import { handleOpenPlaceBet } from "../../../AsianExchangeSrc/redux/slices/placeBetSlice";
+import PlaceBet from "../../../NprSrc/AuraExchangeSrc/components/PlaceBet";
+import { handleOpenPlaceBet } from "../../../redux/slices/placeBetSlice";
 
 const FullMarketCards3039_5 = ({
   title,

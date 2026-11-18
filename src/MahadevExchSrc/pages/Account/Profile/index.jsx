@@ -1,7 +1,7 @@
 import React from "react";
 import { useSelector } from "react-redux";
-import { getUserData, selectSite } from "../../../utils/helper/commonSelectors";
-import profileimage from "../../../assets/images/profile_image.png";
+import { getUserData, selectSite } from "../../../../utils/helper/commonSelectors";
+const profileimage = "/user.svg";
 
 export default function Profile() {
   const userData = useSelector(getUserData());

@@ -1,0 +1,48 @@
+
+
+.heartBeat img {
+    transition: .3s ease-in;
+    animation: zoom-in-zoom-outAnim 1s ease infinite;
+}
+
+.heartBeat span {
+    transition: .3s ease-in;
+    animation: zoom-in-zoom-outAnim 1s ease infinite;
+}
+
+@keyframes zoom-in-zoom-outAnim {
+    0% {
+        transform: scale(1.1);
+        color: #ff0;
+    }
+
+    50% {
+        transform: scale(.8);
+        color: red;
+    }
+
+    100% {
+        transform: scale(1.1);
+        color: #ff0;
+    }
+}
+
+
+.aura-Politics {
+    transition: .3s ease-in;
+    animation: aura-politics 1s ease infinite;
+}
+
+@keyframes aura-politics {
+    0% {
+        color: red;
+    }
+
+    50% {
+        color: #ff0;
+    }
+
+    100% {
+        color: #00f;
+    }
+}

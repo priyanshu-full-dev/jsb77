@@ -1,8 +1,10 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
 import { FaTimes, FaChevronLeft, FaChevronDown } from "react-icons/fa";
+import { useLanguage } from "../context/LanguageContext";
 
 const FloatingWidgets = ({ onOpenFeatured }) => {
+  const { t } = useLanguage();
   const [videoVisible, setVideoVisible] = useState(true);
   const [activeDot, setActiveDot] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
@@ -114,7 +116,7 @@ const FloatingWidgets = ({ onOpenFeatured }) => {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent flex items-end justify-center pb-1">
             <span className="text-[7.5px] font-black text-[#ffbe18] uppercase tracking-tighter text-center leading-tight drop-shadow-md">
-              Featured<br />Games
+              {t("Featured Games")}
             </span>
           </div>
         </button>

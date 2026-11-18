@@ -1,0 +1,176 @@
+/* ExposureDetailPopup.css */
+
+.exposure-modal-overlay {
+  position: fixed;
+  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 99999;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 10px 8px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.exposure-popup-container {
+  position: relative;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  background-color: #ffffff;
+  border-radius: 6px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+}
+
+.exposure-header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px;
+  background-color: #000000 !important;
+  color: #ffffff;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  z-index: 10;
+  min-height: 28px;
+}
+
+.exposure-close-btn {
+  padding: 4px;
+  border-radius: 50%;
+  background-color: transparent;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.exposure-close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.exposure-table-container {
+  width: 100%;
+  overflow-x: hidden;
+  padding: 4px 6px;
+  box-sizing: border-box;
+}
+
+.exposure-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.exposure-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.exposure-th {
+  padding: 4px 2px;
+  text-align: center;
+  vertical-align: middle;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.15;
+  color: #000000;
+  background-color: #e0e6e6 !important;
+  border: 1px solid #000000 !important;
+  box-sizing: border-box;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.exposure-td {
+  padding: 6px 3px;
+  text-align: center;
+  vertical-align: middle !important;
+  border: 1px solid #000000 !important;
+  color: #000000;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  background-color: #ffffff;
+  word-break: break-word;
+  box-sizing: border-box;
+  line-height: 1.25;
+}
+
+.col-sport {
+  width: 19%;
+}
+
+.col-event {
+  width: 47%;
+}
+
+.col-market {
+  width: 21%;
+}
+
+.col-trade {
+  width: 13%;
+}
+
+.exposure-tr:hover {
+  background-color: #f9fafb !important;
+  transition: background-color 0.2s ease;
+}
+
+.exposure-event-link {
+  color: #2789ce;
+  background: none;
+  border: none;
+  font-weight: 700;
+  font-size: 14px;
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.25;
+  text-decoration: none;
+  cursor: pointer;
+  text-align: center;
+  display: inline-block;
+  padding: 0;
+  word-break: break-word;
+}
+
+.exposure-event-link:hover {
+  color: #1d4ed8 !important;
+  text-decoration: underline !important;
+}
+
+.exposure-tfoot-td {
+  padding: 8px 12px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  background-color: #ffffff;
+  color: #000000;
+  border: 1px solid #000000 !important;
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.exposure-tfoot-td.no-data {
+  border-top: 1px solid #000000 !important;
+}
+
+th {
+  background-color: #e0e6e6 !important;
+}

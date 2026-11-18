@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import WinPopup from "../../Popup/WinPopup";
-import { getDresult } from "../../../AsianExchangeSrc/api";
+import { getDresult } from "../../../api";
 import { resolveAAA } from "../WinLogic/CT3040";
 
 const BASE_SECONDS = 20; // full circle = 20s

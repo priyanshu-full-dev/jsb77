@@ -1,12 +1,7 @@
-import React from 'react'
-import CT1CasinoIframe from '../CasinoIframe/CT1'
+import React from 'react';
 
-function CT1({gameId}) {
-  return (
-    <div className='w-full'>
-      <CT1CasinoIframe gameId={gameId} />
-    </div>
-  )
+function CT1({ gameId }) {
+  return null;
 }
 
-export default CT1
+export default CT1;

@@ -3,8 +3,8 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { AnimatePresence, motion } from "framer-motion";
 import { FaTrophy } from "react-icons/fa";
-import { getDresult } from "../../../AsianExchangeSrc/api";
-import { selectSiteHeaderColor } from "../../../AsianExchangeSrc/utils/helper/commonSelectors";
+import { getDresult } from "../../../api";
+import { selectSiteHeaderColor } from "../../../utils/helper/commonSelectors";
 
 // Helper: Find winner's player number by result string ("Player 8" → 8)
 const winnerNum = (winnerStr) => {

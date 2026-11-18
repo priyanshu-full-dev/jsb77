@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { FaInfoCircle, FaCheck, FaCopy, FaTimes } from "react-icons/fa";
+import { useLanguage } from "../../context/LanguageContext";
 
 // Deposit methods configuration
 const PAYMENT_METHODS = [
@@ -58,6 +59,7 @@ const DepositPage = () => {
   const navigate = useNavigate();
   const context = useOutletContext() || {};
   const { user } = context;
+  const { t } = useLanguage();
 
   const [selectedMethod, setSelectedMethod] = useState("fonepay");
   const [selectedChannel, setSelectedChannel] = useState("trc20");
@@ -209,7 +211,7 @@ const DepositPage = () => {
 
         {/* Title */}
         <h1 className="text-white text-[17px] font-normal tracking-normal">
-          Deposit
+          {t("Deposit")}
         </h1>
 
         {/* Exact Deposit Record Icon (Clipboard with circular upward arrow) */}
@@ -235,7 +237,7 @@ const DepositPage = () => {
         <div className="flex items-center gap-1.5 mb-2.5">
           <span className="w-1.5 h-1.5 rounded-full bg-[#f59e0b] inline-block" />
           <h2 className="text-[#1f2937] font-bold text-[13.5px]">
-            Deposit Method
+            {t("Deposit Method")}
           </h2>
         </div>
 
@@ -309,7 +311,7 @@ const DepositPage = () => {
             <div className="flex items-center gap-1.5 mb-2.5">
               <span className="w-2 h-2 rounded-full bg-[#6bbcb3] inline-block" />
               <h2 className="text-[#1f2937] font-bold text-[14.5px]">
-                Payment Channel
+                {t("Payment Channel")}
               </h2>
             </div>
 
@@ -365,7 +367,7 @@ const DepositPage = () => {
         <div className="flex items-center gap-1.5 mb-2">
           <span className="w-1.5 h-1.5 rounded-full bg-[#b56f86] inline-block" />
           <h2 className="text-[#1f2937] font-bold text-[13px]">
-            Deposit Amounts
+            {t("Deposit Amounts")}
           </h2>
         </div>
 
@@ -527,10 +529,11 @@ const DepositPage = () => {
         )}
 
         {/* Warning / Deposit Info */}
-        <p className="text-[#ff0000] text-[17px] sm:text-[13.5px] font-normal leading-[1.2] mt-3.5 mb-5 tracking-normal">
-          Deposit Info: कृपया हाम्रो नम्बर निक्षेपको रूपमा बचत
-          <br />
-          नगर्नुहोस्। जम्मा गर्नु अघि सधैं वेबसाइट जाँच गर्नुहोस्
+        <p className="text-[#ff0000] text-[15px] sm:text-[13.5px] font-normal leading-[1.3] mt-3.5 mb-5 tracking-normal">
+          {t(
+            "Deposit Info: Please do not save our number for deposits. Always check the website before making a deposit.",
+            "निक्षेप जानकारी: कृपया हाम्रो नम्बर निक्षेपको रूपमा बचत नगर्नुहोस्। जम्मा गर्नु अघि सधैं वेबसाइट जाँच गर्नुहोस्"
+          )}
         </p>
       </div>
 
@@ -542,7 +545,7 @@ const DepositPage = () => {
         <div className="flex items-center gap-1.5 mb-2.5">
           <span className="w-1.5 h-1.5 rounded-full bg-[#ec4899] inline-block" />
           <h2 className="text-[#1f2937] font-bold text-[15px]">
-            Promotions
+            {t("Promotions")}
           </h2>
         </div>
 
@@ -666,7 +669,7 @@ const DepositPage = () => {
         <div className="flex items-center gap-1.5 mb-2.5">
           <span className="w-1.5 h-1.5 rounded-full bg-[#4f46e5] inline-block" />
           <h2 className="text-[#1f2937] font-bold text-[15px]">
-            Payment Details
+            {t("Payment Details")}
           </h2>
         </div>
 
@@ -675,7 +678,7 @@ const DepositPage = () => {
           {/* Row 1: Deposit Amounts */}
           <div className="bg-white px-4 py-3.5 flex items-center justify-between border-b border-[#f0f0f0]">
             <span className="text-[#6b7280] font-semibold text-[13.5px]">
-              Deposit Amounts
+              {t("Deposit Amounts")}
             </span>
             <span className="text-[#4b5563] font-bold text-[14px]">
               Rs {currentAmountNum.toLocaleString()}.00
@@ -685,7 +688,7 @@ const DepositPage = () => {
           {/* Row 2: Actual Payment Amount */}
           <div className="bg-[#fff7f7] px-4 py-3.5 flex items-center justify-between">
             <span className="text-[#6b7280] font-semibold text-[13.5px]">
-              Actual Payment Amount
+              {t("Actual Payment Amount")}
             </span>
             <span className="text-[#ff1a3c] font-bold text-[14px]">
               Rs {currentAmountNum.toLocaleString()}.00
@@ -727,7 +730,7 @@ const DepositPage = () => {
             onClick={handleNext}
             className="w-full h-[50px] bg-[#e62121] hover:bg-[#d41818] active:bg-[#c01010] text-white font-bold text-[16px] tracking-wide flex items-center justify-center transition cursor-pointer select-none"
           >
-            Next
+            {t("Next")}
           </button>
         </div>
       </div>
@@ -752,14 +755,14 @@ const DepositPage = () => {
             {/* Summary Banner */}
             <div className="bg-[#fff5f5] border border-red-100 rounded-xl p-3 mb-4 flex items-center justify-between">
               <div>
-                <p className="text-[12px] text-gray-500">Deposit Amount</p>
+                <p className="text-[12px] text-gray-500">{t("Deposit Amount")}</p>
                 <p className="text-[18px] font-extrabold text-[#eb2828]">
                   Rs {currentAmountNum.toLocaleString()}
                 </p>
               </div>
               {promoApplied && (
                 <div className="text-right">
-                  <p className="text-[12px] text-gray-500">Instant Bonus</p>
+                  <p className="text-[12px] text-gray-500">{t("Instant Bonus")}</p>
                   <p className="text-[15px] font-bold text-emerald-600">
                     + Rs {currentBonusNum.toFixed(2)}
                   </p>
@@ -784,7 +787,7 @@ const DepositPage = () => {
             {/* FonePay Merchant ID */}
             <div className="bg-gray-100 rounded-lg p-2.5 flex items-center justify-between mb-4">
               <div>
-                <p className="text-[11px] text-gray-500">Merchant Account Name</p>
+                <p className="text-[11px] text-gray-500">{t("Merchant Account Name")}</p>
                 <p className="text-[13px] font-bold text-gray-800">
                   JSB77 Official Agent
                 </p>
@@ -799,14 +802,14 @@ const DepositPage = () => {
                 className="text-[#0045b8] font-bold text-[12px] flex items-center gap-1 hover:underline cursor-pointer"
               >
                 {copied ? <FaCheck size={12} className="text-green-600" /> : <FaCopy size={12} />}
-                <span>{copied ? "Copied" : "Copy"}</span>
+                <span>{copied ? t("Copied") : t("Copy")}</span>
               </button>
             </div>
 
             {/* Reference ID Input */}
             <div className="mb-4">
               <label className="block text-[12.5px] font-semibold text-gray-700 mb-1">
-                Transaction / Reference ID (आवश्यक)
+                {t("Transaction / Reference ID (आवश्यक)")}
               </label>
               <input
                 type="text"
@@ -824,7 +827,7 @@ const DepositPage = () => {
               onClick={handleConfirmPayment}
               className="w-full h-[46px] rounded-lg bg-[#e62121] hover:bg-[#d41818] text-white font-bold text-[15px] flex items-center justify-center transition cursor-pointer shadow-md"
             >
-              {isSubmitting ? "Processing Deposit..." : "Submit Deposit"}
+              {isSubmitting ? t("Processing Deposit...") : t("Submit Deposit")}
             </button>
           </div>
         </div>

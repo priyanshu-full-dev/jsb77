@@ -1,6 +1,7 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
 import { FaTimes, FaMoneyBillWave, FaQrcode, FaCheckCircle } from "react-icons/fa";
+import { useLanguage } from "../context/LanguageContext";
 
 const depositMethods = [
   { id: "esewa", name: "eSewa", color: "#60bb46", min: 500, max: 50000 },
@@ -12,6 +13,7 @@ const depositMethods = [
 const amountPresets = [500, 1000, 2000, 5000, 10000, 25000];
 
 const DepositModal = ({ isOpen, onClose }) => {
+  const { t } = useLanguage();
   const [selectedMethod, setSelectedMethod] = useState("esewa");
   const [amount, setAmount] = useState(1000);
   const [txnId, setTxnId] = useState("");
@@ -38,7 +40,7 @@ const DepositModal = ({ isOpen, onClose }) => {
         <div className="bg-gradient-to-r from-[#003da5] via-[#005bf8] to-[#003da5] p-4 text-white flex items-center justify-between">
           <div className="flex items-center gap-2">
             <FaMoneyBillWave size={18} className="text-[#ffd700]" />
-            <h3 className="font-extrabold text-sm uppercase">NPR Deposit Gateway</h3>
+            <h3 className="font-extrabold text-sm uppercase">{t("Deposit")}</h3>
           </div>
           <button
             onClick={onClose}

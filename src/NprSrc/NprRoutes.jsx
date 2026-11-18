@@ -11,6 +11,18 @@ import WithdrawalPage from "./pages/Withdrawal/WithdrawalPage";
 import BetHistoryPage from "./pages/Records/BetHistoryPage";
 import LoginPage from "./pages/Auth/LoginPage";
 
+// AuraExchange Imports (inside NprSrc)
+import AuraHome from "./AuraExchangeSrc/pages/Home";
+import CricketMatchesList from "./AuraExchangeSrc/pages/Sports/Cricket";
+import TennisMatchesList from "./AuraExchangeSrc/pages/Sports/Tennis";
+import SoccerMatchesList from "./AuraExchangeSrc/pages/Sports/Soccer";
+import Inplay from "./AuraExchangeSrc/pages/Inplay";
+import QuickLinks from "./AuraExchangeSrc/pages/QuickLinks";
+import MultiMarkets from "./AuraExchangeSrc/pages/Account/MultiMarkets";
+import LayoutFullPage from "./AuraExchangeSrc/components/LayoutFullPage";
+import CTSfullMarket from "./AuraExchangeSrc/pages/FullMarket/CTSfullMarket";
+import SportsTv from "../CommonComponents/SportsTv";
+
 export const NprRouter = createBrowserRouter([
   {
     path: "/login",
@@ -28,6 +40,8 @@ export const NprRouter = createBrowserRouter([
     path: "/m/register",
     element: <LoginPage initialMode="register" />,
   },
+
+  // 1. Main NPR77 Application Layout
   {
     path: "/",
     element: <AppLayout />,
@@ -55,10 +69,6 @@ export const NprRouter = createBrowserRouter([
       {
         path: "casino",
         element: <CasinoPage />,
-      },
-      {
-        path: "inplay",
-        element: <SportsPage />,
       },
       {
         path: "promotion",
@@ -104,9 +114,71 @@ export const NprRouter = createBrowserRouter([
         path: "m/bet-history",
         element: <BetHistoryPage />,
       },
+    ],
+  },
+
+  // 2. AuraExchange Sports Layout (Cricket, Tennis, Soccer)
+  {
+    element: <AuraHome />,
+    children: [
       {
-        path: "*",
-        element: <Home />,
+        path: "/cricket",
+        element: <CricketMatchesList />,
+      },
+      {
+        path: "/tennis",
+        element: <TennisMatchesList />,
+      },
+      {
+        path: "/soccer",
+        element: <SoccerMatchesList />,
+      },
+      {
+        path: "/sports/cricket",
+        element: <CricketMatchesList />,
+      },
+      {
+        path: "/sports/soccer",
+        element: <SoccerMatchesList />,
+      },
+      {
+        path: "/sports/tennis",
+        element: <TennisMatchesList />,
+      },
+      {
+        path: "/inplay",
+        element: <Inplay />,
+      },
+      {
+        path: "/in-play",
+        element: <Inplay />,
+      },
+      {
+        path: "/my-sports",
+        element: <QuickLinks />,
+      },
+      {
+        path: "/multi-market",
+        element: <MultiMarkets />,
+      },
+    ],
+  },
+
+  // 3. AuraExchange Full Market Layout (Exchange Odds, Bookmaker, Fancy, Betslip)
+  {
+    element: <LayoutFullPage />,
+    children: [
+      {
+        path: "/full-market",
+        element: <CTSfullMarket />,
+      },
+      {
+        path: "/full-market/:exEventId?/:sportId?",
+        element: <CTSfullMarket />,
+      },
+      {
+        path: "/tv/:sportId/:eventId",
+        element: <SportsTv />,
       },
     ],
   },

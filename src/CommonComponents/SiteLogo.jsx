@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { selectSiteLogo, selectSiteName } from "../AsianExchangeSrc/utils/helper/commonSelectors";
-import { generatePresignedUrl } from "../AsianExchangeSrc/utils/helper/generatePresignedUrl";
+import { selectSiteLogo, selectSiteName } from "../utils/helper/commonSelectors";
+import { generatePresignedUrl } from "../utils/helper/generatePresignedUrl";
 
 const SiteLogo = ({
   s3Key,             

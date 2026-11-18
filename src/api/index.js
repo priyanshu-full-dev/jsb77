@@ -1,4 +1,3 @@
-import store from "../redux/store";
 import { apiGET, apiPOST } from "./handler";
 import axios from "axios";
 
@@ -119,8 +118,8 @@ export const logPasswordChange = (body) =>
   apiPOST(API_URL.logPasswordChange, body);
 
 export const myBet = () => {
-  const state = store.getState();
-  const token = state.user?.token || "";
+  const token =
+    (typeof window !== "undefined" && localStorage.getItem("token")) || "";
 
   return token && apiGET(API_URL.myBets);
 };
@@ -240,3 +239,6 @@ export const GetDownlinelogPasswordHistory = () =>
 export const getSiteMetaData = (siteID) =>
   apiGET(API_URL.getSiteMetaData(siteID));
 export const get1chipValue = (body) => apiPOST(API_URL.get1chipValue, body);
+export const updateUserProfile = (payload) => apiPOST("/api/v1/users/update-profile", payload);
+export const getGameSections = (params) => apiGET("/api/v1/game-sections", params);
+

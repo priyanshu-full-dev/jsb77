@@ -630,46 +630,25 @@ export const nprFishGames = [
 
 export const nprSportsProviders = [
   {
-    id: "9wickets",
-    name: "9 WICKETS",
-    provider: "9 WICKETS",
+    id: "cricket",
+    name: "CRICKET",
+    provider: "Cricket",
     category: ["sports"],
-    image: "/npr/sports/sports_9wickets.png",
+    image: "/npr/sports/sports_cricket.png",
   },
   {
-    id: "tfgaming",
-    name: "TFGAMING",
-    provider: "TF Gaming",
+    id: "soccer",
+    name: "SOCCER",
+    provider: "Soccer",
     category: ["sports"],
-    image: "/npr/sports/sports_tfgaming.png",
+    image: "/npr/sports/sports_soccer.png",
   },
   {
-    id: "polysports",
-    name: "POLY SPORTS",
-    provider: "Poly Sports",
+    id: "tennis",
+    name: "TENNIS",
+    provider: "Tennis",
     category: ["sports"],
-    image: "/npr/sports/sports_polysports.png",
-  },
-  {
-    id: "ia_esports",
-    name: "IA E-SPORTS",
-    provider: "IA E-Sports",
-    category: ["sports"],
-    image: "/npr/sports/sports_ia_esports.png",
-  },
-  {
-    id: "saba_sports",
-    name: "SABA SPORTS",
-    provider: "SABA Sports",
-    category: ["sports"],
-    image: "/npr/sports/sports_saba_sports.png",
-  },
-  {
-    id: "lucky_sports",
-    name: "LUCKY SPORTS",
-    provider: "Lucky Sports",
-    category: ["sports"],
-    image: "/npr/sports/sports_lucky_sports.png",
+    image: "/npr/sports/sports_tennis.png",
   },
 ];
 

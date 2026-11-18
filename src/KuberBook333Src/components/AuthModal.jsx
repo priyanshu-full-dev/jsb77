@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { X, Eye, EyeOff, User } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { Demo, login, signUp, forgotPassword, createLoginRecord, getSitesByDomain } from '../../api';
-import { subscribeToLogin } from '../../socketClient';
 import { loginSuccess } from '../../redux/slices/userSlice';
 import { setAccountType } from '../../redux/slices/accountSlice';
 import { selectSite } from '../../utils/helper/commonSelectors';
@@ -143,49 +142,7 @@ export default function AuthModal({
     setIsLoginLoading(true);
 
     try {
-      const socketPayload = {
-        userName: enteredUser,
-        username: enteredUser,
-        password: password.trim(),
-        x_panel_type: 'user',
-      };
-
-      // 1. Socket Login
-      let response = null;
-      try {
-        response = await subscribeToLogin(socketPayload);
-      } catch (err) {
-        console.warn('Socket login notice, attempting REST fallback:', err);
-      }
-
-      if (response && response.success) {
-        const { token, userdata } = response;
-        const formattedUser = {
-          ...userdata,
-          username: userdata?.username || userdata?.userName || enteredUser,
-          balance: userdata?.availableBalance ?? userdata?.balance ?? 1500,
-          availableBalance: userdata?.availableBalance ?? userdata?.balance ?? 1500,
-          exposure: userdata?.exposure ?? 0,
-          token: token || 'real-token',
-          _id: userdata?._id || '',
-        };
-
-        if (token) localStorage.setItem('token', token);
-        if (userdata?._id) localStorage.setItem('userId', userdata._id);
-        localStorage.setItem('kuber_user', JSON.stringify(formattedUser));
-
-        dispatch(loginSuccess({ userData: formattedUser, loggedInType: 'real', token: token || 'real-token' }));
-        dispatch(setAccountType({ userData: formattedUser, type: 'real' }));
-
-        createLoginRecord({ userName: enteredUser }).catch(() => {});
-
-        toast.success(response.message || 'Login successful!');
-        if (onLoginSuccess) onLoginSuccess(formattedUser);
-        onClose();
-        return;
-      }
-
-      // 2. Fallback to REST Login
+      // Direct REST Login (no socket)
       const restRes = await login({
         userName: enteredUser,
         username: enteredUser,
@@ -194,14 +151,14 @@ export default function AuthModal({
       });
       const resData = restRes?.data || restRes;
 
-      if (resData?.token || (resData?.success && resData?.userdata?.token)) {
+      if (restRes?.success && (resData?.token || (resData?.success && resData?.userdata?.token) || resData?.userdata)) {
         const token = resData.token || resData.userdata?.token;
         const userdata = resData.user || resData.userdata || { username: enteredUser };
         const formattedUser = {
           ...userdata,
           username: userdata?.username || userdata?.userName || enteredUser,
-          balance: userdata?.availableBalance ?? userdata?.balance ?? 1500,
-          availableBalance: userdata?.availableBalance ?? userdata?.balance ?? 1500,
+          balance: userdata?.availableBalance ?? userdata?.balance ?? 0,
+          availableBalance: userdata?.availableBalance ?? userdata?.balance ?? 0,
           exposure: userdata?.exposure ?? 0,
           token: token || 'real-token',
           _id: userdata?._id || '',
@@ -209,6 +166,7 @@ export default function AuthModal({
 
         if (token) localStorage.setItem('token', token);
         if (userdata?._id) localStorage.setItem('userId', userdata._id);
+        if (userdata) localStorage.setItem('userdata', JSON.stringify(userdata));
         localStorage.setItem('kuber_user', JSON.stringify(formattedUser));
 
         dispatch(loginSuccess({ token, userData: formattedUser, loggedInType: 'real' }));
@@ -222,7 +180,7 @@ export default function AuthModal({
         return;
       }
 
-      const errMsg = response?.message || resData?.message || 'Invalid username or password';
+      const errMsg = resData?.message || restRes?.data?.message || 'Invalid username or password';
       toast.error(errMsg);
       setErrors({ general: errMsg });
     } catch (error) {
@@ -443,7 +401,7 @@ export default function AuthModal({
           return;
         }
 
-        // 2. Instant Socket auto-login with cleanPhone
+        // 2. Direct REST auto-login with cleanPhone (no socket)
         try {
           const loginPayload = {
             userName: cleanPhone,
@@ -452,12 +410,7 @@ export default function AuthModal({
             x_panel_type: 'user',
           };
 
-          let loginRes = null;
-          try {
-            loginRes = await subscribeToLogin(loginPayload);
-          } catch {
-            loginRes = await login(loginPayload);
-          }
+          const loginRes = await login(loginPayload);
 
           const loginData = loginRes?.data || loginRes;
           if (loginData?.token || loginData?.userdata?.token || loginRes?.success) {

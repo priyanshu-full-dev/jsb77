@@ -1,10 +1,10 @@
 import { IoCloseSharp } from "react-icons/io5";
 import React, { useEffect, useState } from "react";
-import { selectSiteHeaderColor } from "../../../AsianExchangeSrc/utils/helper/commonSelectors";
+import { selectSiteHeaderColor } from "../../../utils/helper/commonSelectors";
 import { useSelector } from "react-redux";
 import { AnimatePresence, motion } from "framer-motion";
 import { FaTrophy } from "react-icons/fa";
-import { getDresult } from "../../../AsianExchangeSrc/api";
+import { getDresult } from "../../../api";
 
 const Teen20 = ({ isOpen, onClose, gameId: gmid, result }) => {
     const mid = result?.mid;

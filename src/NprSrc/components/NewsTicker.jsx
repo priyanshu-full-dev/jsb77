@@ -1,11 +1,19 @@
 import { useState, useEffect, useRef } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
-const announcements = [
+const nepaliAnnouncements = [
   "JSB77 मा स्वागत छ!! JSB77 मार्फत जुनसुकै बेला र जहाँसुकै",
   "आनन्द लिनुहोस्! अहिले नै हामीसँग सामेल हुनुहोस् र थप प्रचारहरू",
 ];
 
+const englishAnnouncements = [
+  "Welcome to JSB77!! Enjoy anytime and anywhere with JSB77!",
+  "Join us now and get more exciting bonuses and promotions!",
+];
+
 const NewsTicker = () => {
+  const { lang } = useLanguage();
+  const announcements = lang === "np" ? nepaliAnnouncements : englishAnnouncements;
   const containerRef = useRef(null);
   const [isUserInteracting, setIsUserInteracting] = useState(false);
   const currentIndexRef = useRef(0);

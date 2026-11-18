@@ -16,6 +16,7 @@ import { fetchNetworkDetails } from "./redux/slices/networkSlice";
 import "./App.css";
 
 import { NprRouter } from "./NprSrc/NprRoutes";
+import { LanguageProvider } from "./NprSrc/context/LanguageContext";
 import { KuberBook333Router } from "./KuberBook333Src/KuberBook333Routes";
 import PageSkeleton from "./Kuberbook666/components/Loader/PageSkeleton";
 
@@ -153,6 +154,13 @@ const App = () => {
   --------------------------------------------------------- */
 
   const domainName = useMemo(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const urlDomain = searchParams.get("domain");
+    if (urlDomain) return urlDomain;
+
+    const envDomain = import.meta.env.VITE_SITE_DOMAIN;
+    if (envDomain) return envDomain;
+
     return window.location.host.includes("localhost") ||
       window.location.host.includes("127.0.0.1")
       ? "asianexchange.club"
@@ -388,7 +396,9 @@ const App = () => {
 
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <RouterProvider router={NprRouter} />
+      <LanguageProvider>
+        <RouterProvider router={NprRouter} />
+      </LanguageProvider>
     </Suspense>
   );
 };

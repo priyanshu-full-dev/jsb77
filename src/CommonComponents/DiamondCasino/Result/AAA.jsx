@@ -3,8 +3,8 @@ import { useSelector } from "react-redux";
 import { AnimatePresence, motion } from "framer-motion";
 import { IoCloseSharp } from "react-icons/io5";
 import { FaTrophy } from "react-icons/fa";
-import { selectSiteHeaderColor } from "../../../AsianExchangeSrc/utils/helper/commonSelectors";
-import { getDresult } from "../../../AsianExchangeSrc/api";
+import { selectSiteHeaderColor } from "../../../utils/helper/commonSelectors";
+import { getDresult } from "../../../api";
 
 /* small helpers */
 const suitSymbol = (s) => {

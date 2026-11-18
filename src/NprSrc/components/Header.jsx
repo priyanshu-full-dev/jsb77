@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import { FaWhatsapp, FaHeadset, FaBars, FaUser } from "react-icons/fa";
+import { useLanguage } from "../context/LanguageContext";
 
 const languages = [
   { id: "en", name: "English", flag: "/npr/lan/US.svg" },
@@ -9,7 +10,7 @@ const languages = [
 ];
 
 const Header = ({ onOpenMenu, user }) => {
-  const [currentLang, setCurrentLang] = useState("en");
+  const { lang: currentLang, setLang: setCurrentLang, t } = useLanguage();
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [hideBalance, setHideBalance] = useState(false);
   const langRef = useRef(null);
@@ -58,7 +59,7 @@ const Header = ({ onOpenMenu, user }) => {
             <Link
               to="/members"
               className="flex items-center gap-2 ml-2.5 sm:ml-4 select-none cursor-pointer group hover:opacity-90 active:scale-[0.98] transition"
-              title="Go to Members Profile"
+              title={t("Go to Members Profile")}
             >
               {/* Solid Blue Circle Avatar */}
               <div className="w-[33px] h-[33px] rounded-full bg-[#0045b8] flex items-center justify-center text-white shrink-0 shadow-xs group-hover:bg-[#003da5] transition">
@@ -82,8 +83,8 @@ const Header = ({ onOpenMenu, user }) => {
                       setHideBalance(!hideBalance);
                     }}
                     className="text-[#0045b8] hover:opacity-80 transition focus:outline-none cursor-pointer flex items-center justify-center"
-                    title={hideBalance ? "Show balance" : "Hide balance"}
-                    aria-label={hideBalance ? "Show balance" : "Hide balance"}
+                    title={hideBalance ? t("Show balance") : t("Hide balance")}
+                    aria-label={hideBalance ? t("Show balance") : t("Hide balance")}
                   >
                     {hideBalance ? (
                       /* Exact Match to Reference: Downward Curved Eyelid with 5 Eyelashes */
@@ -133,7 +134,7 @@ const Header = ({ onOpenMenu, user }) => {
             target="_blank"
             rel="noopener noreferrer"
             className="w-6 h-6 flex items-center justify-center hover:opacity-85 transition active:scale-95 select-none"
-            title="WhatsApp Support"
+            title={t("WhatsApp Support")}
           >
             <img
               src="/npr/icon_whatsapp.png"
@@ -146,7 +147,7 @@ const Header = ({ onOpenMenu, user }) => {
           <button
             onClick={() => alert("Connecting to 24/7 JSB77 Live Support...")}
             className="w-6 h-6 flex items-center justify-center hover:opacity-85 transition active:scale-95 select-none focus:outline-hidden"
-            title="Live Customer Service"
+            title={t("Live Customer Service")}
           >
             <img
               src="/npr/icon_headset.png"
@@ -160,7 +161,7 @@ const Header = ({ onOpenMenu, user }) => {
             <button
               onClick={() => setLangDropdownOpen((prev) => !prev)}
               className="w-6 h-6 rounded-full overflow-hidden border border-gray-200 shadow-xs hover:scale-105 transition flex items-center justify-center focus:outline-hidden"
-              title="Select Language"
+              title={t("Select Language")}
             >
               <img
                 src={activeLanguage.flag}

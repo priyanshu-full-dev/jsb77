@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "../../context/LanguageContext";
 import {
   FaChevronLeft,
   FaChevronDown,
@@ -19,6 +20,7 @@ const categories = [
 
 const BetHistoryPage = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [activeCategory, setActiveCategory] = useState("live");
   const [statusFilter, setStatusFilter] = useState("All");
   const [typeFilter, setTypeFilter] = useState("All");
@@ -51,7 +53,7 @@ const BetHistoryPage = () => {
           <FaChevronLeft size={18} />
         </button>
 
-        <h1 className="font-bold text-[17px] tracking-tight">Bet History</h1>
+        <h1 className="font-bold text-[17px] tracking-tight">{t("Bet History")}</h1>
 
         {/* Exclusion turnover list button */}
         <button
@@ -59,9 +61,7 @@ const BetHistoryPage = () => {
           onClick={() => setShowExclusionModal(true)}
           className="bg-[#0091ff] hover:bg-[#0080ea] text-white text-[10px] font-bold px-3 py-1 rounded-full text-center leading-tight shadow-xs active:scale-95 transition cursor-pointer"
         >
-          Exclusion
-          <br />
-          turnover list
+          {t("Exclusion turnover list")}
         </button>
       </header>
 
@@ -77,7 +77,7 @@ const BetHistoryPage = () => {
                 isActive ? "text-[#0088ff]" : "text-gray-800 hover:text-[#0088ff]"
               }`}
             >
-              {cat.label}
+              {t(cat.label)}
               {isActive && (
                 <div className="absolute bottom-0 left-2 right-2 h-[2.5px] bg-[#0088ff] rounded-full" />
               )}

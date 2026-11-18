@@ -4,7 +4,6 @@ import { toast } from "react-toastify";
 import { loginSuccess } from "../../../redux/slices/userSlice";
 import { setAccountType } from "../../../redux/slices/accountSlice";
 import { login, Demo, createLoginRecord } from "../../../api";
-import { subscribeToLogin } from "../../../socketClient";
 
 const LoginModal = ({ isOpen, onClose, onSwitchToSignup }) => {
   const [activeTab, setActiveTab] = useState("mobile"); // 'mobile' | 'userid'
@@ -34,47 +33,7 @@ const LoginModal = ({ isOpen, onClose, onSwitchToSignup }) => {
     setLoading(true);
 
     try {
-      // 1. First try real-time socket login like Mahadev
-      const socketPayload = {
-        userName: username,
-        username: username,
-        password: password,
-        x_panel_type: "user",
-      };
-
-      let response = null;
-      try {
-        response = await subscribeToLogin(socketPayload);
-      } catch (err) {
-        console.warn("Socket login failed, trying REST API fallback...", err);
-      }
-
-      if (response && response.success) {
-        const { token, userdata } = response;
-        if (token) localStorage.setItem("token", token);
-        if (userdata?._id) localStorage.setItem("userId", userdata._id);
-
-        dispatch(
-          loginSuccess({
-            userData: userdata,
-            loggedInType: "real",
-            token: token,
-          })
-        );
-        dispatch(
-          setAccountType({
-            userData: userdata,
-            type: "real",
-          })
-        );
-
-        toast.success(response.message || "Login successful!");
-        onClose();
-        createLoginRecord({ userName: username }).catch(() => {});
-        return;
-      }
-
-      // 2. Fallback to REST login API
+      // Direct REST login API (no socket)
       const restRes = await login({
         userName: username,
         username: username,
@@ -82,11 +41,12 @@ const LoginModal = ({ isOpen, onClose, onSwitchToSignup }) => {
         x_panel_type: "user",
       });
       const resData = restRes?.data || restRes;
-      if (resData?.token || (resData?.success && resData?.userdata?.token)) {
+      if (restRes?.success && (resData?.token || resData?.success)) {
         const token = resData.token || resData.userdata?.token;
         const userdata = resData.user || resData.userdata || { username };
         if (token) localStorage.setItem("token", token);
         if (userdata?._id) localStorage.setItem("userId", userdata._id);
+        if (userdata) localStorage.setItem("userdata", JSON.stringify(userdata));
 
         dispatch(
           loginSuccess({
@@ -108,7 +68,7 @@ const LoginModal = ({ isOpen, onClose, onSwitchToSignup }) => {
         return;
       }
 
-      const errMsg = response?.message || resData?.message || "Invalid username or password";
+      const errMsg = resData?.message || restRes?.data?.message || "Invalid username or password";
       setError(errMsg);
       toast.error(errMsg);
     } catch (err) {

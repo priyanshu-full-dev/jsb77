@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { IoIosLock } from "react-icons/io";
 import { useDispatch } from "react-redux";
-import { handleOpenPlaceBet } from "../../../AsianExchangeSrc/redux/slices/placeBetSlice";
+import { handleOpenPlaceBet } from "../../../redux/slices/placeBetSlice";
 import { placeBet } from "../../../socketClient";
-import { updateAvailableBalance, updateExposureBalance } from "../../../AsianExchangeSrc/redux/slices/userSlice";
+import { updateAvailableBalance, updateExposureBalance } from "../../../redux/slices/userSlice";
 
 /* -------------------- CHIP IMAGES -------------------- */
 const CHIP_IMAGES = [

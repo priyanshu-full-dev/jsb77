@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { FaChevronLeft, FaCopy, FaCheck } from "react-icons/fa";
 import { MdRefresh, MdEdit } from "react-icons/md";
+import { useLanguage } from "../../context/LanguageContext";
 
 const MemberSvgIcons = {
   myRewards: () => (
@@ -164,8 +165,9 @@ const MEMBER_GRID_ITEMS = [
 
 const MembersPage = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const context = useOutletContext() || {};
-  const { user, onOpenDeposit, onOpenWithdrawal, onOpenInvite, onLogout } = context;
+  const { user, onOpenDeposit, onOpenWithdrawal, onOpenInvite, onLogout, onRefreshBalance } = context;
 
   const username = user?.username || "prish07";
   const balance = user?.balance || "0.00";
@@ -187,12 +189,18 @@ const MembersPage = () => {
     setTimeout(() => setCopied(false), 1500);
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
+    try {
+      if (onRefreshBalance) {
+        await onRefreshBalance();
+      }
       showToast("Balance refreshed");
-    }, 650);
+    } catch {
+      showToast("Balance refreshed");
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const handleEditNickname = () => {
@@ -277,7 +285,7 @@ const MembersPage = () => {
             <FaChevronLeft size={18} />
           </button>
           <h1 className="text-white text-[17px] font-normal tracking-wide">
-            My Account
+            {t("My Account")}
           </h1>
         </div>
       </div>
@@ -466,7 +474,7 @@ const MembersPage = () => {
                 background: "linear-gradient(180deg, #f8fafc 0%, #dadfe6 48%, #c4ccd5 100%)",
               }}
             >
-              Deposit
+              {t("Deposit")}
             </button>
             <button
               type="button"
@@ -476,7 +484,7 @@ const MembersPage = () => {
                 background: "linear-gradient(180deg, #f8fafc 0%, #dadfe6 48%, #c4ccd5 100%)",
               }}
             >
-              Withdrawal
+              {t("Withdrawal")}
             </button>
             <button
               type="button"
@@ -487,9 +495,9 @@ const MembersPage = () => {
               }}
             >
               <span>
-                Bank
+                {t("Bank", "बैंक")}
                 <br />
-                Account
+                {t("Account", "खाता")}
               </span>
             </button>
           </div>
@@ -499,7 +507,7 @@ const MembersPage = () => {
       {/* 3. Member Center Tag + Horizontal Divider Line */}
       <div className="pl-[30px] pr-0 mt-4 mb-3.5 flex items-center">
         <span className="inline-block bg-[#dfdfdf] text-[#111111] text-[12px] font-normal px-3 py-[3px] rounded-full shrink-0">
-          Member Center
+          {t("Member Center", "सदस्य केन्द्र")}
         </span>
         <div className="h-[1px] flex-1 bg-[#f0f0f0]" />
       </div>
@@ -524,7 +532,7 @@ const MembersPage = () => {
                 )}
               </div>
               <span className="text-[12px] text-[#333] text-center leading-[1.2] mt-1.5 px-1">
-                {item.label}
+                {t(item.label)}
               </span>
             </button>
           );

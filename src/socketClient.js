@@ -1,5 +1,5 @@
 import io from "socket.io-client";
-import { baseUrl } from "./api/axios";
+import API, { baseUrl } from "./api/axios";
 import {
   setMatchesLoading,
   updateMatches,
@@ -12,6 +12,7 @@ import {
 } from "./redux/slices/fullmarketSlice";
 import {
   setBookmakerData,
+  setBookmakerError,
   setBookmakerLoading,
 } from "./redux/slices/bookmakerSlice";
 import { setUserData } from "./redux/slices/userSlice";
@@ -22,6 +23,7 @@ import {
 } from "./redux/slices/accountSlice";
 import {
   setFancyOddsData,
+  setFancyOddsError,
   setFancyOddsLoading,
 } from "./redux/slices/fancySlice";
 import {
@@ -43,15 +45,114 @@ import {
   setDiamondCasinoOddsError,
   setDiamondCasinoOddsLoading,
 } from "./redux/slices/diamondCasinoOddsSlice";
+import {
+  updateAuraMatches,
+  setAuraOddsData,
+} from "./redux/slices/auraMatchesSlice";
+import { fetchLocksApi } from "./utils/fetchLocks";
+import { fetchMatchLockDetails } from "./utils/helper/fetchMatcOdds";
+import ExposureToast from "./NprSrc/AuraExchangeSrc/components/ExposureToast";
+import { createElement } from "react";
 
-// Dynamic Store Injection to prevent Circular Dependency & TDZ ReferenceError
+export const auraOddsMemoryCache = new Map();
+export const casinoOddsMemoryCache = new Map();
+const MAX_AURA_CACHE_SIZE = 20;
+
+// Dynamic Store Injection
 let reduxStore = null;
 export const injectStore = (_store) => {
   reduxStore = _store;
 };
 export const getStore = () => reduxStore;
-const getReduxState = () => reduxStore?.getState?.() || {};
-const dispatch = (action) => reduxStore?.dispatch?.(action);
+
+const safeDispatch = (action) => {
+  if (reduxStore?.dispatch && action) {
+    try {
+      reduxStore.dispatch(action);
+    } catch (e) {
+      // safe dispatch
+    }
+  }
+};
+
+const safeGetState = () => {
+  return reduxStore?.getState ? reduxStore.getState() : {};
+};
+
+export const getCasinoOddsCache = (gmid) => {
+  if (!gmid) return null;
+  return casinoOddsMemoryCache.get(String(gmid)) || null;
+};
+
+export const prefetchDiamondCasinoOdds = (gmid) => {
+  if (!gmid || !socket?.connected) return;
+  const actualId = String(gmid);
+  socket.emit("subscribeToDiamondCasinoOdds", {
+    eventId: actualId,
+    eventType: "casino",
+    gmid: actualId,
+  });
+};
+
+// Flatten lock keys only when the Redux lock object identity changes.
+// Live odds can arrive frequently; rebuilding these objects per packet is wasteful.
+const flattenedLockCache = new WeakMap();
+const EMPTY_LOCK_SET = new Set();
+const EMPTY_LOCK_GROUPS = Object.freeze({});
+
+const getFlattenedLockIds = (lockGroups) => {
+  if (!lockGroups || typeof lockGroups !== "object") {
+    return EMPTY_LOCK_SET;
+  }
+
+  const cached = flattenedLockCache.get(lockGroups);
+  if (cached) return cached;
+
+  const ids = new Set();
+  Object.values(lockGroups).forEach((group) => {
+    if (!group || typeof group !== "object") return;
+    Object.keys(group).forEach((id) => ids.add(String(id)));
+  });
+
+  flattenedLockCache.set(lockGroups, ids);
+  return ids;
+};
+
+export const setAuraOddsCache = (id, oddsData) => {
+  if (!oddsData) return;
+  const cacheKey = String(id);
+  if (auraOddsMemoryCache.has(cacheKey)) {
+    auraOddsMemoryCache.delete(cacheKey);
+  } else if (auraOddsMemoryCache.size >= MAX_AURA_CACHE_SIZE) {
+    const oldestKey = auraOddsMemoryCache.keys().next().value;
+    auraOddsMemoryCache.delete(oldestKey);
+  }
+  const cachedValue = Array.isArray(oddsData)
+    ? Object.assign([...oddsData], { _cachedAt: Date.now() })
+    : { ...oddsData, _cachedAt: Date.now() };
+  auraOddsMemoryCache.set(cacheKey, cachedValue);
+};
+
+export const getFreshAuraOddsCache = (
+  id,
+  reduxOdds = null,
+  maxAgeMs = 10000,
+) => {
+  if (!id) return null;
+  const now = Date.now();
+  const mem = auraOddsMemoryCache.get(String(id));
+  if (mem && mem._cachedAt && now - mem._cachedAt <= maxAgeMs) {
+    return mem;
+  }
+  if (
+    reduxOdds &&
+    reduxOdds._cachedAt &&
+    now - reduxOdds._cachedAt <= maxAgeMs
+  ) {
+    return reduxOdds;
+  }
+  return null;
+};
 
 const activeSubscriptions = {
   matches: new Map(), // key: `${eventId}-${eventType}`
@@ -69,259 +170,609 @@ const activeSubscriptions = {
   diamondCasino: new Map(), // key: gmid
   profileRoom: null,
   myBets: null,
+  // ---- New Aura Universe ----
+  auraEvents: new Map(), // key: sportId
+  auraOdds: new Map(), // key: `${sportId}-${exEventId}`
+  auraState: new Map(), // key: `${sportId}-${exEventId}`
 };
 
 let isResubscribing = false;
 
 export const socket = io(baseUrl, {
-  auth: (cb) => {
-    const token =
-      reduxStore?.getState()?.user?.token ||
-      localStorage.getItem("token") ||
-      "";
-    cb({ token });
+  // Resolve the token at handshake time, not while this module is importing.
+  // This also picks up a token obtained after initial page load.
+  auth: (callback) => {
+    callback({ token: safeGetState()?.user?.token || "" });
   },
   reconnection: true,
-  reconnectionDelay: 1000,
-  reconnectionDelayMax: 5000,
+  reconnectionDelay: 500,
+  reconnectionDelayMax: 2500,
   reconnectionAttempts: Infinity,
-  transports: ["websocket"],
+  timeout: 15000,
+  transports: ["websocket", "polling"],
+  upgrade: true,
 });
-
-// Expose socket and logger globally for browser DevTools inspect
-if (typeof window !== "undefined") {
-  window.socket = socket;
-}
-
-if (typeof socket.onAny === "function") {
-  socket.onAny((event, ...args) => {
-  });
-}
 
 // ==================== GLOBAL LISTENERS (only one time) ====================
 
+let lastConnectErrorMessage = "";
+let lastServerPacketAt = Date.now();
+let lastLiveOddsPacketAt = Date.now();
+let lastMissingRoomResubAt = 0;
+let syncAckTimer = null;
+const auraOddsDeliveryTimers = new Map();
+
+const clearAuraDeliveryTimer = (key) => {
+  const timer = auraOddsDeliveryTimers.get(key);
+  if (timer) {
+    clearTimeout(timer);
+    auraOddsDeliveryTimers.delete(key);
+  }
+};
+
+const clearAllAuraDeliveryTimers = () => {
+  for (const timer of auraOddsDeliveryTimers.values()) {
+    clearTimeout(timer);
+  }
+  auraOddsDeliveryTimers.clear();
+};
+
+const clearAuraDeliveryTimersForEvent = (exEventId) => {
+  const suffix = `-${String(exEventId)}`;
+  for (const [key, timer] of auraOddsDeliveryTimers.entries()) {
+    if (key.endsWith(suffix)) {
+      clearTimeout(timer);
+      auraOddsDeliveryTimers.delete(key);
+    }
+  }
+};
+
+const hasPeriodicLiveOddsSubscription = () =>
+  activeSubscriptions.auraOdds.size > 0 ||
+  activeSubscriptions.auraMarketOdds.size > 0 ||
+  activeSubscriptions.auraBookmaker.size > 0 ||
+  activeSubscriptions.diamondCasino.size > 0;
+
+const hasActiveLiveOddsSubscription = () =>
+  hasPeriodicLiveOddsSubscription() ||
+  activeSubscriptions.marketOdds.size > 0 ||
+  activeSubscriptions.bookmaker.size > 0 ||
+  activeSubscriptions.fancyOdds.size > 0 ||
+  activeSubscriptions.horseOdds.size > 0 ||
+  activeSubscriptions.greyhoundOdds.size > 0 ||
+  activeSubscriptions.kabaddiOdds.size > 0;
+
+const clearSyncAckTimer = () => {
+  if (syncAckTimer) {
+    clearTimeout(syncAckTimer);
+    syncAckTimer = null;
+  }
+};
+
+socket.onAny(() => {
+  lastServerPacketAt = Date.now();
+});
+
 socket.on("connect", () => {
+  clearSyncAckTimer();
+  const now = Date.now();
+  lastServerPacketAt = now;
+  lastLiveOddsPacketAt = now;
+  lastConnectErrorMessage = "";
+  console.log("Socket connected");
+  fetchLocksApi();
   resubscribeAll();
 });
 
-let lastHiddenTime = null;
-let redirected = false;
-
-document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "hidden") {
-    console.log("App going to background");
-
-    lastHiddenTime = Date.now();
-
-
-    redirected = false;
+const verifySocketAliveOrReconnect = (force = false) => {
+  if (!socket.connected) {
+    clearSyncAckTimer();
+    socket.connect();
+    return;
   }
 
-  if (document.visibilityState === "visible") {
-    if (!lastHiddenTime || redirected) return;
+  if (syncAckTimer && !force) {
+    return;
+  }
 
-    const diff = Date.now() - lastHiddenTime;
-
-    // 🔥 15 seconds threshold
-    if (diff > 15000) {
-      console.log("Foreground after 15s → redirecting to /");
-
-      redirected = true;
-
-      window.location.reload();
+  clearSyncAckTimer();
+  syncAckTimer = setTimeout(() => {
+    syncAckTimer = null;
+    console.warn("Socket zombie connection detected, reconnecting...");
+    try {
+      socket.disconnect();
+    } catch {
+      // ignore
     }
+    socket.connect();
+  }, 2500);
+
+  socket.emit("syncCheck", (res) => {
+    const now = Date.now();
+    lastServerPacketAt = now;
+    clearSyncAckTimer();
+    if (
+      res &&
+      typeof res.resyncedRooms === "number" &&
+      res.resyncedRooms === 0 &&
+      hasActiveLiveOddsSubscription() &&
+      now - lastMissingRoomResubAt >= 4000
+    ) {
+      lastMissingRoomResubAt = now;
+      resubscribeAll();
+    }
+  });
+};
+
+const scheduleAuraOddsDeliveryCheck = (key) => {
+  clearAuraDeliveryTimer(key);
+  const timer = setTimeout(() => {
+    auraOddsDeliveryTimers.delete(key);
+    if (!activeSubscriptions.auraOdds.has(key)) return;
+    if (
+      typeof document !== "undefined" &&
+      document.visibilityState === "hidden"
+    ) {
+      return;
+    }
+    if (!socket.connected) {
+      socket.connect();
+      return;
+    }
+    verifySocketAliveOrReconnect();
+  }, 2500);
+  auraOddsDeliveryTimers.set(key, timer);
+};
+
+let pageHiddenAt = null;
+let windowBlurredAt = null;
+let lastResumeSyncAt = 0;
+
+const syncConnectionOnResume = (hiddenDurationMs = 0, force = false) => {
+  const now = Date.now();
+  if (!force && now - lastResumeSyncAt < 800) return;
+  lastResumeSyncAt = now;
+
+  if (!socket.connected) {
+    // Immediate reconnect without waiting for backoff timer after background sleep
+    socket.connect();
+    return;
   }
-});
+
+  const idleSincePacket = now - lastServerPacketAt;
+  const idleSinceLiveOdds = now - lastLiveOddsPacketAt;
+
+  // Re-emit active subscriptions and verify socket liveness so half-open TCP sleeps recover immediately
+  if (force || hiddenDurationMs >= 2000) {
+    resubscribeAll();
+    verifySocketAliveOrReconnect(true);
+    if (force || hiddenDurationMs >= 15000) {
+      fetchLocksApi();
+    }
+  } else if (
+    (hasActiveLiveOddsSubscription() && idleSinceLiveOdds >= 2500) ||
+    idleSincePacket >= 8000
+  ) {
+    verifySocketAliveOrReconnect();
+  }
+};
+
+if (typeof document !== "undefined") {
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+      pageHiddenAt = Date.now();
+    } else if (document.visibilityState === "visible") {
+      const hiddenStart = pageHiddenAt || windowBlurredAt;
+      const diff = hiddenStart ? Date.now() - hiddenStart : 0;
+      pageHiddenAt = null;
+      windowBlurredAt = null;
+      syncConnectionOnResume(diff);
+    }
+  });
+
+  // Chrome Page Lifecycle API when a frozen background tab resumes
+  document.addEventListener("resume", () => {
+    const hiddenStart = pageHiddenAt || windowBlurredAt;
+    const diff = hiddenStart ? Date.now() - hiddenStart : 15000;
+    pageHiddenAt = null;
+    windowBlurredAt = null;
+    syncConnectionOnResume(diff, true);
+  });
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("blur", () => {
+    if (!windowBlurredAt) {
+      windowBlurredAt = Date.now();
+    }
+  });
+
+  window.addEventListener("focus", () => {
+    const blurDiff = windowBlurredAt ? Date.now() - windowBlurredAt : 0;
+    windowBlurredAt = null;
+    if (
+      typeof document === "undefined" ||
+      document.visibilityState === "visible"
+    ) {
+      const hiddenDiff = pageHiddenAt ? Date.now() - pageHiddenAt : 0;
+      if (pageHiddenAt) pageHiddenAt = null;
+      syncConnectionOnResume(Math.max(hiddenDiff, blurDiff));
+    }
+  });
+
+  window.addEventListener("pageshow", (event) => {
+    if (event?.persisted) {
+      pageHiddenAt = null;
+      windowBlurredAt = null;
+      syncConnectionOnResume(15000, true);
+    }
+  });
+
+  window.addEventListener("online", () => {
+    pageHiddenAt = null;
+    windowBlurredAt = null;
+    syncConnectionOnResume(15000, true);
+  });
+
+  // Catch OS sleep/wakeups AND stalled foreground live-odds feeds (silent TCP stalls)
+  let lastHeartbeatTickAt = Date.now();
+  setInterval(() => {
+    const now = Date.now();
+    const delta = now - lastHeartbeatTickAt;
+    lastHeartbeatTickAt = now;
+    const isVisible =
+      typeof document === "undefined" || document.visibilityState === "visible";
+    if (!isVisible) return;
+
+    if (delta > 15000) {
+      syncConnectionOnResume(delta, true);
+      return;
+    }
+
+    if (
+      hasPeriodicLiveOddsSubscription() &&
+      now - lastLiveOddsPacketAt >= 7500
+    ) {
+      verifySocketAliveOrReconnect();
+    }
+  }, 4000);
+}
 
 socket.on("disconnect", (reason) => {
-  console.log("🔴 [SOCKET DISCONNECTED]:", reason);
+  clearSyncAckTimer();
+  clearAllAuraDeliveryTimers();
+  console.log("Socket disconnected:", reason);
 });
 
 socket.on("connect_error", (error) => {
-  console.error("⚠️ [SOCKET CONNECT ERROR]:", error.message);
-  dispatch(setMatchesError({ sport: "all", error: error.message }));
-  dispatch(setMarketOddsError(error.message));
+  const message = error?.message || "Socket connection failed";
+  if (message === lastConnectErrorMessage) return;
+  lastConnectErrorMessage = message;
+
+  console.error("Connection error:", message);
+  safeDispatch(setMatchesError({ sport: "all", error: message }));
+  safeDispatch(setMarketOddsError(message));
 });
 
-// Match Updates
+// ==================== MATCH UPDATES ====================
 socket.on("matchUpdate", (data) => {
-  if (typeof window !== "undefined") {
-    window.lastMatchUpdate = data;
-  }
+  const lockState = safeGetState()?.locks || {};
+  const locks = lockState.matchLocks || {};
+  const isReady = lockState.ready;
 
-  // 🔥 CASE 1: Sports list (NO eventId)
-  if (data?.matches && data?.sport) {
-    const sportKey = data.sport.toLowerCase();
-    dispatch(
+  if (!isReady) return;
+
+  if (data.matches && data.sport) {
+    const matchesArray = Array.isArray(data.matches) ? data.matches : [];
+
+    const filteredMatches = matchesArray.filter((match) => {
+      const matchId = match.eventId;
+      return !locks[matchId];
+    });
+
+    safeDispatch(
       updateMatches({
-        sport: sportKey,
-        data: { data: data.matches },
-      })
+        sport: data.sport,
+        data: { data: filteredMatches },
+      }),
     );
     return;
   }
 
-  // 🔥 CASE 2: Match-specific update (WITH eventId)
-  if (data?.eventId || data?.eventType) {
-    const resolvedEventType = data?.eventType || data?.eventId;
-    const key = `${data.eventId}-${resolvedEventType}`;
-    const sub = activeSubscriptions.matches.get(key) || activeSubscriptions.matches.get(`${data.eventId}`);
+  if (data?.eventId && data?.eventType) {
+    const sport = data.sport || "unknown";
 
-    const rawSport =
-      data.sport ||
-      sub?.sport ||
-      (data.eventId == 4 || resolvedEventType == 4
-        ? "cricket"
-        : data.eventId == 1 || resolvedEventType == 1
-        ? "soccer"
-        : data.eventId == 2 || resolvedEventType == 2
-        ? "tennis"
-        : "");
+    if (data.matches) {
+      const matchesArray = Array.isArray(data.matches) ? data.matches : [];
 
-    const sport = rawSport ? String(rawSport).toLowerCase() : "";
+      const filteredMatches = matchesArray.filter((match) => {
+        const matchId = match.eventId;
+        return !locks[matchId];
+      });
 
-    if (data.matches && sport && sport !== "unknown") {
-      dispatch(
+      safeDispatch(
         updateMatches({
           sport,
-          data: { data: data.matches },
-        })
+          data: { data: filteredMatches },
+        }),
       );
     }
   }
 });
 
-// Market Odds
+// ==================== NEW AURA UNIVERSE LISTENERS ====================
+socket.on("auraEventsUpdate", (data) => {
+  const lockState = safeGetState()?.locks || {};
+  const locks = lockState.matchLocks || {};
+
+  if (data?.events) {
+    const eventsArray = Array.isArray(data.events) ? data.events : [];
+
+    const filteredEvents = eventsArray.filter((event) => {
+      const matchId = event.eventId || event.exEventId || event.id;
+      return !locks[matchId];
+    });
+
+    const sportMap = {
+      4: "cricket",
+      1: "soccer",
+      2: "tennis",
+      7: "horse",
+      4339: "greyhound",
+      8: "kabaddi",
+      7522: "basketball",
+      1002: "basketball",
+    };
+
+    const sportIdStr = String(data.sportId);
+    const sport = sportMap[sportIdStr] || "unknown";
+
+    safeDispatch(
+      updateAuraMatches({
+        sport,
+        data: {
+          data: filteredEvents,
+        },
+      }),
+    );
+
+    // Save to auraSportsEvents in localStorage (matching original site)
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        const raw = window.localStorage.getItem("auraSportsEvents");
+        const parsed = raw ? JSON.parse(raw) : { eventsBySport: {} };
+        parsed.at = Date.now();
+        if (!parsed.eventsBySport) parsed.eventsBySport = {};
+        parsed.eventsBySport[sportIdStr] = filteredEvents;
+        window.localStorage.setItem("auraSportsEvents", JSON.stringify(parsed));
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+});
+
+socket.on("auraOddsUpdate", (data) => {
+  if (data?.oddsData && data?.exEventId) {
+    const id = String(data.exEventId);
+    const isActiveEvent = Array.from(activeSubscriptions.auraOdds.values()).some(
+      (sub) => String(sub?.exEventId) === id,
+    );
+    if (isActiveEvent) {
+      lastLiveOddsPacketAt = Date.now();
+    }
+    clearAuraDeliveryTimersForEvent(id);
+    setAuraOddsCache(id, data.oddsData);
+    safeDispatch(
+      setAuraOddsData({
+        exEventId: id,
+        oddsData: data.oddsData,
+      }),
+    );
+  }
+});
+
+socket.on("auraStateUpdate", (data) => {
+  if (data?.state) {
+    // TODO: jab auraStateSlice bane to yahan dispatch karna
+    // safeDispatch(setAuraStateData({ ...data }));
+  }
+});
+
+// ==================== MARKET ODDS ====================
 socket.on("marketOddsUpdate", (data) => {
-  if (data.marketOdds) {
+  if (Array.isArray(data?.marketOdds)) {
+    lastLiveOddsPacketAt = Date.now();
     const sport = data.sport || "unknown";
-    dispatch(
-      setMarketOddsData({ data: { data: data.marketOdds }, sport })
+
+    const lockState = safeGetState()?.locks || {};
+    const marketLocks = lockState.marketLocks || EMPTY_LOCK_GROUPS;
+
+    const lockedMarketIds = getFlattenedLockIds(marketLocks);
+
+    const filteredMarketOdds = data.marketOdds.filter((market) => {
+      const marketId = String(market.marketId);
+      return !lockedMarketIds.has(marketId);
+    });
+
+    safeDispatch(
+      setMarketOddsData({
+        data: { data: filteredMarketOdds },
+        sport,
+      }),
     );
   }
 });
 
 socket.on("auramarketOddsUpdate", (data) => {
   if (data.auraMarketOdds) {
+    lastLiveOddsPacketAt = Date.now();
     const sport = data.sport || "unknown";
-    dispatch(
-      setMarketOddsData({ data: { data: data.auraMarketOdds }, sport })
+    safeDispatch(
+      setMarketOddsData({ data: { data: data.auraMarketOdds }, sport }),
     );
   }
 });
 
-// Bookmaker
+// ==================== BOOKMAKER ====================
 socket.on("bookmakerUpdate", (data) => {
-  if (data?.bookmakerOdds) {
+  if (data.bookmakerOdds) {
+    lastLiveOddsPacketAt = Date.now();
     const sport = data.sport || "unknown";
-    dispatch(
+    safeDispatch(
       setBookmakerData({
         data: data.bookmakerOdds,
         sport,
-        matchId: data?.matchId || data?.eventId || null,
-      })
+        matchId: data.matchId || null,
+      }),
     );
   }
 });
 
 socket.on("auraBookmakerUpdate", (data) => {
-  if (data?.auraBookmakerOdds) {
+  if (data.auraBookmakerOdds) {
+    lastLiveOddsPacketAt = Date.now();
     const sport = data.sport || "unknown";
-    dispatch(
+    safeDispatch(
       setBookmakerData({
         data: data.auraBookmakerOdds,
         sport,
-        matchId: data?.matchId || data?.eventId || null,
-      })
+        matchId: data.matchId || null,
+      }),
     );
   }
 });
 
-// Fancy Odds
+// ==================== FANCY ODDS ====================
 socket.on("fancyOddsUpdate", (data) => {
-  if (data?.fancyOdds) {
+  if (Array.isArray(data?.fancyOdds)) {
+    lastLiveOddsPacketAt = Date.now();
     const sport = data.sport || "unknown";
-    dispatch(
+
+    const lockState = safeGetState()?.locks || {};
+    const fancyLocks = lockState.fancyLocks || EMPTY_LOCK_GROUPS;
+
+    const lockedSelectionIds = getFlattenedLockIds(fancyLocks);
+
+    const filteredFancyOdds = data.fancyOdds.filter((item) => {
+      const selectionId = String(item.SelectionId);
+      return !lockedSelectionIds.has(selectionId);
+    });
+
+    safeDispatch(
       setFancyOddsData({
-        data: data.fancyOdds,
+        data: filteredFancyOdds,
         sport,
-        matchId: data?.matchId || data?.eventId || null,
-      })
+        matchId: data?.matchId || null,
+      }),
     );
   }
 });
 
-// Horse
+// ==================== HORSE ====================
 socket.on("horseMatchesUpdate", (data) => {
-
   if (activeSubscriptions.horseMatches && data.status && data.data) {
-    dispatch(updateHorseSlice({ horseRaceList: data?.data?.t1 }));
+    safeDispatch(updateHorseSlice({ horseRaceList: data?.data?.t1 }));
   }
 });
 
 socket.on("horseOddsUpdate", (data) => {
-
   if (data.horseOdds?.data?.length > 0) {
     const gmid = data.horseOdds.data[0].gmid;
     if (activeSubscriptions.horseOdds.has(gmid.toString())) {
-      dispatch(updateHorseMarket({ gmid, odds: data.horseOdds.data }));
+      lastLiveOddsPacketAt = Date.now();
+      safeDispatch(updateHorseMarket({ gmid, odds: data.horseOdds.data }));
     }
   }
 });
 
-// Greyhound
+// ==================== GREYHOUND ====================
 socket.on("greyhoundMatchesUpdate", (data) => {
-
-  if (activeSubscriptions.greyhoundMatches && data.status && data.data) {
-    dispatch(updateGreyhoundSlice({ greyhoundRaceList: data?.data?.t1 }));
+  const raceList = data?.data?.t1 || data?.data || data?.t1;
+  if (activeSubscriptions.greyhoundMatches && raceList) {
+    safeDispatch(updateGreyhoundSlice({ greyhoundRaceList: raceList }));
   }
 });
 
 socket.on("greyhoundOddsUpdate", (data) => {
-
   if (data.greyhoundOdds?.data?.length > 0) {
     const gmid = data.greyhoundOdds.data[0].gmid;
     if (activeSubscriptions.greyhoundOdds.has(gmid.toString())) {
-      dispatch(
-        updateGreyhoundMarket({ gmid, odds: data.greyhoundOdds.data })
+      lastLiveOddsPacketAt = Date.now();
+      safeDispatch(
+        updateGreyhoundMarket({ gmid, odds: data.greyhoundOdds.data }),
       );
     }
   }
 });
 
-// Kabaddi
+// ==================== KABADDI ====================
 socket.on("kabaddiMatchesUpdate", (data) => {
-
   if (activeSubscriptions.kabaddiMatches && data?.kabaddiMatches) {
-    dispatch(updatekabaddiSlice({ kabaddiList: data.kabaddiMatches }));
+    safeDispatch(updatekabaddiSlice({ kabaddiList: data.kabaddiMatches }));
   }
 });
 
 socket.on("kabaddiOddsUpdate", (data) => {
-
   if (data?.kabaddiOdds?.length > 0) {
     const gmid = data.kabaddiOdds[0].gmid;
     if (activeSubscriptions.kabaddiOdds.has(gmid.toString())) {
-      dispatch(updateKabaddiMarket({ gmid, odds: data.kabaddiOdds }));
+      lastLiveOddsPacketAt = Date.now();
+      safeDispatch(updateKabaddiMarket({ gmid, odds: data.kabaddiOdds }));
     }
   }
 });
 
-// Diamond Casino
+// ==================== DIAMOND CASINO ====================
 socket.on("diamondCasinoOddsUpdate", (data) => {
+  if (data?.diamondCasinoOdds) {
+    const odds = data.diamondCasinoOdds;
+    const candidateGmids = [
+      data?.gmid,
+      data?.matchId && data.matchId !== "casino" ? data.matchId : null,
+      data?.eventId && data.eventId !== "casino" ? data.eventId : null,
+      odds?.eventId,
+      odds?.gmid,
+      odds?.data?.eventId,
+      odds?.data?.gmid,
+    ]
+      .filter((v) => v !== undefined && v !== null && v !== "")
+      .map(String);
 
-  if (data.diamondCasinoOdds) {
-    dispatch(setDiamondCasinoOddsData({ data: data.diamondCasinoOdds }));
-  } else if (data.message) {
-    dispatch(setDiamondCasinoOddsError(data.message));
+    // Cache latest odds for instantaneous zero-latency table switches
+    candidateGmids.forEach((id) => {
+      casinoOddsMemoryCache.set(id, odds);
+    });
+
+    // Guard: Only process packets for the currently active subscribed diamond casino game
+    if (activeSubscriptions.diamondCasino.size > 0) {
+      const activeKey = String(
+        activeSubscriptions.diamondCasino.keys().next().value || "",
+      );
+      if (activeKey && candidateGmids.length > 0) {
+        const matches = candidateGmids.some(
+          (id) =>
+            id === activeKey ||
+            id.includes(activeKey) ||
+            activeKey.includes(id),
+        );
+        if (!matches) {
+          return;
+        }
+      }
+      lastLiveOddsPacketAt = Date.now();
+    }
+    safeDispatch(setDiamondCasinoOddsData({ data: odds }));
+  } else if (data?.message) {
+    safeDispatch(setDiamondCasinoOddsError(data.message));
   }
 });
 
-// Profile & My Bets
+// ==================== PROFILE & MY BETS ====================
 socket.on("ProfileUpdated", (data) => {
   if (activeSubscriptions.profileRoom && data) {
-    dispatch(setUserData(data));
-    dispatch(updateProfileData(data));
+    safeDispatch(setUserData(data));
+    safeDispatch(updateProfileData(data));
   }
 });
 
@@ -330,109 +781,274 @@ socket.on("myBetsUpdate", (data) => {
     const reversedData = Array.isArray(data?.data)
       ? [...data.data].reverse()
       : [];
-    dispatch(addMatchBetsData(reversedData));
-    dispatch(addBet(reversedData));
+    safeDispatch(addMatchBetsData(reversedData));
+    safeDispatch(addBet(reversedData));
   }
 });
 
-// Global error (optional)
+// Global error
 socket.on("error", (error) => {
   console.error("Socket error:", error.message);
 });
 
 // ==================== RESUBSCRIBE ON RECONNECT ====================
 const resubscribeAll = () => {
-  if (isResubscribing) return;
+  if (isResubscribing || !socket.connected) return;
   isResubscribing = true;
 
+  try {
+    console.log("Resubscribing all active channels...");
 
-
-  activeSubscriptions.matches.forEach((params) => {
-    socket.emit("subscribeToMatches", {
-      eventId: params.eventId,
-      eventType: params.eventType,
+    activeSubscriptions.matches.forEach((params) => {
+      socket.emit("subscribeToMatches", {
+        eventId: params.eventId,
+        eventType: params.eventType,
+      });
     });
-  });
 
-  activeSubscriptions.marketOdds.forEach((params) => {
-    socket.emit("subscribeToMarketOdds", params);
-  });
+    activeSubscriptions.marketOdds.forEach((params) => {
+      socket.emit("subscribeToMarketOdds", params);
+    });
 
-  activeSubscriptions.auraMarketOdds.forEach((params) => {
-    socket.emit("subscribeToAuraMarketOdds", params);
-  });
+    activeSubscriptions.auraMarketOdds.forEach((params) => {
+      socket.emit("subscribeToAuraMarketOdds", params);
+    });
 
-  activeSubscriptions.bookmaker.forEach((params) => {
-    socket.emit("subscribeToBookmaker", params);
-  });
+    activeSubscriptions.bookmaker.forEach((params) => {
+      socket.emit("subscribeToBookmaker", params);
+    });
 
-  activeSubscriptions.auraBookmaker.forEach((params) => {
-    socket.emit("subscribeToAuraBookmaker", params);
-  });
+    activeSubscriptions.auraBookmaker.forEach((params) => {
+      socket.emit("subscribeToAuraBookmaker", params);
+    });
 
-  activeSubscriptions.fancyOdds.forEach((params) => {
-    socket.emit("subscribeToFancyOdds", params);
-  });
+    activeSubscriptions.fancyOdds.forEach((params) => {
+      socket.emit("subscribeToFancyOdds", params);
+    });
 
-  if (activeSubscriptions.horseMatches) socket.emit("subscribeToHourseMatches");
-  activeSubscriptions.horseOdds.forEach((params) =>
-    socket.emit("subscribeToHourseOdds", params)
-  );
+    if (activeSubscriptions.horseMatches) {
+      socket.emit("subscribeToHourseMatches");
+    }
 
-  if (activeSubscriptions.greyhoundMatches)
-    socket.emit("subscribeToGreyhoundMatches");
-  activeSubscriptions.greyhoundOdds.forEach((params) =>
-    socket.emit("subscribeToGreyHoundOdds", params)
-  );
+    activeSubscriptions.horseOdds.forEach((params) =>
+      socket.emit("subscribeToHourseOdds", params),
+    );
 
-  if (activeSubscriptions.kabaddiMatches)
-    socket.emit("subscribeToKabaddiMatches", { eventId: "8" });
-  activeSubscriptions.kabaddiOdds.forEach((params) =>
-    socket.emit("subscribeToKabaddiOdds", params)
-  );
+    if (activeSubscriptions.greyhoundMatches) {
+      socket.emit("subscribeToGreyhoundMatches");
+    }
 
-  activeSubscriptions.diamondCasino.forEach((params) =>
-    socket.emit("subscribeToDiamondCasinoOdds", params)
-  );
+    activeSubscriptions.greyhoundOdds.forEach((params) =>
+      socket.emit("subscribeToGreyHoundOdds", params),
+    );
 
-  if (activeSubscriptions.profileRoom)
-    socket.emit("joinProfileRoom", activeSubscriptions.profileRoom);
-  if (activeSubscriptions.myBets)
-    socket.emit("joinMyBets", activeSubscriptions.myBets);
+    if (activeSubscriptions.kabaddiMatches) {
+      socket.emit("subscribeToKabaddiMatches", { eventId: "8" });
+    }
+
+    activeSubscriptions.kabaddiOdds.forEach((params) =>
+      socket.emit("subscribeToKabaddiOdds", params),
+    );
+
+    activeSubscriptions.diamondCasino.forEach((params) =>
+      socket.emit("subscribeToDiamondCasinoOdds", params),
+    );
+
+    // ---- New Aura Universe ----
+    activeSubscriptions.auraEvents.forEach((params) => {
+      socket.emit("subscribeToAuraEvents", { sportId: params.sportId });
+    });
+
+    activeSubscriptions.auraOdds.forEach((params, key) => {
+      socket.emit("subscribeToAuraOdds", {
+        sportId: params.sportId,
+        exEventId: params.exEventId,
+      });
+      scheduleAuraOddsDeliveryCheck(key);
+    });
+
+    activeSubscriptions.auraState.forEach((params) => {
+      socket.emit("subscribeToAuraState", {
+        sportId: params.sportId,
+        exEventId: params.exEventId,
+      });
+    });
+
+    if (activeSubscriptions.profileRoom) {
+      socket.emit("joinProfileRoom", activeSubscriptions.profileRoom);
+    }
+
+    if (activeSubscriptions.myBets) {
+      socket.emit("joinMyBets", activeSubscriptions.myBets);
+    }
+  } finally {
+    isResubscribing = false;
+  }
 };
 
-// ==================== SUBSCRIPTION FUNCTIONS (Safe & Clean) ====================
+// ==================== SUBSCRIPTION FUNCTIONS ====================
 
+// ---- New Aura Universe ----
+const auraEventRefCounts = new Map();
+
+export const subscribeToAuraEventsData = ({ sportId }) => {
+  const key = String(sportId);
+  const nextCount = (auraEventRefCounts.get(key) || 0) + 1;
+  auraEventRefCounts.set(key, nextCount);
+  activeSubscriptions.auraEvents.set(key, { sportId });
+
+  if (nextCount === 1 && socket.connected) {
+    socket.emit("subscribeToAuraEvents", { sportId });
+  }
+
+  return () => {
+    const remaining = (auraEventRefCounts.get(key) || 1) - 1;
+    if (remaining <= 0) {
+      auraEventRefCounts.delete(key);
+      activeSubscriptions.auraEvents.delete(key);
+      if (socket.connected) {
+        socket.emit("unsubscribeFromAuraEvents", { sportId });
+      }
+    } else {
+      auraEventRefCounts.set(key, remaining);
+    }
+  };
+};
+
+const prefetchedAuraTimers = new Map();
+const MAX_CONCURRENT_AURA_PREFETCHES = 2;
+
+const cleanupPrefetchedAuraKey = (key, emitUnsubscribe = true) => {
+  const entry = prefetchedAuraTimers.get(key);
+  if (!entry) return;
+  clearTimeout(entry.timer);
+  prefetchedAuraTimers.delete(key);
+  if (emitUnsubscribe && !activeSubscriptions.auraOdds.has(key) && socket.connected) {
+    socket.emit("unsubscribeFromAuraOdds", {
+      sportId: entry.sportId,
+      exEventId: entry.exEventId,
+    });
+  }
+};
+
+export const prefetchAuraOddsData = ({ sportId, exEventId }) => {
+  if (!sportId || !exEventId || !socket.connected) return;
+  const key = `${sportId}-${exEventId}`;
+  const idStr = String(exEventId);
+
+  // If already an active viewing subscription, skip
+  if (activeSubscriptions.auraOdds.has(key)) return;
+
+  const existingCache = auraOddsMemoryCache.get(idStr);
+  // If cache is fresh within 15 seconds, memory is already warm
+  if (
+    existingCache &&
+    existingCache._cachedAt &&
+    Date.now() - existingCache._cachedAt < 15000
+  ) {
+    return;
+  }
+
+  // A pending prefetch already owns this event; do not emit duplicate
+  // subscribe packets on repeated mouseenter/hover events.
+  if (prefetchedAuraTimers.has(key)) return;
+
+  // Keep prefetch fan-out bounded so scrolling/list load never floods the socket
+  while (prefetchedAuraTimers.size >= MAX_CONCURRENT_AURA_PREFETCHES) {
+    const oldestKey = prefetchedAuraTimers.keys().next().value;
+    if (!oldestKey) break;
+    cleanupPrefetchedAuraKey(oldestKey, true);
+  }
+
+  // Pre-subscribe: Server pushes real live odds into auraOddsUpdate -> memory cache
+  socket.emit("subscribeToAuraOdds", { sportId, exEventId });
+
+  // Auto-unsubscribe after 10 seconds if user never clicked / navigated
+  const timer = setTimeout(() => {
+    prefetchedAuraTimers.delete(key);
+    if (!activeSubscriptions.auraOdds.has(key) && socket.connected) {
+      socket.emit("unsubscribeFromAuraOdds", { sportId, exEventId });
+    }
+  }, 10000);
+
+  prefetchedAuraTimers.set(key, { sportId, exEventId, timer });
+};
+
+export const subscribeToAuraOddsData = ({ sportId, exEventId }) => {
+  const newKey = `${sportId}-${exEventId}`;
+
+  // Clear this match's prefetch timer if any, and immediately close all other pending prefetches
+  for (const existingPrefetchKey of Array.from(prefetchedAuraTimers.keys())) {
+    if (existingPrefetchKey === newKey) {
+      const entry = prefetchedAuraTimers.get(existingPrefetchKey);
+      if (entry?.timer) clearTimeout(entry.timer);
+      prefetchedAuraTimers.delete(existingPrefetchKey);
+    } else {
+      cleanupPrefetchedAuraKey(existingPrefetchKey, true);
+    }
+  }
+
+  // Enforce single active stream: cleanup any other active aura odds streams
+  activeSubscriptions.auraOdds.forEach((val, existingKey) => {
+    if (existingKey !== newKey) {
+      clearAuraDeliveryTimer(existingKey);
+      activeSubscriptions.auraOdds.delete(existingKey);
+      if (socket.connected) {
+        socket.emit("unsubscribeFromAuraOdds", {
+          sportId: val.sportId,
+          exEventId: val.exEventId,
+        });
+      }
+    }
+  });
+
+  activeSubscriptions.auraOdds.set(newKey, { sportId, exEventId });
+  lastLiveOddsPacketAt = Date.now();
+  scheduleAuraOddsDeliveryCheck(newKey);
+  if (socket.connected) {
+    socket.emit("subscribeToAuraOdds", { sportId, exEventId });
+  } else {
+    socket.connect();
+  }
+
+  return () => {
+    clearAuraDeliveryTimer(newKey);
+    activeSubscriptions.auraOdds.delete(newKey);
+    if (socket.connected) {
+      socket.emit("unsubscribeFromAuraOdds", { sportId, exEventId });
+    }
+  };
+};
+
+export const subscribeToAuraStateData = ({ sportId, exEventId }) => {
+  const key = `${sportId}-${exEventId}`;
+  activeSubscriptions.auraState.set(key, { sportId, exEventId });
+  if (socket.connected) {
+    socket.emit("subscribeToAuraState", { sportId, exEventId });
+  }
+
+  return () => {
+    activeSubscriptions.auraState.delete(key);
+    if (socket.connected) {
+      socket.emit("unsubscribeFromAuraState", { sportId, exEventId });
+    }
+  };
+};
+
+// ---- Existing ----
 export const subscribeToMatchData = ({
   eventId,
   eventType,
-  sport,
+  sport = "unknown",
 }) => {
-  const resolvedEventType = eventType || eventId;
-  const resolvedSport = (
-    sport ||
-    (eventId == 4 || resolvedEventType == 4
-      ? "cricket"
-      : eventId == 1 || resolvedEventType == 1
-      ? "soccer"
-      : eventId == 2 || resolvedEventType == 2
-      ? "tennis"
-      : "")
-  ).toLowerCase();
+  const key = `${eventId}-${eventType}`;
+  activeSubscriptions.matches.set(key, { eventId, eventType, sport });
 
-  const key = `${eventId}-${resolvedEventType}`;
-  activeSubscriptions.matches.set(key, { eventId, eventType: resolvedEventType, sport: resolvedSport });
-  activeSubscriptions.matches.set(`${eventId}`, { eventId, eventType: resolvedEventType, sport: resolvedSport });
-
- 
-  if (resolvedSport && resolvedSport !== "unknown") {
-    dispatch(setMatchesLoading({ sport: resolvedSport }));
-  }
-  socket.emit("subscribeToMatches", { eventId, eventType: resolvedEventType });
+  safeDispatch(setMatchesLoading({ sport }));
+  socket.emit("subscribeToMatches", { eventId, eventType });
 
   return () => {
     activeSubscriptions.matches.delete(key);
-    activeSubscriptions.matches.delete(`${eventId}`);
     socket.emit("unsubscribeFromMatches", { eventId });
   };
 };
@@ -449,8 +1065,10 @@ export const subscribeToMarketOddsData = ({
   const params = { eventId, eventType, competitionId, matchId, marketId };
 
   activeSubscriptions.marketOdds.set(key, { ...params, sport });
-  dispatch(setMarketOddsLoading());
+  safeDispatch(setMarketOddsLoading());
   socket.emit("subscribeToMarketOdds", params);
+
+  fetchMatchLockDetails(matchId);
 
   return () => {
     activeSubscriptions.marketOdds.delete(key);
@@ -470,7 +1088,7 @@ export const subscribeToAuraMarketOddsData = ({
   const params = { eventId, eventType, competitionId, matchId, marketId };
 
   activeSubscriptions.auraMarketOdds.set(key, { ...params, sport });
-  dispatch(setMarketOddsLoading());
+  safeDispatch(setMarketOddsLoading());
   socket.emit("subscribeToAuraMarketOdds", params);
 
   return () => {
@@ -480,13 +1098,13 @@ export const subscribeToAuraMarketOddsData = ({
 };
 
 export const subscribeToLeaveMyBets = () => {
-  const userId = getReduxState()?.user?.userData?._id;
+  const userId = safeGetState()?.user?.userData?._id;
   if (!userId) return;
 
   activeSubscriptions.myBets = null;
-
   socket.emit("leaveMyBets", userId);
-  socket.off("myBetsUpdate");
+  // Keep the module-level myBetsUpdate listener registered. It checks
+  // activeSubscriptions.myBets before dispatching and is shared by the app.
 };
 
 export const subscribeToBookmakerData = ({
@@ -499,7 +1117,7 @@ export const subscribeToBookmakerData = ({
   const params = { eventId, eventType, competitionId };
 
   activeSubscriptions.bookmaker.set(key, { ...params, sport });
-  dispatch(setBookmakerLoading());
+  safeDispatch(setBookmakerLoading());
   socket.emit("subscribeToBookmaker", params);
 
   return () => {
@@ -518,7 +1136,7 @@ export const subscribeToAuraBookmakerData = ({
   const params = { eventId, eventType, competitionId };
 
   activeSubscriptions.auraBookmaker.set(key, { ...params, sport });
-  dispatch(setBookmakerLoading());
+  safeDispatch(setBookmakerLoading());
   socket.emit("subscribeToAuraBookmaker", params);
 
   return () => {
@@ -537,7 +1155,7 @@ export const subscribeToFancyOddsData = ({
   const params = { eventId, eventType, competitionId };
 
   activeSubscriptions.fancyOdds.set(key, { ...params, sport });
-  dispatch(setFancyOddsLoading());
+  safeDispatch(setFancyOddsLoading());
   socket.emit("subscribeToFancyOdds", params);
 
   return () => {
@@ -620,14 +1238,34 @@ export const subscribeToDiamondCasinoOddsData = ({
   eventType,
   gmid,
 }) => {
-  const key = `${gmid}`;
-  activeSubscriptions.diamondCasino.set(key, { eventId, eventType, gmid });
-  dispatch(setDiamondCasinoOddsLoading());
-  socket.emit("subscribeToDiamondCasinoOdds", { eventId, eventType, gmid });
+  const actualId = String(gmid || eventId || "");
+  const key = actualId;
+
+  // Ensure only one active diamond casino subscription exists at any time
+  if (activeSubscriptions.diamondCasino.size > 0) {
+    for (const oldKey of Array.from(activeSubscriptions.diamondCasino.keys())) {
+      if (oldKey !== key) {
+        activeSubscriptions.diamondCasino.delete(oldKey);
+        socket.emit("unsubscribeFromDiamondCasinoOdds", { gmid: oldKey });
+      }
+    }
+  }
+
+  activeSubscriptions.diamondCasino.set(key, {
+    eventId: actualId,
+    eventType: eventType || "casino",
+    gmid: actualId,
+  });
+  safeDispatch(setDiamondCasinoOddsLoading());
+  socket.emit("subscribeToDiamondCasinoOdds", {
+    eventId: actualId,
+    eventType: eventType || "casino",
+    gmid: actualId,
+  });
 
   return () => {
     activeSubscriptions.diamondCasino.delete(key);
-    socket.emit("unsubscribeFromDiamondCasinoOdds", { gmid });
+    socket.emit("unsubscribeFromDiamondCasinoOdds", { gmid: actualId });
   };
 };
 
@@ -642,8 +1280,8 @@ export const subscribeToJoinProfileRoom = (currentUserId) => {
 };
 
 export const subscribeToJoinMyBets = () => {
-  const userId = getReduxState()?.user?.userData?._id;
-  if (!userId) return () => {};
+  const userId = safeGetState()?.user?.userData?._id;
+  if (!userId) return () => { };
 
   activeSubscriptions.myBets = userId;
   socket.emit("joinMyBets", userId);
@@ -654,8 +1292,7 @@ export const subscribeToJoinMyBets = () => {
   };
 };
 
-// ==================== MANUAL UNSUBSCRIBE EXPORTS (Tere project) ====================
-
+// ==================== MANUAL UNSUBSCRIBE EXPORTS ====================
 export const unsubscribeFromMatches = (eventId) => {
   activeSubscriptions.matches.forEach((value, key) => {
     if (value.eventId === eventId) {
@@ -712,72 +1349,83 @@ export const unsubscribeFromDiamondCasinoOdds = (gmid) => {
   socket.emit("unsubscribeFromDiamondCasinoOdds", { gmid });
 };
 
+// ---- New Aura Universe unsubscribes ----
+export const unsubscribeFromAuraEvents = (sportId) => {
+  const key = String(sportId);
+  auraEventRefCounts.delete(key);
+  activeSubscriptions.auraEvents.delete(key);
+  if (socket.connected) {
+    socket.emit("unsubscribeFromAuraEvents", { sportId });
+  }
+};
+
+export const unsubscribeFromAuraOdds = (sportId, exEventId) => {
+  const key = `${sportId}-${exEventId}`;
+  clearAuraDeliveryTimer(key);
+  activeSubscriptions.auraOdds.delete(key);
+  if (socket.connected) {
+    socket.emit("unsubscribeFromAuraOdds", { sportId, exEventId });
+  }
+};
+
+export const unsubscribeFromAuraState = (sportId, exEventId) => {
+  const key = `${sportId}-${exEventId}`;
+  activeSubscriptions.auraState.delete(key);
+  if (socket.connected) {
+    socket.emit("unsubscribeFromAuraState", { sportId, exEventId });
+  }
+};
+
 export const setUserOnline = (userId) =>
   socket.emit("userOnline", { currentUserId: userId });
+
 export const setUserOffline = (userId) =>
   socket.emit("userOffline", { currentUserId: userId });
 
 export const placeBet = async (betData) => {
-  const state = getReduxState();
-  const token = state?.user?.token || localStorage.getItem("token");
-  const userId = localStorage.getItem("userId") || state?.user?.userData?._id;
-  const user = state?.user?.userData;
-
-  // 1. Auth check
-  if (!token || !userId) {
-    toast.error("Please login to place a bet");
-    return Promise.reject(new Error("Not logged in"));
-  }
-
-  // 2. Available Balance & Required Amount Calculation
-  const availableBalance = Number(user?.availableBalance ?? 0);
-  const stake = Number(betData?.stake ?? 0);
-  const odds = Number(betData?.oddsReq ?? betData?.price ?? 1);
-  const isLay = betData?.type?.toLowerCase() === "lay";
-
-  // Calculate actual required amount (Liability for Lay, Stake for Back)
-  const requiredAmount = isLay ? (odds - 1) * stake : stake;
-
-  // 3. Strict Balance Validation
-  if (availableBalance <= 0) {
-    toast.error("Insufficient Balance. Please deposit funds to play.");
-    return Promise.reject(new Error("Zero or negative balance"));
-  }
-  if (availableBalance < requiredAmount) {
-    toast.error(
-      `Insufficient Balance! Required: ₹${requiredAmount.toFixed(2)}, Available: ₹${availableBalance.toFixed(2)}`
-    );
-    return Promise.reject(new Error("Insufficient funds for liability/stake"));
-  }
-
-  // 4. Odds Limits
   const oddsLimits = {
-    cricket: 20,
-    Cricket: 20,
-    soccer: 15,
-    Soccer: 15,
-    tennis: 10,
+    Cricket: 10,
+    Soccer: 10,
     Tennis: 10,
     "Horse Racing": 10,
-    "Greyhound Racing": 10,
   };
+
   const limit = oddsLimits[betData.sportsName];
-  if (limit && (betData.markettype === "Match Odds" || betData.market === "Match Odds") && odds > limit) {
-    toast.error(`Max odds allowed for ${betData.sportsName} is ${limit}`);
-    return Promise.reject(new Error("Odds limit exceeded"));
+
+  if (
+    limit &&
+    String(betData.type).toLowerCase() === "lay" &&
+    betData.markettype == "Match Odds" &&
+    betData.oddsReq > limit
+  ) {
+    // toast.error(`Max odds allowed: ${limit}`);
+    toast.error(
+      createElement(ExposureToast, {
+        type: "error",
+        subtitle: "We do not accept bet above rate 10.00",
+      }),
+    );
+    return;
   }
 
-  // 5. Min / Max Stake Limits
-  const { minBet: globalMin = 50, maxBet: globalMax = 500000, sports } =
-    state?.betSettingsSlice?.betSettings || {};
-  let minBet = globalMin;
-  let maxBet = globalMax;
+  const state = store?.getState();
+  const {
+    minBet: globalMin,
+    maxBet: globalMax,
+    sports,
+  } = state?.betSettingsSlice?.betSettings || {};
+  const { ip, isp } = state?.network || {};
+  const siteId = state?.site?.siteDetails?._id || "";
+  const layout = state?.site?.siteDetails?.layout || "";
+  const UserAvailableBalance = state?.user?.userData?.availableBalance;
+  let minBet = globalMin || 50;
+  let maxBet = globalMax || 500000;
 
   if (betData.sportsName && betData.market) {
     const sport = sports?.find((s) => s.sportName === betData.sportsName);
     if (sport) {
       const market = sport.markets?.find(
-        (m) => m.marketName === betData.market
+        (m) => m.marketName === betData.market,
       );
       if (market) {
         minBet = market.minBet ?? globalMin;
@@ -786,98 +1434,205 @@ export const placeBet = async (betData) => {
     }
   }
 
-  if (!betData?.isCashout) {
-    if (stake < minBet) {
-      toast.error(`Bet amount must be at least ₹${minBet}`);
-      return Promise.reject(new Error(`Bet amount must be at least ₹${minBet}`));
-    }
-    if (stake > maxBet) {
-      toast.error(`Bet amount cannot exceed ₹${maxBet}`);
-      return Promise.reject(new Error(`Bet amount cannot exceed ₹${maxBet}`));
-    }
+  if (UserAvailableBalance < 0) {
+    toast.error("Your balance is negative. Please deposit funds.");
+    return Promise.reject();
   }
 
-  // Socket Emit Payload
-  const siteId = state?.site?.siteDetails?._id || "";
-  const layout = state?.site?.siteDetails?.layout || "asianexchange";
-  const { ip = "0.0.0.0", isp = "ISP" } = state?.network || {};
+  const _id = localStorage?.getItem("userId") || "";
 
-  return new Promise((resolve) => {
-    let resolved = false;
+  const finalLayout =
+    betData?.isCashout === true
+      ? "asianexchange"
+      : window.location.host === "raftaarclub.com" ||
+        window.location.host === "localhost:500"
+        ? "asianexchange"
+        : layout;
 
-    // 8-second safety timeout so UI does not stay in infinite loading
-    const timeoutTimer = setTimeout(() => {
-      if (!resolved) {
-        resolved = true;
-        console.warn("⚠️ [PLACE BET] Socket response timeout after 8s");
-        resolve({
-          success: false,
-          statusCode: 504,
-          message: "Request timed out. Please check your internet or Open Bets tab.",
-        });
-      }
-    }, 8000);
+  // Bet placement is HTTP now. Keep the Socket.IO connection for live odds,
+  // myBetsUpdate, profile updates, and the other realtime subscriptions.
+  const PLACE_BET_API_ENDPOINT = "/api/v1/place";
+  const payload = {
+    ...betData,
+    type: betData?.type?.toLowerCase()?.trim() === "lay" ? "Lay" : "Back",
+    userId: _id,
+    layout: finalLayout,
+    siteId,
+    network: {
+      deviceIp: ip,
+      isp,
+    },
+  };
 
-    socket.emit(
-      "placeBet",
-      {
-        ...betData,
-        type: isLay ? "Lay" : "Back",
-        userId,
-        stake: String(stake),
-        layout,
-        siteId,
-        network: {
-          deviceIp: ip,
-          isp,
-        },
-      },
-      (response) => {
-        if (!resolved) {
-          resolved = true;
-          clearTimeout(timeoutTimer);
-          if (response?.statusCode === 200 || response?.success || response?.status === "success") {
-            dispatch(addLatestBet(betData));
-          }
-          resolve(response);
-        }
-      }
+  try {
+    const { data: response } = await API.post(PLACE_BET_API_ENDPOINT, payload);
+
+    // API may return either an envelope:
+    //   { success: true, bet: { ... } }
+    // or the saved bet document directly:
+    //   { _id, status, stake, marketId, ... }
+    // Normalize both shapes so PlaceBet.jsx receives a consistent response.
+    const betCandidates = [
+      response?.bet,
+      response?.data?.bet,
+      response?.data,
+      response,
+    ];
+
+    const latestBet = betCandidates.find(
+      (candidate) =>
+        candidate &&
+        typeof candidate === "object" &&
+        candidate._id &&
+        (candidate.stake !== undefined || candidate.selectionId !== undefined),
     );
-  });
+
+    const isSuccess =
+      response?.success === true ||
+      Boolean(
+        latestBet?._id && response?.success !== false && !response?.error,
+      );
+
+    if (!isSuccess) {
+      return {
+        ...(response && typeof response === "object" ? response : {}),
+        success: false,
+        message:
+          response?.message || response?.error || "Bet placement failed.",
+      };
+    }
+
+    if (latestBet?._id) {
+      const currentState = safeGetState();
+      const betId = String(latestBet._id);
+      const sameBet = (item) => String(item?._id ?? "") === betId;
+
+      // Market P/L reads state.account.bets. Keep this list updated immediately
+      // from the saved API response instead of waiting for myBetsUpdate.
+      const currentAccountBets = Array.isArray(currentState?.account?.bets)
+        ? currentState.account.bets
+        : [];
+      const nextAccountBets = [
+        latestBet,
+        ...currentAccountBets.filter((item) => !sameBet(item)),
+      ];
+      safeDispatch(addBet(nextAccountBets));
+
+      // Other bet widgets read state.bets. Update that list immediately too.
+      const betsState = currentState?.bets;
+      const currentMatchBets = Array.isArray(betsState)
+        ? betsState
+        : Array.isArray(betsState?.bets)
+          ? betsState.bets
+          : Array.isArray(betsState?.data)
+            ? betsState.data
+            : Array.isArray(betsState?.data?.bets)
+              ? betsState.data.bets
+              : [];
+      const nextMatchBets = [
+        latestBet,
+        ...currentMatchBets.filter((item) => !sameBet(item)),
+      ];
+      safeDispatch(addMatchBetsData(nextMatchBets));
+
+      // Keep the latest-bet selector in sync as well.
+      // safeDispatch(addLatestBet(latestBet));
+    }
+
+    // The sample API document uses balanceAfterBet/exposureAfterBet, while
+    // older API responses may use userData.availableBalance/exposure.
+    const availableBalance =
+      response?.userData?.availableBalance ??
+      response?.data?.userData?.availableBalance ??
+      response?.balanceAfterBet ??
+      latestBet?.balanceAfterBet;
+    const exposure =
+      response?.exposure ??
+      response?.data?.exposure ??
+      response?.exposureAfterBet ??
+      latestBet?.exposureAfterBet;
+
+    return {
+      ...(response && typeof response === "object" ? response : {}),
+      success: true,
+      statusCode: response?.statusCode ?? 200,
+      ...(latestBet ? { bet: latestBet } : {}),
+      userData: {
+        ...(response?.userData || response?.data?.userData || {}),
+        ...(availableBalance !== undefined ? { availableBalance } : {}),
+      },
+      ...(exposure !== undefined ? { exposure } : {}),
+    };
+  } catch (error) {
+    const apiResponse = error?.response?.data;
+    if (apiResponse) return apiResponse;
+
+    console.error("Place bet API error:", error);
+    throw error;
+  }
 };
 
 export const generatePresignedUrlFromS3Url = (s3Url) => {
-  return new Promise((resolve, reject) => {
-    socket.emit("generatePresignedUrlFromS3Url", s3Url, (response) => {
-      if (response.status === "success") resolve(response.data);
-      else reject(new Error(response.message || "Failed"));
+  const urlStr =
+    typeof s3Url === "object" && s3Url !== null ? s3Url?.url : s3Url;
+  if (typeof urlStr !== "string" || !urlStr.trim()) {
+    return Promise.resolve(null);
+  }
+  return new Promise((resolve) => {
+    socket.emit("generatePresignedUrlFromS3Url", urlStr, (response) => {
+      if (response?.status === "success") resolve(response.data);
+      else resolve(null);
     });
   });
 };
 
 export const subscribeToLogin = (payload) => {
   return new Promise((resolve) => {
-    const state = getReduxState();
-    let siteObj = state?.site?.siteDetails;
-    if (!siteObj || !siteObj._id) {
-      try {
-        siteObj = JSON.parse(localStorage.getItem("siteDetails") || "{}");
-      } catch {
-        siteObj = {};
-      }
-    }
     const domainId =
-      payload?.domainid ||
-      payload?.domainId ||
-      siteObj?.siteDetails?.domainDetails?._id ||
-      siteObj?.domainDetails?._id ||
-      siteObj?.domain ||
-      "6a85553b526a2dbeb187f070";
-
+      safeGetState()?.site?.siteDetails?.domainDetails?._id || "";
     socket.emit("login", { ...payload, domainid: domainId }, (response) => {
       resolve(response);
     });
   });
 };
+
+let latestBallByBallState = null;
+
+export function subscribeToBallByBall({ onState, onUpdate, onError } = {}) {
+  // Emit memory-cached state immediately (0ms) so UI renders instantly without waiting for network roundtrip
+  if (latestBallByBallState) {
+    try {
+      onState?.(latestBallByBallState);
+    } catch (e) {
+      console.error("[subscribeToBallByBall cache err]", e);
+    }
+  }
+
+  const handleState = (payload) => {
+    latestBallByBallState = payload;
+    onState?.(payload);
+  };
+  const handleUpdate = (payload) => {
+    if (latestBallByBallState && payload?.round) {
+      latestBallByBallState = {
+        ...latestBallByBallState,
+        round: payload.round,
+      };
+    }
+    onUpdate?.(payload);
+  };
+  const handleError = (payload) => onError?.(payload);
+
+  socket.on("ballbyball:state", handleState);
+  socket.on("ballbyball:update", handleUpdate);
+  socket.on("ballbyball:error", handleError);
+  socket.emit("ballbyball:subscribe");
+
+  return () => {
+    socket.off("ballbyball:state", handleState);
+    socket.off("ballbyball:update", handleUpdate);
+    socket.off("ballbyball:error", handleError);
+  };
+}
 
 export default socket;

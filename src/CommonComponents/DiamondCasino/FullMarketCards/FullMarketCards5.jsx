@@ -2,8 +2,8 @@
 
 import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { handleOpenPlaceBet } from "../../../AsianExchangeSrc/redux/slices/placeBetSlice";
-import PlaceBet from "../../../AuraExchangeSrc/components/PlaceBet";
+import { handleOpenPlaceBet } from "../../../redux/slices/placeBetSlice";
+import PlaceBet from "../../../NprSrc/AuraExchangeSrc/components/PlaceBet";
 
 // Typography
 const FS_LABEL = "text-[12px]";

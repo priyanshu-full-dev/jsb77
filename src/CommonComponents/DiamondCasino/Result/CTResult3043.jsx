@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { AnimatePresence, motion } from "framer-motion";
 import { FaTrophy } from "react-icons/fa";
-import { selectSiteHeaderColor } from "../../../AsianExchangeSrc/utils/helper/commonSelectors";
-import { getDresult } from "../../../AsianExchangeSrc/api";
+import { selectSiteHeaderColor } from "../../../utils/helper/commonSelectors";
+import { getDresult } from "../../../api";
 
 // ---------- helpers ----------
 const colorToken = (suitOrColor) => {

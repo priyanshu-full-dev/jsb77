@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { handleOpenPlaceBet } from "../../../AsianExchangeSrc/redux/slices/placeBetSlice";
-import PlaceBet from "../../../AuraExchangeSrc/components/PlaceBet";
+import { handleOpenPlaceBet } from "../../../redux/slices/placeBetSlice";
+import PlaceBet from "../../../NprSrc/AuraExchangeSrc/components/PlaceBet";
 
 /* Styles */
 const FS_LINE_NUMBERS = "text-base";

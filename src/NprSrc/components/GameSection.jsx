@@ -1,5 +1,7 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
+import { useNavigate } from "react-router-dom";
+import { useLanguage } from "../context/LanguageContext";
 import {
   FaStar,
   FaChevronLeft,
@@ -49,6 +51,8 @@ const categoryIconMap = {
 };
 
 const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
+  const navigate = useNavigate();
+  const { t } = useLanguage();
   const [activeCategory, setActiveCategory] = useState(initialCategory);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [slotProvider, setSlotProvider] = useState("all");
@@ -181,13 +185,9 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
                     }`}
                 >
                   {cat.id === "live" ? (
-                    <>
-                      Live
-                      <br />
-                      Casino
-                    </>
+                    t("Live Casino")
                   ) : (
-                    cat.name
+                    t(cat.name)
                   )}
                 </span>
               </button>
@@ -213,12 +213,26 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
             {(activeCategory === "live" ? nprLiveCasinoProviders : nprSportsProviders).map((prov) => (
               <div
                 key={prov.id}
-                onClick={() =>
+                onClick={() => {
+                  if (activeCategory === "sports") {
+                    if (prov.id === "cricket") {
+                      navigate("/cricket");
+                      return;
+                    }
+                    if (prov.id === "soccer") {
+                      navigate("/soccer");
+                      return;
+                    }
+                    if (prov.id === "tennis") {
+                      navigate("/tennis");
+                      return;
+                    }
+                  }
                   onSelectGame({
                     title: `${prov.name} Lobby`,
                     provider: prov.provider,
-                  })
-                }
+                  });
+                }}
                 className="w-full rounded-[14px] overflow-hidden shadow-xs hover:shadow-md transition duration-200 cursor-pointer active:scale-[0.985] group"
               >
                 <img
@@ -239,7 +253,7 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
                 {/* Row 1: Title + 4 Action Buttons */}
                 <div className="flex items-center justify-between mb-2.5">
                   <h2 className="text-[#1a202c] font-bold text-[18px]">
-                    Slots
+                    {t("Slots")}
                   </h2>
                   <div className="flex items-center gap-1.5 sm:gap-2">
                     {/* 1. All/Grid View */}
@@ -308,7 +322,7 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search slot games..."
+                      placeholder={t("Search slot games...")}
                       className="w-full h-8 px-3 rounded-lg border border-blue-200 text-xs focus:outline-none focus:border-[#0047ba]"
                       autoFocus
                     />
@@ -325,7 +339,7 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
                       : "bg-white text-[#0047ba] hover:bg-blue-50/50"
                       }`}
                   >
-                    All
+                    {t("All")}
                   </button>
                   {nprSlotProviders.slice(1).map((p) => {
                     const isSelected = slotProvider === p.id;
@@ -365,7 +379,7 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
                       : "bg-white border-[1.5px] border-[#0047ba] text-[#0047ba]"
                       }`}
                   >
-                    All
+                    {t("All")}
                   </button>
                   <button
                     type="button"
@@ -375,7 +389,7 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
                       : "bg-white border-[1.5px] border-[#0047ba] text-[#0047ba]"
                       }`}
                   >
-                    3 Reels
+                    {t("3 Reels")}
                   </button>
                   <button
                     type="button"
@@ -385,7 +399,7 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
                       : "bg-white border-[1.5px] border-[#0047ba] text-[#0047ba]"
                       }`}
                   >
-                    5 Reels
+                    {t("5 Reels")}
                   </button>
                   <button
                     type="button"
@@ -396,7 +410,7 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
                       }`}
                   >
                     <span className="text-[12px] leading-none">🌸</span>
-                    <span className="font-semibold text-[11px]">Pink</span>
+                    <span className="font-semibold text-[11px]">{t("Pink")}</span>
                   </button>
                   <div className="text-[#0047ba] shrink-0 ml-auto pr-0.5 flex items-center">
                     <svg className="w-[18px] h-[18px] text-[#0047ba]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.8}>
@@ -413,7 +427,7 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
                 {/* Row 1: Title + 4 Action Buttons */}
                 <div className="flex items-center justify-between mb-2.5">
                   <h2 className="text-[#1a202c] font-bold text-[18px]">
-                    Fish
+                    {t("Fish")}
                   </h2>
                   <div className="flex items-center gap-1.5 sm:gap-2">
                     {/* 1. All/Grid View */}
@@ -480,7 +494,7 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
                   <div className="mb-2.5">
                     <input
                       type="text"
-                      placeholder="Search fish games..."
+                      placeholder={t("Search fish games...")}
                       value={fishSearch}
                       onChange={(e) => setFishSearch(e.target.value)}
                       className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 focus:outline-hidden focus:border-[#0047ba]"
@@ -503,7 +517,7 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
                           }`}
                       >
                         {prov.id === "all" ? (
-                          <span>All</span>
+                          <span>{t("All")}</span>
                         ) : prov.logo ? (
                           <img
                             src={prov.logo}
@@ -530,7 +544,7 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
                       : "bg-white border-[1.5px] border-[#0047ba] text-[#0047ba]"
                       }`}
                   >
-                    All
+                    {t("All")}
                   </button>
                   <button
                     type="button"
@@ -540,7 +554,7 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
                       : "bg-white border-[1.5px] border-[#0047ba] text-[#0047ba]"
                       }`}
                   >
-                    Fishing Machine
+                    {t("Fishing Machine")}
                   </button>
                   <div className="text-[#0047ba] shrink-0 ml-auto pr-0.5 flex items-center">
                     <svg className="w-[18px] h-[18px] text-[#0047ba]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.8}>
@@ -557,7 +571,7 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
                 {/* Row 1: Title + 4 Action Buttons */}
                 <div className="flex items-center justify-between mb-2.5">
                   <h2 className="text-[#1a202c] font-bold text-[18px]">
-                    Poker
+                    {t("Poker")}
                   </h2>
                   <div className="flex items-center gap-1.5 sm:gap-2">
                     {/* 1. All/Grid View */}
@@ -624,7 +638,7 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
                   <div className="mb-2.5">
                     <input
                       type="text"
-                      placeholder="Search poker games..."
+                      placeholder={t("Search poker games...")}
                       value={pokerSearch}
                       onChange={(e) => setPokerSearch(e.target.value)}
                       className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 focus:outline-hidden focus:border-[#0047ba]"
@@ -647,7 +661,7 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
                           }`}
                       >
                         {prov.id === "all" ? (
-                          <span>All</span>
+                          <span>{t("All")}</span>
                         ) : prov.logo ? (
                           <img
                             src={prov.logo}
@@ -674,7 +688,7 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
                       : "bg-white border-[1.5px] border-[#0047ba] text-[#0047ba]"
                       }`}
                   >
-                    All
+                    {t("All")}
                   </button>
                   <button
                     type="button"
@@ -684,7 +698,7 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
                       : "bg-white border-[1.5px] border-[#0047ba] text-[#0047ba]"
                       }`}
                   >
-                    Multiplayer game
+                    {t("Multiplayer game")}
                   </button>
                   <div className="text-[#0047ba] shrink-0 ml-auto pr-0.5 flex items-center">
                     <svg className="w-[18px] h-[18px] text-[#0047ba]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.8}>

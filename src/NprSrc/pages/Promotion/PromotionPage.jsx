@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { FaChevronLeft, FaTimes, FaGift, FaCheckCircle, FaCoins } from "react-icons/fa";
+import { useLanguage } from "../../context/LanguageContext";
 
 const categories = ["All", "Deposit", "Sports", "Live Casino", "Slots"];
 
@@ -40,6 +41,7 @@ const promotionData = [
 const PromotionPage = () => {
   const navigate = useNavigate();
   const { onOpenDeposit, onOpenRegister } = useOutletContext() || {};
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("All");
   const [selectedPromo, setSelectedPromo] = useState(null);
 
@@ -62,7 +64,7 @@ const PromotionPage = () => {
         </button>
 
         <h1 className="text-white font-bold text-[17px] tracking-tight absolute left-1/2 -translate-x-1/2">
-          Promotion
+          {t("Promotion")}
         </h1>
 
         <div className="w-10" />
@@ -82,7 +84,7 @@ const PromotionPage = () => {
                   : "text-[#8898aa] hover:text-[#495057]"
               }`}
             >
-              {cat}
+              {t(cat)}
               {isActive && (
                 <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#0045b8] rounded-full" />
               )}
@@ -184,7 +186,7 @@ const PromotionPage = () => {
               <div className="grid grid-cols-2 gap-2 bg-[#f4f7fb] p-3 rounded-xl border border-gray-100 text-xs">
                 <div>
                   <span className="text-[10.5px] text-gray-400 font-bold block uppercase">
-                    Bonus Value
+                    {t("Bonus Value")}
                   </span>
                   <span className="font-black text-[#0045b8]">
                     {selectedPromo.bonusAmount}
@@ -192,7 +194,7 @@ const PromotionPage = () => {
                 </div>
                 <div>
                   <span className="text-[10.5px] text-gray-400 font-bold block uppercase">
-                    Min Deposit
+                    {t("Min Deposit")}
                   </span>
                   <span className="font-bold text-gray-800">
                     {selectedPromo.minDeposit}
@@ -200,7 +202,7 @@ const PromotionPage = () => {
                 </div>
                 <div>
                   <span className="text-[10.5px] text-gray-400 font-bold block uppercase">
-                    Rollover
+                    {t("Rollover")}
                   </span>
                   <span className="font-bold text-gray-800">
                     {selectedPromo.turnover}
@@ -208,10 +210,10 @@ const PromotionPage = () => {
                 </div>
                 <div>
                   <span className="text-[10.5px] text-gray-400 font-bold block uppercase">
-                    Status
+                    {t("Status")}
                   </span>
                   <span className="font-bold text-emerald-600 flex items-center gap-1">
-                    <FaCheckCircle size={10} /> Active
+                    <FaCheckCircle size={10} /> {t("Active")}
                   </span>
                 </div>
               </div>
@@ -225,13 +227,13 @@ const PromotionPage = () => {
                   }}
                   className="flex-1 py-2.5 rounded-lg bg-gradient-to-b from-[#1872f2] via-[#0356e0] to-[#062d75] text-white font-bold text-xs uppercase tracking-wider shadow-md hover:brightness-105 active:scale-98 transition flex items-center justify-center gap-1.5"
                 >
-                  <FaCoins size={12} /> Deposit & Claim
+                  <FaCoins size={12} /> {t("Deposit & Claim")}
                 </button>
                 <button
                   onClick={() => setSelectedPromo(null)}
                   className="px-4 py-2.5 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold text-xs transition"
                 >
-                  Close
+                  {t("Close")}
                 </button>
               </div>
             </div>

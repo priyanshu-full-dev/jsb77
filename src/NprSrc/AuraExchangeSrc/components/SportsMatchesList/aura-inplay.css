@@ -1,0 +1,51 @@
+.aura-inplay {
+    color: #508d0e;
+    /* margin-left: 10px; */
+    transition: .4s ease-in;
+    animation: 1s infinite auraanimationinplay;
+    font-weight: 700;
+    font-size: 12px !important;
+}
+
+@keyframes auraanimationinplay {
+    0% {
+        transform: scale(1);
+        color: green
+    }
+
+    50% {
+        transform: scale(1.01);
+        color: red
+    }
+
+    100% {
+        transform: scale(1);
+        color: green
+    }
+}
+
+.aura-market-status {
+    font-weight: 700;
+    color: #fff;
+    font-style: italic;
+    border-radius: 4px;
+}
+.aura-bm {
+    background: linear-gradient(-180deg,#315195,#14213d);
+    font-weight: 700;
+    padding: 0 7px 0 2px;
+    letter-spacing: -2px;
+    /* margin-left: .22rem !important; */
+}
+.aura-f {
+    background: linear-gradient(180deg,#0a92a5 15%,#076875 100%);
+    font-weight: 700;
+    padding: 0 5px;
+    /* margin-left: .22rem !important; */
+}
+.aura-s {
+    background: linear-gradient(180deg,#f26d1c 15%,#d14100 100%);
+    font-weight: 700;
+    padding: 0 5px;
+    /* margin-left: .22rem !important; */
+}

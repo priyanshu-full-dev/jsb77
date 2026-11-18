@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { IoLockClosed } from "react-icons/io5";
-import { handleOpenPlaceBet } from "../../../AsianExchangeSrc/redux/slices/placeBetSlice";
-import PlaceBet from "../../../AuraExchangeSrc/components/PlaceBet";
+import { handleOpenPlaceBet } from "../../../redux/slices/placeBetSlice";
+import PlaceBet from "../../../NprSrc/AuraExchangeSrc/components/PlaceBet";
 
 // Tabs
 const TABS = [

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import CT3058CasinoIframe from "../CasinoIframe/CT3058";
 import FullMarketCards from "../FullMarketCards/FullMarketCards";
 import Lucky7 from "../Result/Lucky7";
-import CT3059CasinoIframe from "../CasinoIframe/CT3059.JSX";
+import CT3059CasinoIframe from "../CasinoIframe/CT3059";
 import FullMarketCards3059 from "../FullMarketCards/FullMarketCard3059";
 import Lucky7b from "../Result/Lucky7b";
 

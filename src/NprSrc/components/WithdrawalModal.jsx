@@ -1,6 +1,7 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
 import { FaTimes, FaMoneyBillWave, FaUniversity, FaWallet, FaCheckCircle } from "react-icons/fa";
+import { useLanguage } from "../context/LanguageContext";
 
 const withdrawalMethods = [
   { id: "esewa", name: "eSewa", icon: FaWallet, color: "bg-[#60bb46] text-white", fee: "0% Fee" },
@@ -9,6 +10,7 @@ const withdrawalMethods = [
 ];
 
 const WithdrawalModal = ({ isOpen, onClose, balance = "0.00" }) => {
+  const { t } = useLanguage();
   const [method, setMethod] = useState("esewa");
   const [account, setAccount] = useState("");
   const [amount, setAmount] = useState("");
@@ -37,7 +39,7 @@ const WithdrawalModal = ({ isOpen, onClose, balance = "0.00" }) => {
         <div className="bg-[#0045b8] px-4 py-3.5 flex items-center justify-between text-white">
           <div className="flex items-center gap-2">
             <FaMoneyBillWave className="text-yellow-300" size={18} />
-            <h3 className="font-bold text-base tracking-tight">Withdrawal</h3>
+            <h3 className="font-bold text-base tracking-tight">{t("Withdrawal")}</h3>
           </div>
           <button
             onClick={onClose}

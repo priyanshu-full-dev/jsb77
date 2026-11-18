@@ -3,11 +3,11 @@ import { useParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { subscribeToDiamondCasinoOddsData, socket } from "../../socketClient";
-import CasinoHeader from "../../AuraExchangeSrc/components/Header/CasinoHeader";
+import CasinoHeader from "../../NprSrc/AuraExchangeSrc/components/Header/CasinoHeader";
 import {
   selectSite,
   selectSiteHeaderColor,
-} from "../../AsianExchangeSrc/utils/helper/commonSelectors";
+} from "../../utils/helper/commonSelectors";
 
 const casinoComponents = {
   3030: lazy(() => import("./CasinoFullMarket/CT3030")),

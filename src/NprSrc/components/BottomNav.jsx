@@ -1,7 +1,9 @@
 import PropTypes from "prop-types";
 import { NavLink, useLocation } from "react-router-dom";
+import { useLanguage } from "../context/LanguageContext";
 
 const BottomNav = ({ onOpenInvite, onOpenDeposit, onOpenMembers }) => {
+  const { t } = useLanguage();
   const location = useLocation();
   const isHome =
     location.pathname === "/" ||
@@ -23,7 +25,7 @@ const BottomNav = ({ onOpenInvite, onOpenDeposit, onOpenMembers }) => {
           draggable={false}
         />
         <span className="text-[11.5px] sm:text-[12px] font-bold leading-none tracking-tight">
-          Home
+          {t("Home")}
         </span>
         {/* Active Pill Indicator under Home (absolute so it never shifts the icon or text) */}
         {isHome && (
@@ -43,7 +45,7 @@ const BottomNav = ({ onOpenInvite, onOpenDeposit, onOpenMembers }) => {
           draggable={false}
         />
         <span className="text-[11.5px] sm:text-[12px] font-bold leading-none tracking-tight">
-          Promotion
+          {t("Promotion")}
         </span>
         {/* Active Pill Indicator under Promotion (absolute so it never shifts the icon or text) */}
         {isPromotion && (
@@ -66,7 +68,7 @@ const BottomNav = ({ onOpenInvite, onOpenDeposit, onOpenMembers }) => {
           />
         </button>
         <span className="text-[11.5px] sm:text-[12px] font-bold text-[#cce0ff] mt-0.5 leading-none tracking-tight">
-          Invite
+          {t("Invite")}
         </span>
       </div>
 
@@ -84,7 +86,7 @@ const BottomNav = ({ onOpenInvite, onOpenDeposit, onOpenMembers }) => {
           />
         </div>
         <span className="text-[11.5px] sm:text-[12px] font-bold leading-none tracking-tight">
-          Deposit
+          {t("Deposit")}
         </span>
       </button>
 
@@ -100,7 +102,7 @@ const BottomNav = ({ onOpenInvite, onOpenDeposit, onOpenMembers }) => {
           draggable={false}
         />
         <span className="text-[11.5px] sm:text-[12px] font-bold leading-none tracking-tight">
-          Members
+          {t("Members")}
         </span>
       </button>
     </nav>

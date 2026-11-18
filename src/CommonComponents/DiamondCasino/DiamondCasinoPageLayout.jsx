@@ -1,6 +1,6 @@
 import { Outlet } from 'react-router-dom'
-import Header from "../../AuraExchangeSrc/components/Header"
-import MobileBottomNavbar from '../../AuraExchangeSrc/components/Header/MobileBottomNavbar'
+import Header from "../../NprSrc/AuraExchangeSrc/components/Header"
+import MobileBottomNavbar from '../../NprSrc/AuraExchangeSrc/components/Header/MobileBottomNavbar'
 
 function DiamondCasinoPageLayout() {
 

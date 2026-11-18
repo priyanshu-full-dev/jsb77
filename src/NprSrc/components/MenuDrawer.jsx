@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "../context/LanguageContext";
 import {
   FaTimes,
   FaGift,
@@ -26,6 +27,7 @@ const categories = [
 
 const MenuDrawer = ({ isOpen, onClose, onSelectCategory, user, onLogout }) => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   // Prevent background page from scrolling when drawer is open
   useEffect(() => {
     if (isOpen) {
@@ -89,7 +91,7 @@ const MenuDrawer = ({ isOpen, onClose, onSelectCategory, user, onLogout }) => {
                 alt={cat.name}
                 className="w-[30px] h-[30px] sm:w-[32px] sm:h-[32px] object-contain pointer-events-none group-hover:scale-110 transition duration-200 shrink-0"
               />
-              <span className="font-bold text-[16px] sm:text-[17px] tracking-wide">{cat.name}</span>
+              <span className="font-bold text-[16px] sm:text-[17px] tracking-wide">{t(cat.name)}</span>
             </button>
           ))}
         </div>
@@ -105,7 +107,7 @@ const MenuDrawer = ({ isOpen, onClose, onSelectCategory, user, onLogout }) => {
             className="w-full h-12 rounded-[14px] bg-gradient-to-r from-[#ffaa00] via-[#f58400] to-[#e65c00] flex items-center gap-3.5 px-4 text-white font-bold text-[15px] shadow-[0_3px_8px_rgba(245,132,0,0.35)] transition hover:opacity-95 active:scale-[0.98] cursor-pointer"
           >
             <FaGift size={22} className="text-white shrink-0 drop-shadow-xs" />
-            <span>Promotion</span>
+            <span>{t("Promotion")}</span>
           </button>
 
           {/* 2. Reward Center (Magenta/Rose to Purple) */}
@@ -117,7 +119,7 @@ const MenuDrawer = ({ isOpen, onClose, onSelectCategory, user, onLogout }) => {
             className="w-full h-12 rounded-[14px] bg-gradient-to-r from-[#e63966] via-[#ba3694] to-[#6f3bb2] flex items-center gap-3.5 px-4 text-white font-bold text-[15px] shadow-[0_3px_8px_rgba(186,54,148,0.35)] transition hover:opacity-95 active:scale-[0.98] cursor-pointer"
           >
             <FaAward size={22} className="text-white shrink-0 drop-shadow-xs" />
-            <span>Reward Center</span>
+            <span>{t("Reward Center")}</span>
           </button>
 
           {/* 3. Invite (Blue-Violet to Purple) */}
@@ -129,7 +131,7 @@ const MenuDrawer = ({ isOpen, onClose, onSelectCategory, user, onLogout }) => {
             className="w-full h-12 rounded-[14px] bg-gradient-to-r from-[#3f64f5] via-[#5b4fe8] to-[#8042df] flex items-center gap-3.5 px-4 text-white font-bold text-[15px] shadow-[0_3px_8px_rgba(91,79,232,0.35)] transition hover:opacity-95 active:scale-[0.98] cursor-pointer"
           >
             <FaUsers size={22} className="text-white shrink-0 drop-shadow-xs" />
-            <span>Invite</span>
+            <span>{t("Invite")}</span>
           </button>
 
           {/* 4. Betting Record (Vibrant Red to Crimson) */}
@@ -141,7 +143,7 @@ const MenuDrawer = ({ isOpen, onClose, onSelectCategory, user, onLogout }) => {
             className="w-full h-12 rounded-[14px] bg-gradient-to-r from-[#e61924] via-[#bf0f19] to-[#80070a] flex items-center gap-3.5 px-4 text-white font-bold text-[15px] shadow-[0_3px_8px_rgba(230,25,36,0.35)] transition hover:opacity-95 active:scale-[0.98] cursor-pointer"
           >
             <FaCalendarAlt size={20} className="text-white shrink-0 drop-shadow-xs" />
-            <span>Betting Record</span>
+            <span>{t("Betting Record")}</span>
           </button>
 
           {/* 5. Beginner Guide (Vibrant Cyan to Deep Blue) */}
@@ -153,7 +155,7 @@ const MenuDrawer = ({ isOpen, onClose, onSelectCategory, user, onLogout }) => {
             className="w-full h-12 rounded-[14px] bg-gradient-to-r from-[#00b4d8] via-[#0084d1] to-[#0051b8] flex items-center gap-3.5 px-4 text-white font-bold text-[15px] shadow-[0_3px_8px_rgba(0,180,216,0.35)] transition hover:opacity-95 active:scale-[0.98]"
           >
             <FaAndroid size={22} className="text-white shrink-0 drop-shadow-xs" />
-            <span>Beginner Guide</span>
+            <span>{t("Beginner Guide")}</span>
           </button>
         </div>
 
@@ -167,7 +169,7 @@ const MenuDrawer = ({ isOpen, onClose, onSelectCategory, user, onLogout }) => {
             className="w-full h-10 rounded-full bg-[#061d4b] hover:bg-[#0c2b69] border border-[#0f347d] flex items-center gap-3 px-4 text-white font-bold text-[13.5px] shadow-sm transition active:scale-[0.98]"
           >
             <FaHeadset size={16} className="text-white shrink-0" />
-            <span>Customer Service</span>
+            <span>{t("Customer Service")}</span>
           </a>
 
           {/* FACEBOOK */}
@@ -212,7 +214,7 @@ const MenuDrawer = ({ isOpen, onClose, onSelectCategory, user, onLogout }) => {
             className="w-full h-10 rounded-full bg-[#061d4b] hover:bg-[#0c2b69] border border-[#0f347d] flex items-center gap-3 px-4 text-white font-bold text-[13.5px] shadow-sm transition active:scale-[0.98]"
           >
             <FaMobileAlt size={16} className="text-white shrink-0" />
-            <span>App</span>
+            <span>{t("App")}</span>
           </button>
 
           {/* Logout Button if user is logged in */}
@@ -224,7 +226,7 @@ const MenuDrawer = ({ isOpen, onClose, onSelectCategory, user, onLogout }) => {
               }}
               className="w-full h-10 rounded-full bg-red-600/20 hover:bg-red-600/30 border border-red-500/40 flex items-center justify-center text-red-200 font-bold text-[13.5px] shadow-sm transition active:scale-[0.98] mt-2 cursor-pointer"
             >
-              Logout ({user.username || "prish07"})
+              {t("Logout")} ({user.username || "prish07"})
             </button>
           )}
         </div>

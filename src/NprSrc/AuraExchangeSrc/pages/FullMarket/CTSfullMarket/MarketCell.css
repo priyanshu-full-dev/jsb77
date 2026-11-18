@@ -1,0 +1,47 @@
+.market-cell {
+    transition: background-color 0.2s ease;
+    color: #212529;
+    font-family: Tahoma, Helvetica, sans-serif;
+}
+
+.market-cell span {
+    color: #212529;
+    font-family: Tahoma, Helvetica, sans-serif;
+}
+
+.market-cell.market-cell-active-back span,
+.market-cell.market-cell-active-lay span {
+    color: #ffffff !important;
+}
+
+.market-cell .market-value-update {
+    animation: marketValueUpdate 0.16s ease-out;
+}
+
+@keyframes marketValueUpdate {
+    from {
+        opacity: 0.45;
+        transform: translateY(-2px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Background flash when odds/size changes */
+.market-cell.market-cell-flash-back {
+    background-color: #FFF2B2 !important;
+    transition: none !important;
+}
+
+.market-cell.market-cell-flash-lay {
+    background-color: #D2E9FF !important;
+    transition: none !important;
+}
+
+.market-cell.market-cell-value-flash {
+    background-color: #FFF2B2 !important;
+    transition: none !important;
+}

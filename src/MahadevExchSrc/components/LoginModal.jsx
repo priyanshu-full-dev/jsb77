@@ -6,7 +6,6 @@ import {
   IoCloseSharp,
   IoChevronBackSharp,
 } from "react-icons/io5";
-import { subscribeToLogin } from "../../socketClient";
 import { toast } from "react-toastify";
 import { setAccountType } from "../../redux/slices/accountSlice";
 import { useDispatch, useSelector } from "react-redux";
@@ -84,12 +83,16 @@ const LoginModal = ({ onClose }) => {
     setLoading((prev) => ({ ...prev, real: true }));
 
     try {
-      const response = await subscribeToLogin(formData);
+      const response = await login(formData);
+      const resData = response?.data || response;
 
-      if (response.success) {
-        const { token, userdata } = response;
+      if (response?.success && (resData?.token || resData?.success)) {
+        const token = resData.token;
+        const userdata = resData.userdata || resData.data?.userdata;
 
-        localStorage.setItem("userId", userdata?._id);
+        if (token) localStorage.setItem("token", token);
+        if (userdata?._id) localStorage.setItem("userId", userdata?._id);
+        if (userdata) localStorage.setItem("userdata", JSON.stringify(userdata));
 
         dispatch(
           loginSuccess({
@@ -105,13 +108,13 @@ const LoginModal = ({ onClose }) => {
           }),
         );
 
-        toast.success(response.message || t("Login successful", "লগইন সফল হয়েছে"));
+        toast.success(resData?.message || t("Login successful", "লগইন সফল হয়েছে"));
 
         onClose();
 
-        await createLoginRecord();
+        await createLoginRecord({ userName: formData.userName }).catch(() => {});
       } else {
-        toast.error(response.message || "invalid credentials");
+        toast.error(resData?.message || response?.data?.message || "Invalid credentials");
       }
     } catch (error) {
       console.error("Login API error:", error);

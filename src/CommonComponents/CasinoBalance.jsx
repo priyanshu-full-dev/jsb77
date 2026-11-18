@@ -4,15 +4,15 @@ import {
   get1chipValue,
   launcherUrl,
   updateCasinoBalance,
-} from "../AsianExchangeSrc/api";
+} from "../api";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { isMobile } from "react-device-detect";
 import {
   updateAvailableBalance,
   updateUserCasinoBalance,
-} from "../AsianExchangeSrc/redux/slices/userSlice";
-import { selectSite } from "../AsianExchangeSrc/utils/helper/commonSelectors";
+} from "../redux/slices/userSlice";
+import { selectSite } from "../utils/helper/commonSelectors";
 
 const CasinoBalance = ({ onClose, title, gameId, gameName, isLoggedIn }) => {
   const [amount, setAmount] = useState(0);

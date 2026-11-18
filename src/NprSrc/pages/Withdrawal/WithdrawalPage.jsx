@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
+import { useLanguage } from "../../context/LanguageContext";
 import {
   FaChevronLeft,
   FaChevronRight,
@@ -53,7 +54,8 @@ const popularEwallets = ["eSewa", "Khalti", "IME Pay", "Prabhu Pay"];
 const WithdrawalPage = () => {
   const navigate = useNavigate();
   const context = useOutletContext() || {};
-  const { user } = context;
+  const { user, onRefreshBalance } = context;
+  const { t } = useLanguage();
 
   const [activeTab, setActiveTab] = useState("bank");
   const [amount, setAmount] = useState("");
@@ -77,12 +79,18 @@ const WithdrawalPage = () => {
     setTimeout(() => setToastMessage(""), 2200);
   };
 
-  const handleRefreshBalance = () => {
+  const handleRefreshBalance = async () => {
     setIsRefreshing(true);
-    setTimeout(() => {
+    try {
+      if (onRefreshBalance) {
+        await onRefreshBalance();
+      }
+      showToast(t("Balance refreshed!"));
+    } catch {
+      showToast(t("Balance refreshed!"));
+    } finally {
       setIsRefreshing(false);
-      showToast("Balance refreshed!");
-    }, 600);
+    }
   };
 
   const handleAddAccount = (e) => {
@@ -145,7 +153,7 @@ const WithdrawalPage = () => {
         >
           <FaChevronLeft size={18} />
         </button>
-        <h1 className="font-bold text-[17px] tracking-tight">Withdrawal</h1>
+        <h1 className="font-bold text-[17px] tracking-tight">{t("Withdrawal")}</h1>
         <button
           onClick={() => showToast("Opening withdrawal records...")}
           className="w-8 h-8 flex items-center justify-center text-white hover:opacity-80 active:scale-95 transition cursor-pointer"
@@ -171,9 +179,8 @@ const WithdrawalPage = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-2.5 flex items-center gap-2 relative transition cursor-pointer ${
-                  isActive ? "text-[#e53935]" : "text-[#475569] hover:text-[#1e293b]"
-                }`}
+                className={`py-2.5 flex items-center gap-2 relative transition cursor-pointer ${isActive ? "text-[#e53935]" : "text-[#475569] hover:text-[#1e293b]"
+                  }`}
               >
                 {/* Method Icon Circle */}
                 <div
@@ -190,15 +197,7 @@ const WithdrawalPage = () => {
 
                 {/* Tab Label */}
                 <span className={`text-[13px] leading-tight text-left ${isActive ? "font-bold" : "font-semibold"}`}>
-                  {tab.label === "Bank Accounts" ? (
-                    <>
-                      Bank
-                      <br />
-                      Accounts
-                    </>
-                  ) : (
-                    tab.label
-                  )}
+                  {t(tab.label)}
                 </span>
 
                 {/* Active Red Bottom Underline Bar */}
@@ -224,8 +223,8 @@ const WithdrawalPage = () => {
             {activeTab === "bank"
               ? `My bank accounts(${linkedBanks.filter((b) => b.type === "bank").length}/3)`
               : activeTab === "ewallet"
-              ? `My e-wallets(${linkedBanks.filter((b) => b.type === "ewallet").length}/3)`
-              : `My crypto wallets(${linkedBanks.filter((b) => b.type === "crypto").length}/3)`}
+                ? `My e-wallets(${linkedBanks.filter((b) => b.type === "ewallet").length}/3)`
+                : `My crypto wallets(${linkedBanks.filter((b) => b.type === "crypto").length}/3)`}
           </span>
         </div>
 
@@ -263,7 +262,7 @@ const WithdrawalPage = () => {
               />
             </div>
             <p className="text-[#94a3b8] text-[13.5px] font-medium text-center mt-1">
-              No bank account linked yet
+              {t("No bank account linked yet")}
             </p>
           </div>
         )}
@@ -282,13 +281,13 @@ const WithdrawalPage = () => {
 
       {/* 4. Withdrawal Information & Balances */}
       <div className="px-4 py-2 space-y-1 text-[12px] text-[#94a3b8]">
-        <p>Withdrawal time: 24 hours</p>
-        <p>Daily withdrawal 2 (Times), Remaining withdrawal 2 (Times)</p>
+        <p>{t("Withdrawal time: 24 hours")}</p>
+        <p>{t("Daily withdrawal 2 (Times), Remaining withdrawal 2 (Times)")}</p>
         <p className="text-[#0f172a] font-bold text-[13px] pt-0.5">
-          Main Wallet :Rs {user?.balance || "0.00"}
+          {t("Main Wallet")} :Rs {user?.balance || "0.00"}
         </p>
         <p className="text-[#0f172a] font-bold text-[13px]">
-          Available Amount : Rs {user?.balance || "0.00"}
+          {t("Available Amount")} : Rs {user?.balance || "0.00"}
         </p>
 
         {/* Refresh Balance Button */}
@@ -301,7 +300,7 @@ const WithdrawalPage = () => {
             <div className={`w-5 h-5 rounded-full bg-[#1d4ed8] text-white flex items-center justify-center ${isRefreshing ? "animate-spin" : ""}`}>
               <FaSyncAlt size={10} />
             </div>
-            <span>Refresh Balance</span>
+            <span>{t("Refresh Balance")}</span>
           </button>
         </div>
       </div>
@@ -310,7 +309,7 @@ const WithdrawalPage = () => {
       <form onSubmit={handleSubmitWithdrawal} className="px-4 pt-3 relative">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-[#1e293b] font-bold text-sm">
-            Withdrawal Amount:
+            {t("Withdrawal Amount:")}
           </h2>
           {amount && (
             <button
@@ -327,7 +326,7 @@ const WithdrawalPage = () => {
         <div className="relative">
           <div className="border border-gray-300 rounded-[10px] px-3.5 py-3 flex items-center bg-white focus-within:border-[#0047ba] transition">
             <span className="font-bold text-sm text-[#1e293b] w-20 shrink-0">
-              Amount
+              {t("Amount")}
             </span>
             <input
               type="number"
@@ -365,7 +364,7 @@ const WithdrawalPage = () => {
         <div className="relative mt-3">
           <div className="border border-gray-300 rounded-[10px] px-3.5 py-3 flex items-center bg-white focus-within:border-[#0047ba] transition">
             <span className="font-bold text-sm text-[#1e293b] w-20 shrink-0">
-              Password
+              {t("Password")}
             </span>
             <input
               type={showPassword ? "text" : "password"}
@@ -393,13 +392,12 @@ const WithdrawalPage = () => {
         <button
           type="submit"
           disabled={!isFormValid}
-          className={`w-full h-12 rounded-[10px] font-bold text-base mt-6 flex items-center justify-center transition shadow-sm ${
-            isFormValid
+          className={`w-full h-12 rounded-[10px] font-bold text-base mt-6 flex items-center justify-center transition shadow-sm ${isFormValid
               ? "bg-[#0047ba] hover:bg-[#003da5] text-white cursor-pointer active:scale-[0.99]"
               : "bg-[#d1d5db] text-white cursor-not-allowed"
-          }`}
+            }`}
         >
-          Submit
+          {t("Submit")}
         </button>
       </form>
 
@@ -413,10 +411,10 @@ const WithdrawalPage = () => {
                 <FaUniversity size={16} />
                 <h3 className="font-bold text-sm">
                   {activeTab === "bank"
-                    ? "Link Bank Account"
+                    ? t("Link Bank Account")
                     : activeTab === "ewallet"
-                    ? "Link E-Wallet"
-                    : "Link Crypto Wallet"}
+                      ? t("Link E-Wallet")
+                      : t("Link Crypto Wallet")}
                 </h3>
               </div>
               <button
@@ -431,7 +429,7 @@ const WithdrawalPage = () => {
             <form onSubmit={handleAddAccount} className="p-4 space-y-3">
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">
-                  {activeTab === "bank" ? "Select Bank" : activeTab === "ewallet" ? "Select Wallet" : "Crypto Network"}
+                  {activeTab === "bank" ? t("Select Bank") : activeTab === "ewallet" ? t("Select Wallet") : t("Crypto Network")}
                 </label>
                 <select
                   value={newBankName}
@@ -448,13 +446,13 @@ const WithdrawalPage = () => {
 
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">
-                  Account Holder Name
+                  {t("Account Holder Name")}
                 </label>
                 <input
                   type="text"
                   value={newAccountName}
                   onChange={(e) => setNewAccountName(e.target.value)}
-                  placeholder="Full Legal Name"
+                  placeholder={t("Full Legal Name")}
                   className="w-full h-10 px-3 rounded-lg border border-gray-300 text-xs font-semibold focus:outline-hidden focus:border-[#0047ba]"
                   required
                 />
@@ -462,7 +460,7 @@ const WithdrawalPage = () => {
 
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">
-                  {activeTab === "bank" ? "Bank Account Number" : activeTab === "ewallet" ? "Mobile / Wallet ID" : "Wallet Address"}
+                  {activeTab === "bank" ? t("Bank Account Number") : activeTab === "ewallet" ? t("Mobile / Wallet ID") : t("Wallet Address")}
                 </label>
                 <input
                   type="text"
@@ -477,7 +475,7 @@ const WithdrawalPage = () => {
               {activeTab === "bank" && (
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Branch Name
+                    {t("Branch Name")}
                   </label>
                   <input
                     type="text"
@@ -494,7 +492,7 @@ const WithdrawalPage = () => {
                   type="submit"
                   className="w-full h-10 bg-[#0047ba] hover:bg-[#003da5] text-white font-bold text-xs rounded-lg transition shadow-sm active:scale-98"
                 >
-                  Save & Link Account
+                  {t("Save & Link Account")}
                 </button>
               </div>
             </form>

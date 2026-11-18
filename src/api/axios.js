@@ -32,9 +32,14 @@ const shouldSkipEncryption = (url = "") =>
 ================================ */
 API.interceptors.request.use(
   async (config) => {
-    const state = store.getState();
+    let state = {};
+    try {
+      state = store?.getState ? store.getState() : {};
+    } catch {
+      state = {};
+    }
 
-    const token = state.user?.token || localStorage.getItem("token") || "";
+    const token = state?.user?.token || localStorage.getItem("token") || "";
     let siteObj = state.site?.siteDetails;
 
     if (!siteObj || !siteObj._id) {
@@ -46,12 +51,14 @@ API.interceptors.request.use(
     }
 
     const domainId =
+      config.headers.Domainid ||
       siteObj?.domainDetails?._id ||
       siteObj?.siteDetails?.domainDetails?._id ||
       siteObj?.domain ||
       "6a85553b526a2dbeb187f070";
 
     const admindomainId =
+      config.headers.admindomainId ||
       siteObj?.admindomainName?._id ||
       siteObj?.siteDetails?.admindomainName?._id ||
       siteObj?.ownerDomainId ||
@@ -93,10 +100,14 @@ API.interceptors.request.use(
 ================================ */
 const handleLogout = async () => {
   try {
-    store.dispatch(revertUser());
-    store.dispatch(revertAccount());
+    if (store?.dispatch) {
+      store.dispatch(revertUser());
+      store.dispatch(revertAccount());
+    }
     localStorage.clear();
-    await persistor.purge();
+    if (persistor?.purge) {
+      await persistor.purge();
+    }
     window.location.href = "/";
   } catch (error) {
     console.error("Logout error:", error);

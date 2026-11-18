@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { FaStar, FaTimes } from "react-icons/fa";
+import { useLanguage } from "../context/LanguageContext";
 
 const AppDownloadBanner = () => {
+  const { t } = useLanguage();
   const [visible, setVisible] = useState(true);
 
   if (!visible) return null;
@@ -29,7 +31,7 @@ const AppDownloadBanner = () => {
           onClick={() => alert("Downloading NPR77 APK app...")}
           className="bg-white hover:bg-gray-100 text-[#003da5] font-extrabold text-xs px-4 py-1.5 rounded-md shadow transition transform active:scale-95"
         >
-          Download
+          {t("Download")}
         </button>
         <button
           onClick={() => setVisible(false)}

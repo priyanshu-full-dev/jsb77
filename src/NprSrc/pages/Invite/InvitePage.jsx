@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "../../context/LanguageContext";
 import {
   FaChevronLeft,
   FaCopy,
@@ -14,6 +15,7 @@ import {
 
 const InvitePage = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
   const [sliderUsers, setSliderUsers] = useState(50);
   const [toastMessage, setToastMessage] = useState("");
@@ -59,7 +61,7 @@ const InvitePage = () => {
         >
           <FaChevronLeft size={18} />
         </button>
-        <h1 className="font-bold text-[17px] tracking-tight">Invite Friends</h1>
+        <h1 className="font-bold text-[17px] tracking-tight">{t("Invite Friends")}</h1>
         <div className="w-8" />
       </header>
 
@@ -67,25 +69,25 @@ const InvitePage = () => {
       <div className="grid grid-cols-2 gap-2.5 p-3 sm:p-3.5">
         {/* Card 1: Today's Income */}
         <div className="bg-gradient-to-r from-[#62b7ff] to-[#3f8efc] rounded-[10px] py-3.5 px-2 text-center text-white shadow-2xs flex flex-col items-center justify-center">
-          <span className="text-[13px] font-medium leading-none">Today's Income</span>
+          <span className="text-[13px] font-medium leading-none">{t("Today's Income")}</span>
           <span className="text-[20px] font-bold mt-1.5 leading-none">--</span>
         </div>
 
         {/* Card 2: Yesterday's Income */}
         <div className="bg-gradient-to-r from-[#b589ff] to-[#8c65f8] rounded-[10px] py-3.5 px-2 text-center text-white shadow-2xs flex flex-col items-center justify-center">
-          <span className="text-[13px] font-medium leading-none">Yesterday's Income</span>
+          <span className="text-[13px] font-medium leading-none">{t("Yesterday's Income")}</span>
           <span className="text-[20px] font-bold mt-1.5 leading-none">--</span>
         </div>
 
         {/* Card 3: Registers */}
         <div className="bg-gradient-to-r from-[#b589ff] to-[#8c65f8] rounded-[10px] py-3.5 px-2 text-center text-white shadow-2xs flex flex-col items-center justify-center">
-          <span className="text-[13px] font-medium leading-none">Registers</span>
+          <span className="text-[13px] font-medium leading-none">{t("Registers")}</span>
           <span className="text-[20px] font-bold mt-1.5 leading-none">--</span>
         </div>
 
         {/* Card 4: Valid Referral */}
         <div className="bg-gradient-to-r from-[#62b7ff] to-[#3f8efc] rounded-[10px] py-3.5 px-2 text-center text-white shadow-2xs flex flex-col items-center justify-center">
-          <span className="text-[13px] font-medium leading-none">Valid Referral</span>
+          <span className="text-[13px] font-medium leading-none">{t("Valid Referral")}</span>
           <span className="text-[20px] font-bold mt-1.5 leading-none">--</span>
         </div>
       </div>
@@ -102,7 +104,7 @@ const InvitePage = () => {
             />
           </div>
           <h2 className="text-2xl sm:text-[28px] font-black tracking-tight leading-none text-white drop-shadow-xs">
-            Revenue goals
+            {t("Revenue goals")}
           </h2>
         </div>
 
@@ -122,14 +124,14 @@ const InvitePage = () => {
 
         {/* Bottom Subtitle */}
         <p className="text-center text-blue-100 text-[12px] font-medium mt-2">
-          Invite <span className="text-[#f6b74e] font-bold">50</span> user to meet the target
+          {t("Invite 50 user to meet the target")}
         </p>
       </div>
 
       {/* 4. Section: Rewards Released to Date */}
       <div className="mb-4">
         <h3 className="text-[#152349] font-black text-[19px] sm:text-[20px] text-center my-3.5">
-          Rewards Released to Date
+          {t("Rewards Released to Date")}
         </h3>
 
         <div className="flex flex-col gap-2.5 px-3 sm:px-3.5">
@@ -143,11 +145,11 @@ const InvitePage = () => {
               />
             </div>
             <div className="flex-1 min-w-0">
-              <span className="text-[#475569] font-bold text-[13px] block">Invitation Rewards</span>
+              <span className="text-[#475569] font-bold text-[13px] block">{t("Invitation Rewards")}</span>
               <span className="text-[#0f1f4f] font-black text-[18px] sm:text-[20px] leading-tight block">
                 Rs 41,500.00
               </span>
-              <span className="text-[#94a3b8] text-[11px] font-medium block">179 claimed</span>
+              <span className="text-[#94a3b8] text-[11px] font-medium block">179 {t("claimed")}</span>
             </div>
           </div>
 
@@ -161,11 +163,11 @@ const InvitePage = () => {
               />
             </div>
             <div className="flex-1 min-w-0">
-              <span className="text-[#475569] font-bold text-[13px] block">Achievement Rewards</span>
+              <span className="text-[#475569] font-bold text-[13px] block">{t("Achievement Rewards")}</span>
               <span className="text-[#0f1f4f] font-black text-[18px] sm:text-[20px] leading-tight block">
                 Rs 3,600.00
               </span>
-              <span className="text-[#94a3b8] text-[11px] font-medium block">102 claimed</span>
+              <span className="text-[#94a3b8] text-[11px] font-medium block">102 {t("claimed")}</span>
             </div>
           </div>
 
@@ -179,11 +181,11 @@ const InvitePage = () => {
               />
             </div>
             <div className="flex-1 min-w-0">
-              <span className="text-[#475569] font-bold text-[13px] block">Deposit Rebate</span>
+              <span className="text-[#475569] font-bold text-[13px] block">{t("Deposit Rebate")}</span>
               <span className="text-[#0f1f4f] font-black text-[18px] sm:text-[20px] leading-tight block">
                 Rs 107,553.48
               </span>
-              <span className="text-[#94a3b8] text-[11px] font-medium block">296 claimed</span>
+              <span className="text-[#94a3b8] text-[11px] font-medium block">296 {t("claimed")}</span>
             </div>
           </div>
 
@@ -197,11 +199,11 @@ const InvitePage = () => {
               />
             </div>
             <div className="flex-1 min-w-0">
-              <span className="text-[#475569] font-bold text-[13px] block">Betting Rebate</span>
+              <span className="text-[#475569] font-bold text-[13px] block">{t("Betting Rebate")}</span>
               <span className="text-[#0f1f4f] font-black text-[18px] sm:text-[20px] leading-tight block">
                 Rs 126,546.37
               </span>
-              <span className="text-[#94a3b8] text-[11px] font-medium block">344 claimed</span>
+              <span className="text-[#94a3b8] text-[11px] font-medium block">344 {t("claimed")}</span>
             </div>
           </div>
         </div>
@@ -209,13 +211,13 @@ const InvitePage = () => {
 
       {/* 5. Empty Status */}
       <div className="text-gray-400 font-semibold text-sm text-center py-2">
-        Empty
+        {t("Empty")}
       </div>
 
       {/* 6. Share with your friends Card */}
       <div className="bg-white rounded-[14px] p-3.5 mx-3 sm:mx-3.5 mb-5 border border-slate-100 shadow-xs">
         <h4 className="text-[#3b28cc] font-black text-[13px] sm:text-[14px] mb-3">
-          Share with your friends
+          {t("Share with your friends")}
         </h4>
 
         <div className="flex items-center gap-3">
@@ -329,40 +331,40 @@ const InvitePage = () => {
       {/* 7. Leaderboard Section */}
       <div className="mb-4">
         <h3 className="text-[#152349] font-black text-[19px] sm:text-[20px] text-center my-3.5">
-          Leaderboard
+          {t("Leaderboard")}
         </h3>
 
         <div className="bg-gradient-to-b from-[#2196f3] via-[#4f5bd5] to-[#833ab4] rounded-[16px] p-4 text-white mx-3 sm:mx-3.5 shadow-md">
           <h4 className="text-white font-bold text-base sm:text-[17px] text-center mb-3.5">
-            Who received the rewards
+            {t("Who received the rewards")}
           </h4>
 
           <div className="space-y-2">
             {/* Winner 1 */}
             <div className="bg-white/95 rounded-full px-4 py-2 flex items-center justify-between text-xs font-semibold shadow-2xs">
               <span className="text-[#475569] font-bold">an*******a</span>
-              <span className="text-[#94a3b8] text-[11px] font-medium">Received</span>
+              <span className="text-[#94a3b8] text-[11px] font-medium">{t("Received")}</span>
               <span className="text-[#0f1f4f] font-black">1000 Points</span>
             </div>
 
             {/* Winner 2 */}
             <div className="bg-white/95 rounded-full px-4 py-2 flex items-center justify-between text-xs font-semibold shadow-2xs">
               <span className="text-[#475569] font-bold">wl*****e</span>
-              <span className="text-[#94a3b8] text-[11px] font-medium">Received</span>
+              <span className="text-[#94a3b8] text-[11px] font-medium">{t("Received")}</span>
               <span className="text-[#0f1f4f] font-black">Rs 300.00</span>
             </div>
 
             {/* Winner 3 */}
             <div className="bg-white/95 rounded-full px-4 py-2 flex items-center justify-between text-xs font-semibold shadow-2xs">
               <span className="text-[#475569] font-bold">wl*****e</span>
-              <span className="text-[#94a3b8] text-[11px] font-medium">Received</span>
+              <span className="text-[#94a3b8] text-[11px] font-medium">{t("Received")}</span>
               <span className="text-[#0f1f4f] font-black">1000 Points</span>
             </div>
 
             {/* Winner 4 */}
             <div className="bg-white/95 rounded-full px-4 py-2 flex items-center justify-between text-xs font-semibold shadow-2xs">
               <span className="text-[#475569] font-bold">sh******9</span>
-              <span className="text-[#94a3b8] text-[11px] font-medium">Received</span>
+              <span className="text-[#94a3b8] text-[11px] font-medium">{t("Received")}</span>
               <span className="text-[#0f1f4f] font-black">Rs 300.00</span>
             </div>
           </div>
@@ -381,7 +383,7 @@ const InvitePage = () => {
             />
           </div>
           <h3 className="text-2xl sm:text-[28px] font-black tracking-tight leading-none text-white drop-shadow-xs">
-            Income calculator
+            {t("Income calculator")}
           </h3>
         </div>
 
@@ -394,7 +396,7 @@ const InvitePage = () => {
 
         {/* Subtitle */}
         <p className="text-center text-blue-100 text-[12px] font-medium mb-3">
-          Invite <span className="text-[#f6b74e] font-bold">{sliderUsers}</span> active users, expected revenue
+          Invite <span className="text-[#f6b74e] font-bold">{sliderUsers}</span> {t("active users, expected revenue")}
         </p>
 
         {/* Interactive Slider */}

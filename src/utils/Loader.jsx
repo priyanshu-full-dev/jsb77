@@ -1,5 +1,5 @@
 import React from "react";
-import "../../SkyExchangeSrc/src/assets/styles/Loading.css";
+import "./Loading.css";
 import { useSelector } from "react-redux";
 import { selectSite } from "./helper/commonSelectors";
 import { useLocation } from "react-router-dom";

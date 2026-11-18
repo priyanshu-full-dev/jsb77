@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { isSignupUser } from "../AsianExchangeSrc/utils/helper/commonSelectors";
+import { isSignupUser } from "../utils/helper/commonSelectors";
 
 const SignupProtectedRoute = ({ children, navigateTo = "/" }) => {
   const navigate = useNavigate();

@@ -1,6 +1,6 @@
 import React from "react";
 import { useSelector } from "react-redux";
-import { selectSite } from "../../AsianExchangeSrc/utils/helper/commonSelectors";
+import { selectSite } from "../../utils/helper/commonSelectors";
 
 
 const AuraLoader = () => {

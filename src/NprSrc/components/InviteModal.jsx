@@ -1,7 +1,9 @@
 import PropTypes from "prop-types";
 import { FaTimes, FaCopy, FaShareAlt, FaGift } from "react-icons/fa";
+import { useLanguage } from "../context/LanguageContext";
 
 const InviteModal = ({ isOpen, onClose }) => {
+  const { t } = useLanguage();
   if (!isOpen) return null;
 
   const referralCode = "JSB77VIP";
@@ -19,7 +21,7 @@ const InviteModal = ({ isOpen, onClose }) => {
         <div className="bg-gradient-to-r from-[#003da5] via-[#005bf8] to-[#003da5] p-4 text-white flex items-center justify-between">
           <div className="flex items-center gap-2">
             <FaGift size={18} className="text-[#ffd700]" />
-            <h3 className="font-extrabold text-sm uppercase">Invite & Earn Bonus</h3>
+            <h3 className="font-extrabold text-sm uppercase">{t("Invite")}</h3>
           </div>
           <button
             onClick={onClose}
@@ -53,7 +55,7 @@ const InviteModal = ({ isOpen, onClose }) => {
               onClick={handleCopy}
               className="bg-[#0047ba] hover:bg-[#003da5] text-white text-xs font-bold px-3 py-1.5 rounded-md flex items-center gap-1.5 shadow-sm transition"
             >
-              <FaCopy size={11} /> Copy
+              <FaCopy size={11} /> {t("Copy")}
             </button>
           </div>
         </div>
