@@ -162,7 +162,8 @@ const App = () => {
     if (envDomain) return envDomain;
 
     return window.location.host.includes("localhost") ||
-      window.location.host.includes("127.0.0.1")
+      window.location.host.includes("127.0.0.1") ||
+      window.location.host.includes("vercel.app")
       ? "asianexchange.club"
       : window.location.host;
   }, []);

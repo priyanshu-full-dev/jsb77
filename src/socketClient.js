@@ -178,7 +178,14 @@ const activeSubscriptions = {
 
 let isResubscribing = false;
 
-export const socket = io(baseUrl, {
+const socketServerUrl =
+  (import.meta.env.PROD
+    ? import.meta.env.VITE_API_BASE_URL_PROD
+    : import.meta.env.VITE_API_BASE_URL_DEV) ||
+  import.meta.env.VITE_API_BASE_URL_PROD ||
+  "https://api.professor.monster";
+
+export const socket = io(socketServerUrl, {
   // Resolve the token at handshake time, not while this module is importing.
   // This also picks up a token obtained after initial page load.
   auth: (callback) => {
