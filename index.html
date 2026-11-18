@@ -41,51 +41,6 @@
   </head>
 
   <body class="bg-light-bg dark:bg-dark-bg text-black dark:text-whitede">
-    <script>
-      (function() {
-        var errCount = 0;
-        var origErr = console.error;
-        function renderError(label, message, stack) {
-          if (errCount++ > 10) return;
-          var box = document.getElementById('debug-error-box');
-          if (!box) {
-            box = document.createElement('div');
-            box.id = 'debug-error-box';
-            box.style.cssText = 'position:fixed;top:0;left:0;right:0;max-height:50vh;overflow-y:auto;z-index:9999999;background:#b91c1c;color:#fff;padding:12px;font-family:monospace;font-size:12px;white-space:pre-wrap;word-break:break-all;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
-            var close = document.createElement('button');
-            close.innerText = '✕ Dismiss';
-            close.style.cssText = 'float:right;background:#000;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;';
-            close.onclick = function() { box.remove(); };
-            box.appendChild(close);
-            document.body ? document.body.appendChild(box) : document.documentElement.appendChild(box);
-          }
-          var item = document.createElement('div');
-          item.style.cssText = 'border-bottom:1px solid rgba(255,255,255,0.2);padding:4px 0;';
-          item.innerHTML = '<strong>[' + label + ']:</strong> ' + message + (stack ? '<br/><pre style="font-size:10px;opacity:0.8;margin:2px 0;">' + stack + '</pre>' : '');
-          box.appendChild(item);
-        }
-
-        console.error = function() {
-          origErr.apply(console, arguments);
-          var msg = Array.from(arguments).map(function(a) {
-            if (a instanceof Error) return a.message + '\n' + a.stack;
-            if (typeof a === 'object') {
-              try { return JSON.stringify(a); } catch(e) { return String(a); }
-            }
-            return String(a);
-          }).join(' ');
-          renderError('CONSOLE.ERROR', msg);
-        };
-
-        window.addEventListener('error', function(e) {
-          renderError('WINDOW ERROR', e.message, (e.filename || '') + ':' + (e.lineno || '') + '\n' + (e.error ? e.error.stack : ''));
-        });
-
-        window.addEventListener('unhandledrejection', function(e) {
-          renderError('PROMISE REJECTION', e.reason?.message || String(e.reason), e.reason?.stack);
-        });
-      })();
-    </script>
     <div id="root">
     </div>
     <script type="module" src="/src/main.jsx"></script>
