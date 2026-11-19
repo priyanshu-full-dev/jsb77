@@ -209,7 +209,7 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
       <div className="flex-1 min-w-0 pr-1">
         {activeCategory === "live" || activeCategory === "sports" ? (
           /* Live Casino & Sports Provider Banners (1 per row, matching NPR77 reference) */
-          <div className="flex flex-col gap-3 sm:gap-3.5">
+          <div className="flex flex-col gap-2 mt-4 sm:gap-3.5">
             {(activeCategory === "live" ? nprLiveCasinoProviders : nprSportsProviders).map((prov) => (
               <div
                 key={prov.id}
@@ -260,17 +260,17 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
                     <button
                       type="button"
                       onClick={() => setSlotView("all")}
-                      className={`w-[34px] h-[34px] rounded-[8px] flex items-center justify-center transition cursor-pointer border-[1.5px] border-[#0047ba] ${slotView === "all"
+                      className={`w-[32px] h-[32px] rounded-[7px] flex items-center justify-center transition cursor-pointer border-[1.5px] border-[#0047ba] ${slotView === "all"
                         ? "bg-[#0047ba] text-white"
                         : "bg-white text-[#0047ba] hover:bg-blue-50/50"
                         }`}
                       title="All Games"
                     >
                       <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] fill-current">
-                        <rect x="3.5" y="3.5" width="7.5" height="7.5" rx="1.5" />
-                        <rect x="13" y="3.5" width="7.5" height="7.5" rx="1.5" />
-                        <rect x="3.5" y="13" width="7.5" height="7.5" rx="1.5" />
-                        <rect x="13" y="13" width="7.5" height="7.5" rx="1.5" />
+                        <rect x="3" y="3" width="8" height="8" rx="2" />
+                        <rect x="13" y="3" width="8" height="8" rx="2" />
+                        <rect x="3" y="13" width="8" height="8" rx="2" />
+                        <rect x="13" y="13" width="8" height="8" rx="2" />
                       </svg>
                     </button>
 
@@ -278,39 +278,44 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
                     <button
                       type="button"
                       onClick={() => setSlotView("hot")}
-                      className={`w-[34px] h-[34px] rounded-[8px] flex items-center justify-center transition cursor-pointer border-[1.5px] border-[#0047ba] ${slotView === "hot"
+                      className={`w-[32px] h-[32px] rounded-[7px] flex items-center justify-center transition cursor-pointer border-[1.5px] border-[#0047ba] ${slotView === "hot"
                         ? "bg-[#0047ba] text-white"
                         : "bg-white text-[#0047ba] hover:bg-blue-50/50"
                         }`}
                       title="Hot Slots"
                     >
-                      <FaFire size={16} />
+                      <img
+                        src="/npr/category/cat_hot_inactive.png"
+                        alt="Hot"
+                        className={`w-[20px] h-[20px] object-contain pointer-events-none select-none ${slotView === "hot" ? "brightness-0 invert" : ""}`}
+                        draggable={false}
+                      />
                     </button>
 
                     {/* 3. Favorites */}
                     <button
                       type="button"
                       onClick={() => setSlotView("favorite")}
-                      className={`w-[34px] h-[34px] rounded-[8px] flex items-center justify-center transition cursor-pointer border-[1.5px] border-[#0047ba] ${slotView === "favorite"
+                      className={`w-[32px] h-[32px] rounded-[7px] flex items-center justify-center transition cursor-pointer border-[1.5px] border-[#0047ba] ${slotView === "favorite"
                         ? "bg-[#0047ba] text-white"
                         : "bg-white text-[#0047ba] hover:bg-blue-50/50"
                         }`}
                       title="Favorites"
                     >
-                      <FaHeart size={15} />
+                      <FaHeart size={14} className={slotView === "favorite" ? "text-white" : "text-[#0047ba]"} />
                     </button>
 
                     {/* 4. Search */}
                     <button
                       type="button"
                       onClick={() => setSlotView(slotView === "search" ? "all" : "search")}
-                      className={`w-[34px] h-[34px] rounded-[8px] flex items-center justify-center transition cursor-pointer border-[1.5px] border-[#0047ba] ${slotView === "search"
+                      className={`w-[32px] h-[32px] rounded-[7px] flex items-center justify-center transition cursor-pointer border-[1.5px] border-[#0047ba] ${slotView === "search"
                         ? "bg-[#0047ba] text-white"
                         : "bg-white text-[#0047ba] hover:bg-blue-50/50"
                         }`}
                       title="Search"
                     >
-                      <FaSearch size={14} />
+                      <FaSearch size={14} className={slotView === "search" ? "text-white" : "text-[#0047ba]"} />
                     </button>
                   </div>
                 </div>
@@ -334,8 +339,8 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
                   <button
                     type="button"
                     onClick={() => setSlotProvider("all")}
-                    className={`h-[44px] min-w-[76px] px-3 rounded-[8px] font-bold text-[13px] flex items-center justify-center shrink-0 transition cursor-pointer border-[1.5px] border-[#0047ba] ${slotProvider === "all"
-                      ? "bg-[#0047ba] text-white"
+                    className={`h-[42px] min-w-[76px] px-3 rounded-[8px] font-bold text-[13px] flex items-center justify-center shrink-0 transition cursor-pointer border-[1.5px] border-[#0047ba] ${slotProvider === "all"
+                      ? "bg-gradient-to-b from-[#0055d4] to-[#003da8] text-white shadow-xs"
                       : "bg-white text-[#0047ba] hover:bg-blue-50/50"
                       }`}
                   >
@@ -348,7 +353,7 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
                         key={p.id}
                         type="button"
                         onClick={() => setSlotProvider(isSelected ? "all" : p.id)}
-                        className={`h-[44px] min-w-[76px] px-2.5 rounded-[8px] flex items-center justify-center shrink-0 transition cursor-pointer border-[1.5px] border-[#0047ba] ${isSelected
+                        className={`h-[42px] min-w-[76px] px-2.5 rounded-[8px] flex items-center justify-center shrink-0 transition cursor-pointer border-[1.5px] border-[#0047ba] ${isSelected
                           ? "bg-[#0047ba] text-white"
                           : "bg-white hover:bg-blue-50/40 text-[#0047ba]"
                           }`}
@@ -401,17 +406,6 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
                   >
                     {t("5 Reels")}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setSlotReel(slotReel === "pink" ? "all" : "pink")}
-                    className={`h-[26px] px-3 rounded-full font-bold text-[11px] shrink-0 transition cursor-pointer flex items-center gap-1.5 border-[1.5px] ${slotReel === "pink"
-                      ? "border-[#0047ba] bg-[#fcdbe8] text-[#8c0846]"
-                      : "border-[#0047ba] bg-[#fceef4] text-[#9c0750]"
-                      }`}
-                  >
-                    <span className="text-[12px] leading-none">🌸</span>
-                    <span className="font-semibold text-[11px]">{t("Pink")}</span>
-                  </button>
                   <div className="text-[#0047ba] shrink-0 ml-auto pr-0.5 flex items-center">
                     <svg className="w-[18px] h-[18px] text-[#0047ba]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.8}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -434,17 +428,17 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
                     <button
                       type="button"
                       onClick={() => setFishView("all")}
-                      className={`w-[34px] h-[34px] rounded-[8px] flex items-center justify-center transition cursor-pointer border-[1.5px] border-[#0047ba] ${fishView === "all"
+                      className={`w-[32px] h-[32px] rounded-[7px] flex items-center justify-center transition cursor-pointer border-[1.5px] border-[#0047ba] ${fishView === "all"
                         ? "bg-[#0047ba] text-white"
                         : "bg-white text-[#0047ba] hover:bg-blue-50/50"
                         }`}
                       title="All Games"
                     >
                       <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] fill-current">
-                        <rect x="3.5" y="3.5" width="7.5" height="7.5" rx="1.5" />
-                        <rect x="13" y="3.5" width="7.5" height="7.5" rx="1.5" />
-                        <rect x="3.5" y="13" width="7.5" height="7.5" rx="1.5" />
-                        <rect x="13" y="13" width="7.5" height="7.5" rx="1.5" />
+                        <rect x="3" y="3" width="8" height="8" rx="2" />
+                        <rect x="13" y="3" width="8" height="8" rx="2" />
+                        <rect x="3" y="13" width="8" height="8" rx="2" />
+                        <rect x="13" y="13" width="8" height="8" rx="2" />
                       </svg>
                     </button>
 
@@ -452,39 +446,44 @@ const GameSection = ({ onSelectGame, initialCategory = "hot" }) => {
                     <button
                       type="button"
                       onClick={() => setFishView("hot")}
-                      className={`w-[34px] h-[34px] rounded-[8px] flex items-center justify-center transition cursor-pointer border-[1.5px] border-[#0047ba] ${fishView === "hot"
+                      className={`w-[32px] h-[32px] rounded-[7px] flex items-center justify-center transition cursor-pointer border-[1.5px] border-[#0047ba] ${fishView === "hot"
                         ? "bg-[#0047ba] text-white"
                         : "bg-white text-[#0047ba] hover:bg-blue-50/50"
                         }`}
                       title="Hot Games"
                     >
-                      <FaFire size={16} />
+                      <img
+                        src="/npr/category/cat_hot_inactive.png"
+                        alt="Hot"
+                        className={`w-[20px] h-[20px] object-contain pointer-events-none select-none ${fishView === "hot" ? "brightness-0 invert" : ""}`}
+                        draggable={false}
+                      />
                     </button>
 
                     {/* 3. Favorites */}
                     <button
                       type="button"
                       onClick={() => setFishView("favorite")}
-                      className={`w-[34px] h-[34px] rounded-[8px] flex items-center justify-center transition cursor-pointer border-[1.5px] border-[#0047ba] ${fishView === "favorite"
+                      className={`w-[32px] h-[32px] rounded-[7px] flex items-center justify-center transition cursor-pointer border-[1.5px] border-[#0047ba] ${fishView === "favorite"
                         ? "bg-[#0047ba] text-white"
                         : "bg-white text-[#0047ba] hover:bg-blue-50/50"
                         }`}
                       title="Favorite Games"
                     >
-                      <FaHeart size={15} />
+                      <FaHeart size={14} className={fishView === "favorite" ? "text-white" : "text-[#0047ba]"} />
                     </button>
 
                     {/* 4. Search */}
                     <button
                       type="button"
                       onClick={() => setFishView(fishView === "search" ? "all" : "search")}
-                      className={`w-[34px] h-[34px] rounded-[8px] flex items-center justify-center transition cursor-pointer border-[1.5px] border-[#0047ba] ${fishView === "search"
+                      className={`w-[32px] h-[32px] rounded-[7px] flex items-center justify-center transition cursor-pointer border-[1.5px] border-[#0047ba] ${fishView === "search"
                         ? "bg-[#0047ba] text-white"
                         : "bg-white text-[#0047ba] hover:bg-blue-50/50"
                         }`}
                       title="Search Games"
                     >
-                      <FaSearch size={14} />
+                      <FaSearch size={14} className={fishView === "search" ? "text-white" : "text-[#0047ba]"} />
                     </button>
                   </div>
                 </div>
