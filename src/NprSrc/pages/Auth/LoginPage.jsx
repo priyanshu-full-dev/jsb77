@@ -8,6 +8,8 @@ import {
   login,
   signUp,
   SendOtp,
+  forgotPassword,
+  resetPassword,
   createLoginRecord,
   getSitesByDomain,
 } from "../../../api";
@@ -26,7 +28,11 @@ export const LoginPage = ({ initialMode = "login", onBack, onLoginSuccess }) => 
 
   const isRegisterRoute =
     location.pathname.includes("register") || initialMode === "register";
-  const [mode, setMode] = useState(isRegisterRoute ? "register" : "login");
+  const isForgotRoute =
+    location.pathname.includes("forgot") || initialMode === "forgot";
+  const [mode, setMode] = useState(
+    isForgotRoute ? "forgot" : isRegisterRoute ? "register" : "login"
+  );
 
   // Form states
   const [username, setUsername] = useState("");
@@ -42,6 +48,15 @@ export const LoginPage = ({ initialMode = "login", onBack, onLoginSuccess }) => 
   const [referralParam, setReferralParam] = useState("");
   const [remember, setRemember] = useState(true);
   const [agreeTerms, setAgreeTerms] = useState(true);
+
+  // Forgot Password states
+  const [forgotPhone, setForgotPhone] = useState("");
+  const [forgotOtp, setForgotOtp] = useState("");
+  const [forgotNewPassword, setForgotNewPassword] = useState("");
+  const [forgotShowPassword, setForgotShowPassword] = useState(false);
+  const [forgotOtpSending, setForgotOtpSending] = useState(false);
+  const [forgotOtpCountdown, setForgotOtpCountdown] = useState(0);
+  const [forgotLoading, setForgotLoading] = useState(false);
 
   // Status states
   const [loading, setLoading] = useState(false);
@@ -123,6 +138,17 @@ export const LoginPage = ({ initialMode = "login", onBack, onLoginSuccess }) => 
     return () => clearInterval(timer);
   }, [otpCountdown]);
 
+  // 4. Countdown timer for Forgot Password OTP
+  useEffect(() => {
+    let timer;
+    if (forgotOtpCountdown > 0) {
+      timer = setInterval(() => {
+        setForgotOtpCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [forgotOtpCountdown]);
+
   // Handle Send OTP
   const handleSendOtp = async () => {
     const cleanPhone = phone.replace(/\D/g, "").slice(-10);
@@ -138,20 +164,22 @@ export const LoginPage = ({ initialMode = "login", onBack, onLoginSuccess }) => 
     try {
       const res = await SendOtp({ mobile: cleanPhone });
       const resData = res?.data || res;
-      if (res?.success || resData?.success || resData?.message) {
-        toast.success(resData?.message || "OTP sent successfully! (Default: 1234)");
+      if (res?.success && (resData?.success !== false)) {
+        toast.success(resData?.message || "OTP sent successfully to your mobile!");
+        setOtpCountdown(60);
       } else {
-        toast.info(resData?.message || "OTP request sent. (Default: 1234)");
+        const errorMsg = resData?.message || "Failed to send OTP. Please check your number.";
+        setError(errorMsg);
+        toast.error(errorMsg);
       }
-      setOtpCountdown(60);
     } catch (err) {
       console.warn("Send OTP error:", err);
       const msg =
         err?.response?.data?.message ||
         err?.message ||
-        "OTP sent (Default: 1234)";
-      toast.info(msg);
-      setOtpCountdown(60);
+        "Failed to send OTP. Please try again.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setOtpSending(false);
     }
@@ -164,12 +192,133 @@ export const LoginPage = ({ initialMode = "login", onBack, onLoginSuccess }) => 
   };
 
   const handleBack = () => {
+    if (mode === "forgot") {
+      handleSwitchMode("login");
+      return;
+    }
     if (onBack) {
       onBack();
     } else if (window.history.length > 1) {
       navigate(-1);
     } else {
       navigate("/");
+    }
+  };
+
+  // =========================================================
+  // FORGOT PASSWORD HANDLERS
+  // =========================================================
+  const handleForgotSendOtp = async () => {
+    const cleanPhone = forgotPhone.replace(/\D/g, "").slice(-10);
+    if (!cleanPhone || cleanPhone.length < 10) {
+      setError("Please enter a valid 10-digit phone number first");
+      toast.error("Please enter a valid 10-digit phone number");
+      return;
+    }
+
+    setError("");
+    setForgotOtpSending(true);
+
+    try {
+      const domainId =
+        apiSiteData?.siteDetails?.domainDetails?._id ||
+        apiSiteData?.domainDetails?._id ||
+        siteDetails?.domainDetails?._id ||
+        siteDetails?.domain ||
+        "6a85553b526a2dbeb187f070";
+
+      const res = await forgotPassword({
+        mobile: cleanPhone,
+        domain: domainId,
+      });
+
+      const resData = res?.data || res;
+      if (res?.success && resData?.success !== false) {
+        toast.success(resData?.message || "OTP has been sent to your mobile!");
+        setForgotOtpCountdown(60);
+      } else {
+        const errorMsg =
+          resData?.message ||
+          "User not found or failed to send OTP. Please check your number.";
+        setError(errorMsg);
+        toast.error(errorMsg);
+      }
+    } catch (err) {
+      console.warn("Forgot Password Send OTP error:", err);
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to send OTP. Please try again.";
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setForgotOtpSending(false);
+    }
+  };
+
+  const handleForgotResetSubmit = async (e) => {
+    e.preventDefault();
+    const cleanPhone = forgotPhone.replace(/\D/g, "").slice(-10);
+
+    if (!cleanPhone || cleanPhone.length < 10) {
+      setError("Please enter a valid 10-digit phone number");
+      return;
+    }
+    if (!forgotOtp.trim()) {
+      setError("SMS verification code is required");
+      return;
+    }
+    if (!forgotNewPassword.trim()) {
+      setError("Please enter a new password");
+      return;
+    }
+    if (forgotNewPassword.length < 6) {
+      setError("Password must be at least 6 characters long");
+      return;
+    }
+
+    setError("");
+    setForgotLoading(true);
+
+    try {
+      const domainId =
+        apiSiteData?.siteDetails?.domainDetails?._id ||
+        apiSiteData?.domainDetails?._id ||
+        siteDetails?.domainDetails?._id ||
+        siteDetails?.domain ||
+        "6a85553b526a2dbeb187f070";
+
+      const res = await resetPassword({
+        mobile: cleanPhone,
+        otp: forgotOtp.trim(),
+        newPassword: forgotNewPassword.trim(),
+        domain: domainId,
+      });
+
+      const resData = res?.data || res;
+
+      if (res?.success && resData?.success !== false) {
+        toast.success(
+          resData?.message || "Password reset successfully! Please login."
+        );
+        setUsername(cleanPhone);
+        handleSwitchMode("login");
+      } else {
+        const errorMsg =
+          resData?.message || "Failed to reset password. Please check the OTP.";
+        setError(errorMsg);
+        toast.error(errorMsg);
+      }
+    } catch (err) {
+      console.warn("Reset Password error:", err);
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to reset password. Please try again.";
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setForgotLoading(false);
     }
   };
 
@@ -322,7 +471,7 @@ export const LoginPage = ({ initialMode = "login", onBack, onLoginSuccess }) => 
       return;
     }
     if (!otp.trim()) {
-      setError("OTP is mandatory (default: 1234)");
+      setError("OTP is mandatory");
       return;
     }
     if (!agreeTerms) {
@@ -592,7 +741,11 @@ export const LoginPage = ({ initialMode = "login", onBack, onLoginSuccess }) => 
       <div className="w-full bg-white text-gray-900 rounded-[22px] px-6 sm:px-7 pt-7 pb-6 shadow-[0_12px_36px_rgba(0,0,0,0.35)]">
         {/* Card Title */}
         <h2 className="text-center text-[#0045b8] text-[22px] font-bold tracking-tight mb-4">
-          {mode === "login" ? t("Login") : t("Register")}
+          {mode === "login"
+            ? t("Login")
+            : mode === "register"
+            ? t("Register")
+            : t("Forgot password")}
         </h2>
 
         {/* Error Banner */}
@@ -715,18 +868,14 @@ export const LoginPage = ({ initialMode = "login", onBack, onLoginSuccess }) => 
 
               <button
                 type="button"
-                onClick={() =>
-                  alert(
-                    "Please contact JSB77 24/7 Customer Service on WhatsApp to reset your password."
-                  )
-                }
+                onClick={() => handleSwitchMode("forgot")}
                 className="text-[#0045b8] text-[14px] font-bold underline hover:opacity-80 transition cursor-pointer"
               >
                 {t("Forgot password?")}
               </button>
             </div>
           </form>
-        ) : (
+        ) : mode === "register" ? (
           /* =======================
              REGISTER FORM (bina socket)
              ======================= */
@@ -878,7 +1027,7 @@ export const LoginPage = ({ initialMode = "login", onBack, onLoginSuccess }) => 
                 type="text"
                 required
                 maxLength={6}
-                placeholder={t("OTP (default: 1234)")}
+                placeholder={t("Enter OTP")}
                 value={otp}
                 onChange={(e) => {
                   setOtp(e.target.value.replace(/\D/g, "").slice(0, 6));
@@ -953,6 +1102,155 @@ export const LoginPage = ({ initialMode = "login", onBack, onLoginSuccess }) => 
                 className="text-[#0045b8] text-[14px] font-bold underline hover:opacity-80 transition cursor-pointer"
               >
                 {t("Already have an account? Login")}
+              </button>
+            </div>
+          </form>
+        ) : (
+          /* =======================
+             FORGOT PASSWORD FORM
+             ======================= */
+          <form onSubmit={handleForgotResetSubmit} className="w-full flex flex-col">
+            {/* Active Tab indicator (Only Mobile Number as requested) */}
+            <div className="flex border-b border-gray-200 mb-6 justify-center">
+              <div className="text-red-600 font-bold text-[16px] pb-2 border-b-2 border-red-600 px-5 select-none">
+                {t("Mobile number")}
+              </div>
+            </div>
+
+            {/* 1. Phone number with flag */}
+            <div className="flex items-center gap-2 w-full mb-4">
+              <div className="flex items-center justify-center gap-1.5 h-[46px] px-3 bg-[#e8e8e8] text-gray-800 rounded-lg text-[14px] font-semibold select-none shrink-0">
+                <img
+                  src="/npr/flag_nepal_circle.png"
+                  alt="NP"
+                  className="w-5 h-5 rounded-full object-cover shrink-0"
+                />
+                <span className="text-[#0045b8] font-bold">+977</span>
+              </div>
+              <input
+                type="tel"
+                required
+                maxLength={10}
+                placeholder={t("10 digit phone number")}
+                value={forgotPhone}
+                onChange={(e) => {
+                  setForgotPhone(e.target.value.replace(/\D/g, "").slice(0, 10));
+                  if (error) setError("");
+                }}
+                className="flex-1 h-[46px] bg-[#e8e8e8] text-gray-800 placeholder-[#9e9e9e] text-[15px] px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0045b8] font-normal"
+                disabled={forgotLoading}
+              />
+            </div>
+
+            {/* 2. SMS Code with [ Get code ] button */}
+            <div className="flex items-center gap-2.5 w-full mb-4">
+              <input
+                type="text"
+                required
+                maxLength={6}
+                placeholder={t("SMS")}
+                value={forgotOtp}
+                onChange={(e) => {
+                  setForgotOtp(e.target.value.replace(/\D/g, "").slice(0, 6));
+                  if (error) setError("");
+                }}
+                className="flex-1 h-[46px] bg-[#e8e8e8] text-gray-800 placeholder-[#9e9e9e] text-[15px] px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0045b8] font-normal"
+                disabled={forgotLoading}
+              />
+              <button
+                type="button"
+                onClick={handleForgotSendOtp}
+                disabled={forgotOtpSending || forgotOtpCountdown > 0 || forgotLoading}
+                className="h-[46px] px-4 rounded-lg bg-gradient-to-b from-[#1872f2] via-[#0356e0] to-[#062d75] border border-[#389aff]/40 text-white text-[13px] font-bold shadow-[0_2px_8px_rgba(6,45,117,0.25)] hover:brightness-105 active:scale-95 transition whitespace-nowrap cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed select-none flex items-center justify-center min-w-[95px]"
+              >
+                {forgotOtpSending
+                  ? t("Sending...")
+                  : forgotOtpCountdown > 0
+                  ? `${forgotOtpCountdown}s`
+                  : t("Get code")}
+              </button>
+            </div>
+
+            {/* 3. New password with Eye Toggle */}
+            <div className="relative flex items-center mb-6 w-full">
+              <input
+                type={forgotShowPassword ? "text" : "password"}
+                required
+                placeholder={t("Please enter a new password")}
+                value={forgotNewPassword}
+                onChange={(e) => {
+                  setForgotNewPassword(e.target.value);
+                  if (error) setError("");
+                }}
+                className="w-full h-[46px] bg-[#e8e8e8] text-gray-800 placeholder-[#9e9e9e] text-[15px] pl-4 pr-11 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0045b8] transition font-normal"
+                disabled={forgotLoading}
+              />
+              <button
+                type="button"
+                onClick={() => setForgotShowPassword(!forgotShowPassword)}
+                tabIndex={-1}
+                className="absolute right-3.5 h-full flex items-center justify-center text-[#0045b8] hover:opacity-80 transition cursor-pointer select-none focus:outline-none focus:ring-0 outline-none"
+                title={forgotShowPassword ? "Hide password" : "Show password"}
+                aria-label={forgotShowPassword ? "Hide password" : "Show password"}
+              >
+                {forgotShowPassword ? (
+                  <svg viewBox="0 0 24 16" className="w-[20px] h-[14px] text-[#0045b8]" fill="none">
+                    <path
+                      d="M12 1.5C5.6 1.5 1 8 1 8s4.6 6.5 11 6.5S23 8 23 8s-4.6-6.5-11-6.5z"
+                      fill="currentColor"
+                    />
+                    <circle cx="12" cy="8" r="4.5" fill="#ffffff" />
+                    <circle cx="12" cy="8" r="2.4" fill="currentColor" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 22 15" className="w-[18px] h-[13px] text-[#0045b8]" fill="none">
+                    <path
+                      d="M 2 3.5 C 4 8.5, 8 10.5, 11 10.5 C 14 10.5, 18 8.5, 20 3.5"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                    <line x1="4.5" y1="7.5" x2="2.5" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    <line x1="8.5" y1="9.5" x2="8" y2="14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    <line x1="13.5" y1="9.5" x2="14" y2="14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    <line x1="17.5" y1="7.5" x2="19.5" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                )}
+              </button>
+            </div>
+
+            {/* 4. Confirm Button */}
+            <button
+              type="submit"
+              disabled={forgotLoading}
+              className="w-full h-[48px] rounded-lg bg-gradient-to-b from-[#1872f2] via-[#0356e0] to-[#062d75] border border-[#389aff]/40 text-white text-[16px] font-bold shadow-[0_4px_12px_rgba(6,45,117,0.35)] hover:brightness-105 active:scale-[0.98] transition mb-4 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {forgotLoading ? t("Resetting...") : t("Confirm")}
+            </button>
+
+            {/* 5. Bottom Services & Back to Login */}
+            <div className="w-full flex flex-col items-center gap-2.5 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  const siteDetailsObj = apiSiteData?.siteDetails || siteDetails;
+                  const whatsapp = siteDetailsObj?.whatsappNumber || "9779800000000";
+                  window.open(
+                    `https://wa.me/${whatsapp.replace(/\D/g, "")}?text=Hi,%20I%20need%20help%20with%20password%20reset`,
+                    "_blank"
+                  );
+                }}
+                className="text-[#0045b8] text-[14px] font-semibold underline hover:opacity-80 transition cursor-pointer"
+              >
+                {t("Services")}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSwitchMode("login")}
+                className="text-gray-500 hover:text-[#0045b8] text-[13px] font-medium transition cursor-pointer mt-1"
+              >
+                ← {t("Already have an account? Login")}
               </button>
             </div>
           </form>

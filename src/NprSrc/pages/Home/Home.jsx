@@ -1,4 +1,5 @@
 import { useOutletContext } from "react-router-dom";
+import { toast } from "react-toastify";
 import HeroCarousel from "../../components/HeroCarousel";
 import NewsTicker from "../../components/NewsTicker";
 import FloatingWidgets from "../../components/FloatingWidgets";
@@ -6,11 +7,14 @@ import JackpotSection from "../../components/JackpotSection";
 import GameSection from "../../components/GameSection";
 
 const Home = () => {
-  const { onOpenLogin, onOpenRegister } = useOutletContext() || {};
+  const { user, onOpenLogin, onOpenRegister } = useOutletContext() || {};
 
   const handleSelectGame = (game) => {
-    alert(`Launching ${game.title} (${game.provider})...\nPlease Login or Register to play with real NPR.`);
-    if (onOpenLogin) onOpenLogin();
+    if (!user) {
+      if (onOpenLogin) onOpenLogin();
+      return;
+    }
+    toast.info(`Launching ${game.title || game.name} (${game.provider || "Casino"})...`);
   };
 
   return (

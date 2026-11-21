@@ -22,6 +22,7 @@ import MultiMarkets from "./AuraExchangeSrc/pages/Account/MultiMarkets";
 import LayoutFullPage from "./AuraExchangeSrc/components/LayoutFullPage";
 import CTSfullMarket from "./AuraExchangeSrc/pages/FullMarket/CTSfullMarket";
 import SportsTv from "../CommonComponents/SportsTv";
+import ProtectedRoute from "../CommonComponents/ProtectedRoute";
 
 export const NprRouter = createBrowserRouter([
   {
@@ -39,6 +40,14 @@ export const NprRouter = createBrowserRouter([
   {
     path: "/m/register",
     element: <LoginPage initialMode="register" />,
+  },
+  {
+    path: "/forgot-password",
+    element: <LoginPage initialMode="forgot" />,
+  },
+  {
+    path: "/m/forgot-password",
+    element: <LoginPage initialMode="forgot" />,
   },
 
   // 1. Main NPR77 Application Layout
@@ -119,7 +128,11 @@ export const NprRouter = createBrowserRouter([
 
   // 2. AuraExchange Sports Layout (Cricket, Tennis, Soccer)
   {
-    element: <AuraHome />,
+    element: (
+      <ProtectedRoute navigateTo="/login">
+        <AuraHome />
+      </ProtectedRoute>
+    ),
     children: [
       {
         path: "/cricket",
@@ -166,7 +179,11 @@ export const NprRouter = createBrowserRouter([
 
   // 3. AuraExchange Full Market Layout (Exchange Odds, Bookmaker, Fancy, Betslip)
   {
-    element: <LayoutFullPage />,
+    element: (
+      <ProtectedRoute navigateTo="/login">
+        <LayoutFullPage />
+      </ProtectedRoute>
+    ),
     children: [
       {
         path: "/full-market",
