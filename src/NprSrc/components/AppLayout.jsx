@@ -17,6 +17,7 @@ import InviteModal from "./InviteModal";
 import DepositModal from "./DepositModal";
 import WithdrawalModal from "./WithdrawalModal";
 import SideRedeemWidget from "./SideRedeemWidget";
+import StartupPromoModal from "./StartupPromoModal";
 import "../Npr.css";
 
 const AppLayout = () => {
@@ -26,6 +27,14 @@ const AppLayout = () => {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [depositOpen, setDepositOpen] = useState(false);
   const [withdrawalOpen, setWithdrawalOpen] = useState(false);
+  const [startupPromoOpen, setStartupPromoOpen] = useState(() => {
+    // Show automatically at starting load on home page
+    if (typeof window !== "undefined") {
+      const p = window.location.pathname;
+      return p === "/" || p === "" || p === "/m";
+    }
+    return true;
+  });
 
   const dispatch = useDispatch();
 
@@ -303,6 +312,15 @@ const AppLayout = () => {
         isOpen={withdrawalOpen}
         onClose={() => setWithdrawalOpen(false)}
         balance={user?.balance || "0.00"}
+      />
+
+      {/* 7. Startup Promotional Carousel Pop-up (JSB77 Branded) */}
+      <StartupPromoModal
+        isOpen={startupPromoOpen}
+        onClose={() => setStartupPromoOpen(false)}
+        onOpenLogin={handleOpenLogin}
+        onOpenRegister={handleOpenRegister}
+        user={user}
       />
     </div>
   );

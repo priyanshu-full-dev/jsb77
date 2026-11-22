@@ -1,53 +1,123 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
-import { FaTimes, FaChevronLeft, FaChevronDown } from "react-icons/fa";
+import { FaTimes, FaChevronLeft, FaChevronRight, FaChevronDown } from "react-icons/fa";
 import { useLanguage } from "../context/LanguageContext";
+
+const youtubeVideos = [
+  {
+    id: 1,
+    title: "I PLAYED EVERY GATES OF OLYMPUS",
+    channel: "Fly",
+    image: "/npr/video_slide_1.jpg",
+    youtubeUrl: "https://www.youtube.com/results?search_query=Fly+I+PLAYED+EVERY+GATES+OF+OLYMPUS",
+    embedUrl: "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1",
+  },
+  {
+    id: 2,
+    title: "How much cash can I win with $2000",
+    channel: "Casino King Games",
+    image: "/npr/video_slide_2.jpg",
+    youtubeUrl: "https://www.youtube.com/results?search_query=Casino+King+Games+How+much+cash+can+I+win+with+%242000",
+    embedUrl: "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1",
+  },
+  {
+    id: 3,
+    title: "RARE ONE TUMBLE GATES OF OLYMPUS",
+    channel: "DAILY Degens",
+    image: "/npr/video_slide_3.jpg",
+    youtubeUrl: "https://www.youtube.com/results?search_query=gates+of+olympus+rare+one+tumble+daily+degens",
+    embedUrl: "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1",
+  },
+];
 
 const FloatingWidgets = ({ onOpenFeatured }) => {
   const { t } = useLanguage();
   const [videoVisible, setVideoVisible] = useState(true);
   const [activeDot, setActiveDot] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
+  const [touchStartX, setTouchStartX] = useState(null);
+
+  const currentVideo = youtubeVideos[activeDot] || youtubeVideos[0];
+
+  const handlePrev = (e) => {
+    if (e) e.stopPropagation();
+    setActiveDot((prev) => (prev - 1 + youtubeVideos.length) % youtubeVideos.length);
+  };
+
+  const handleNext = (e) => {
+    if (e) e.stopPropagation();
+    setActiveDot((prev) => (prev + 1) % youtubeVideos.length);
+  };
+
+  const handleTouchStart = (e) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX === null) return;
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) handleNext();
+      else handlePrev();
+    }
+    setTouchStartX(null);
+  };
 
   return (
     <>
-      {/* 1. Video Teaser Section (Gates of Olympus Big Win) */}
+      {/* 1. YouTube Video Carousel (3 Videos) */}
       {videoVisible && (
         <div className="w-full relative select-none bg-[#f4f7fb]">
-          <div className="relative w-full aspect-[512/182] overflow-hidden bg-black shadow-xs">
-            {/* The exact high-res Gates of Olympus video banner */}
+          <div
+            className="relative w-full aspect-[820/300] overflow-hidden bg-black shadow-xs cursor-pointer group"
+            onClick={() => setModalOpen(true)}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
+            {/* The active video banner graphic */}
             <img
-              src="/npr/gates_of_olympus_video.jpg"
-              alt="Rare One Tumble Gates of Olympus - DAILY Degens"
-              className="w-full h-full object-cover object-[center_18%] cursor-pointer block"
-              onClick={() => setModalOpen(true)}
+              src={currentVideo.image}
+              alt={currentVideo.title}
+              className="w-full h-full object-cover transition-opacity duration-300 block select-none pointer-events-none"
               draggable={false}
             />
 
             {/* Left slide chevron navigation arrow */}
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setActiveDot((prev) => (prev - 1 + 3) % 3);
-              }}
-              className="absolute left-0 top-1/2 -translate-y-1/2 w-6 h-9 bg-blue-600/80 hover:bg-blue-600 text-white rounded-r-md flex items-center justify-center transition shadow-md z-10"
+              type="button"
+              onClick={handlePrev}
+              className="absolute left-0 top-1/2 -translate-y-1/2 w-6 h-9 bg-blue-600/80 hover:bg-blue-600 text-white rounded-r-md flex items-center justify-center transition shadow-md z-10 cursor-pointer"
               title="Previous Video"
+              aria-label="Previous Video"
             >
               <FaChevronLeft size={11} />
             </button>
+
+            {/* Right slide chevron navigation arrow */}
+            <button
+              type="button"
+              onClick={handleNext}
+              className="absolute right-0 top-1/2 -translate-y-1/2 w-6 h-9 bg-blue-600/80 hover:bg-blue-600 text-white rounded-l-md flex items-center justify-center transition shadow-md z-10 cursor-pointer"
+              title="Next Video"
+              aria-label="Next Video"
+            >
+              <FaChevronRight size={11} />
+            </button>
           </div>
 
-          {/* 3 Pagination Dots below Video Banner - Seamless uniform background color */}
+          {/* 3 Pagination Dots below Video Banner */}
           <div className="flex items-center justify-center gap-2 pt-2.5 pb-2.5 bg-[#f4f7fb]">
-            {[0, 1, 2].map((idx) => (
+            {youtubeVideos.map((vid, idx) => (
               <button
-                key={idx}
+                key={vid.id}
+                type="button"
                 onClick={() => setActiveDot(idx)}
-                className={`rounded-full transition-all duration-300 ${
+                className={`rounded-full transition-all duration-300 cursor-pointer ${
                   idx === activeDot
-                    ? "w-[8px] h-[8px] bg-[#0052cc]"
+                    ? "w-[9px] h-[9px] bg-[#0052cc]"
                     : "w-[8px] h-[8px] bg-[#c2d3f2] hover:bg-[#a6c0ee]"
                 }`}
+                title={`Video ${idx + 1}`}
                 aria-label={`Video Slide ${idx + 1}`}
               />
             ))}
@@ -64,12 +134,12 @@ const FloatingWidgets = ({ onOpenFeatured }) => {
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse" />
                 <h3 className="text-sm font-bold text-white truncate max-w-[280px]">
-                  RARE ONE TUMBLE GATES OF OLYMPUS
+                  {currentVideo.title}
                 </h3>
               </div>
               <button
                 onClick={() => setModalOpen(false)}
-                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition"
+                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition cursor-pointer"
               >
                 <FaTimes size={13} />
               </button>
@@ -79,8 +149,8 @@ const FloatingWidgets = ({ onOpenFeatured }) => {
             <div className="relative aspect-video w-full bg-black">
               <iframe
                 className="w-full h-full"
-                src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1"
-                title="Gates of Olympus Big Win"
+                src={currentVideo.embedUrl}
+                title={currentVideo.title}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
@@ -88,9 +158,9 @@ const FloatingWidgets = ({ onOpenFeatured }) => {
 
             {/* Modal Footer */}
             <div className="p-3.5 bg-[#0a1020] flex items-center justify-between text-xs text-slate-300">
-              <span>Channel: <strong className="text-white">DAILY Degens</strong></span>
+              <span>Channel: <strong className="text-white">{currentVideo.channel}</strong></span>
               <a
-                href="https://www.youtube.com/results?search_query=gates+of+olympus+rare+one+tumble+daily+degens"
+                href={currentVideo.youtubeUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-400 hover:text-blue-300 font-bold underline"
