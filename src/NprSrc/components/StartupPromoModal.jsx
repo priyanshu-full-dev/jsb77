@@ -99,7 +99,16 @@ const StartupPromoModal = ({ isOpen, onClose, onOpenLogin, onOpenRegister, user 
     setTouchStartX(null);
   };
 
-  if (!isOpen) return null;
+  const isLoggedIn = Boolean(
+    user ||
+    (typeof window !== "undefined" && (
+      localStorage.getItem("token") ||
+      localStorage.getItem("userId") ||
+      localStorage.getItem("npr_user")
+    ))
+  );
+
+  if (!isOpen || isLoggedIn) return null;
 
   const currentSlide = popupSlides[currentIndex];
 

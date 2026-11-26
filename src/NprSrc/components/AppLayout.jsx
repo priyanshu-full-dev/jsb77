@@ -28,12 +28,18 @@ const AppLayout = () => {
   const [depositOpen, setDepositOpen] = useState(false);
   const [withdrawalOpen, setWithdrawalOpen] = useState(false);
   const [startupPromoOpen, setStartupPromoOpen] = useState(() => {
-    // Show automatically at starting load on home page
+    // Show automatically at starting load on home page ONLY if user is NOT logged in
     if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
+      const userId = localStorage.getItem("userId");
+      const nprUser = localStorage.getItem("npr_user");
+      if (token || userId || nprUser) {
+        return false;
+      }
       const p = window.location.pathname;
       return p === "/" || p === "" || p === "/m";
     }
-    return true;
+    return false;
   });
 
   const dispatch = useDispatch();
@@ -88,6 +94,13 @@ const AppLayout = () => {
       }));
     }
   }, [reduxToken, reduxUserData]);
+
+  // Close startup promo pop-up if user is authenticated
+  useEffect(() => {
+    if (user || reduxToken) {
+      setStartupPromoOpen(false);
+    }
+  }, [user, reduxToken]);
 
   // Real-time Balance fetch via REST API
   const fetchBalance = async () => {
@@ -206,6 +219,7 @@ const AppLayout = () => {
       // ignore storage error
     }
     setAuthOpen(false);
+    setStartupPromoOpen(false);
 
     // Refresh balance from server right after login
     setTimeout(() => {
@@ -314,14 +328,16 @@ const AppLayout = () => {
         balance={user?.balance || "0.00"}
       />
 
-      {/* 7. Startup Promotional Carousel Pop-up (JSB77 Branded) */}
-      <StartupPromoModal
-        isOpen={startupPromoOpen}
-        onClose={() => setStartupPromoOpen(false)}
-        onOpenLogin={handleOpenLogin}
-        onOpenRegister={handleOpenRegister}
-        user={user}
-      />
+      {/* 7. Startup Promotional Carousel Pop-up (Only for unauthenticated/guest users) */}
+      {!user && !reduxToken && (
+        <StartupPromoModal
+          isOpen={startupPromoOpen}
+          onClose={() => setStartupPromoOpen(false)}
+          onOpenLogin={handleOpenLogin}
+          onOpenRegister={handleOpenRegister}
+          user={user}
+        />
+      )}
     </div>
   );
 };
