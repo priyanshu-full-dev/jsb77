@@ -19,6 +19,15 @@ import SoccerMatchesList from "./AuraExchangeSrc/pages/Sports/Soccer";
 import Inplay from "./AuraExchangeSrc/pages/Inplay";
 import QuickLinks from "./AuraExchangeSrc/pages/QuickLinks";
 import MultiMarkets from "./AuraExchangeSrc/pages/Account/MultiMarkets";
+import BetHistory from "./AuraExchangeSrc/pages/Account/BetHistory";
+import ProfitLoss from "./AuraExchangeSrc/pages/Account/ProfitLoss";
+import AccountStatement from "./AuraExchangeSrc/pages/Account/account-statement";
+import PasswordChangeHistory from "./AuraExchangeSrc/pages/Account/PasswordChangeHistory";
+import ActiveLogs from "./AuraExchangeSrc/pages/Account/ActiveLogs";
+import Profile from "./AuraExchangeSrc/pages/Account/Profile";
+import RollingCommission from "./AuraExchangeSrc/pages/Account/rolling-commission";
+import UserSingleBet from "./AuraExchangeSrc/pages/Account/UserSingleBet";
+import Account from "./AuraExchangeSrc/pages/Account";
 import LayoutFullPage from "./AuraExchangeSrc/components/LayoutFullPage";
 import CTSfullMarket from "./AuraExchangeSrc/pages/FullMarket/CTSfullMarket";
 import SportsTv from "../CommonComponents/SportsTv";
@@ -173,6 +182,46 @@ export const NprRouter = createBrowserRouter([
       {
         path: "/multi-market",
         element: <MultiMarkets />,
+      },
+      {
+        path: "/bets-history",
+        element: <BetHistory />,
+      },
+      {
+        path: "/bet-history",
+        element: <BetHistory />,
+      },
+      {
+        path: "/profit-loss",
+        element: <ProfitLoss />,
+      },
+      {
+        path: "/account-statement",
+        element: <AccountStatement />,
+      },
+      {
+        path: "/password-history",
+        element: <PasswordChangeHistory />,
+      },
+      {
+        path: "/activity-log",
+        element: <ActiveLogs />,
+      },
+      {
+        path: "/myprofile",
+        element: <Profile />,
+      },
+      {
+        path: "/rolling-commission",
+        element: <RollingCommission />,
+      },
+      {
+        path: "/userBetHistory",
+        element: <UserSingleBet />,
+      },
+      {
+        path: "/account",
+        element: <Account />,
       },
     ],
   },

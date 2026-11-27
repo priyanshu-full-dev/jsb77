@@ -7,6 +7,9 @@ export const fetchMatchLockDetails = async (matchId) => {
 
   try {
     const domainId = store.getState()?.site?.siteDetails?._id || "";
+    if (!domainId) {
+      return { marketLocks: {}, fancyLocks: {} };
+    }
 
     const { data } = await API.get(
       `https://api.professor.monster/api/v1/match-lock/${matchId}?domainId=${domainId}`,

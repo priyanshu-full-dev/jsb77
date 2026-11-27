@@ -213,15 +213,35 @@ const MembersPage = () => {
 
   const handleGridClick = (item) => {
     if (item.id === "betHistory") {
-      navigate("/bet-history");
+      navigate("/bets-history");
       return;
     }
-    if (item.id === "depositRecord") {
-      navigate("/deposit");
+    if (item.id === "profitAndLoss") {
+      navigate("/profit-loss");
+      return;
+    }
+    if (item.id === "depositRecord" || item.id === "transactionHistory") {
+      navigate("/account-statement");
       return;
     }
     if (item.id === "withdrawalRecord") {
       navigate("/withdrawal");
+      return;
+    }
+    if (item.id === "myAccount") {
+      navigate("/myprofile");
+      return;
+    }
+    if (item.id === "securityCenter") {
+      navigate("/password-history");
+      return;
+    }
+    if (item.id === "rebate") {
+      navigate("/rolling-commission");
+      return;
+    }
+    if (item.id === "myRewards" || item.id === "points") {
+      navigate("/promotion");
       return;
     }
     if (item.id === "inviteFriends") {

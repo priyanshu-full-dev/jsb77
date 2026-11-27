@@ -77,7 +77,7 @@ export const LoginPage = ({ initialMode = "login", onBack, onLoginSuccess }) => 
           (window.location.host.includes("localhost") ||
           window.location.host.includes("127.0.0.1") ||
           window.location.host.includes("vercel.app")
-            ? "asianexchange.club"
+            ? "jsb77.com"
             : window.location.host);
 
         const res = await getSitesByDomain(domainName);

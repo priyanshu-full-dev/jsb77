@@ -9,6 +9,10 @@ export const fetchLocksApi = async () => {
     const domainId =
       store.getState()?.site?.siteDetails?._id || "";
 
+    if (!domainId) {
+      return {};
+    }
+
     let finalLockMap = {};
 
     const responses = await Promise.all(
